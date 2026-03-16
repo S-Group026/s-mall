@@ -268,16 +268,18 @@ export default function SMallClient() {
   const GL=()=><div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 24px"}}/>;
 
   const Card=({p,i})=>(
-    <div className="pc" onClick={()=>setSelectedProduct(p)} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:`fadeUp .35s ease ${i*.04}s both`,cursor:"pointer"}}>
-      <div style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`,minHeight:120,overflow:"hidden"}}>
-        {p.badge&&<span style={{position:"absolute",top:10,right:10,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.black:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,textTransform:"uppercase"}}>{p.badge}</span>}
-        {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999}}>-{pct(p.orig_price,p.price)}%</span>}
-        {p.dest==="systeme"&&<span style={{position:"absolute",bottom:8,left:10,background:C.sys,color:C.white,fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:999,textTransform:"uppercase"}}>Systeme.io</span>}
-        {p.image_url?<img src={p.image_url} alt={p.name} style={{width:"100%",height:140,objectFit:"cover",position:"absolute",top:0,left:0,opacity:0.85}}/>:<div style={{fontSize:50}}>{p.emoji}</div>}
-        <span style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>{CATS.find(c=>c.id===p.cat)?.label}</span>
+    <div className="pc" style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:`fadeUp .35s ease ${i*.04}s both`}}>
+      <div onClick={()=>setSelectedProduct(p)} style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`,minHeight:140,overflow:"hidden",cursor:"pointer"}}>
+        {p.badge&&<span style={{position:"absolute",top:10,right:10,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.black:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,textTransform:"uppercase",zIndex:2}}>{p.badge}</span>}
+        {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:2}}>-{pct(p.orig_price,p.price)}%</span>}
+        {p.dest==="systeme"&&<span style={{position:"absolute",bottom:8,left:10,background:C.sys,color:C.white,fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:999,textTransform:"uppercase",zIndex:2}}>Systeme.io</span>}
+        {p.image_url?<img src={p.image_url} alt={p.name} style={{width:"100%",height:140,objectFit:"cover",position:"absolute",top:0,left:0}}/>:<div style={{fontSize:50,paddingTop:20}}>{p.emoji}</div>}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,0.7))",padding:"20px 8px 8px",zIndex:2}}>
+          <span style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>{CATS.find(c=>c.id===p.cat)?.label}</span>
+        </div>
       </div>
       <div style={{padding:18}}>
-        <h3 style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,marginBottom:5,color:C.white}}>{p.name}</h3>
+        <h3 onClick={()=>setSelectedProduct(p)} style={{fontFamily:"'Playfair Display',serif",fontSize:16,fontWeight:700,marginBottom:5,color:C.white,cursor:"pointer"}}>{p.name}</h3>
         <p style={{fontSize:12,color:C.muted,marginBottom:13,lineHeight:1.5}}>{p.desc}</p>
         <div style={{marginBottom:13}}>
           <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -286,9 +288,12 @@ export default function SMallClient() {
           </div>
           {p.orig_price&&<p style={{fontSize:11,color:C.green,fontWeight:700,marginTop:2}}>Économie : {fmt(p.orig_price-p.price)}</p>}
         </div>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <button onClick={()=>setSelectedProduct(p)} style={{flex:1,background:"transparent",border:`1.5px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"8px",fontWeight:600,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>👁 Voir détail</button>
+        </div>
         <div style={{display:"flex",gap:8}}>
-          {p.bookable&&<button onClick={e=>{e.stopPropagation();setBooking(p);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>}
-          <button onClick={e=>{e.stopPropagation();addToCart(p);}} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 {p.bookable?"Acheter":"Ajouter"}</button>
+          {p.bookable&&<button onClick={()=>setBooking(p)} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>}
+          <button onClick={()=>addToCart(p)} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 {p.bookable?"Acheter":"Ajouter"}</button>
         </div>
       </div>
     </div>

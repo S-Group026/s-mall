@@ -134,6 +134,7 @@ export default function SMallClient() {
   const [errors,setErrors]=useState({});
   const [processing,setProcessing]=useState(false);
   const [notif,setNotif]=useState(null);
+  const [selectedProduct,setSelectedProduct]=useState(null);
 
   // ── CHARGEMENT TEMPS RÉEL DES PRODUITS ──────────────────────────────────
   useEffect(()=>{
@@ -267,7 +268,7 @@ export default function SMallClient() {
   const GL=()=><div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 24px"}}/>;
 
   const Card=({p,i})=>(
-    <div className="pc" style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:`fadeUp .35s ease ${i*.04}s both`}}>
+    <div className="pc" onClick={()=>setSelectedProduct(p)} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:`fadeUp .35s ease ${i*.04}s both`,cursor:"pointer"}}>
       <div style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`,minHeight:120,overflow:"hidden"}}>
         {p.badge&&<span style={{position:"absolute",top:10,right:10,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.black:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,textTransform:"uppercase"}}>{p.badge}</span>}
         {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999}}>-{pct(p.orig_price,p.price)}%</span>}
@@ -286,8 +287,8 @@ export default function SMallClient() {
           {p.orig_price&&<p style={{fontSize:11,color:C.green,fontWeight:700,marginTop:2}}>Économie : {fmt(p.orig_price-p.price)}</p>}
         </div>
         <div style={{display:"flex",gap:8}}>
-          {p.bookable&&<button onClick={()=>setBooking(p)} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>}
-          <button onClick={()=>addToCart(p)} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 {p.bookable?"Acheter":"Ajouter"}</button>
+          {p.bookable&&<button onClick={e=>{e.stopPropagation();setBooking(p);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>}
+          <button onClick={e=>{e.stopPropagation();addToCart(p);}} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 {p.bookable?"Acheter":"Ajouter"}</button>
         </div>
       </div>
     </div>
@@ -310,7 +311,44 @@ export default function SMallClient() {
       `}</style>
 
       {notif&&<div style={{position:"fixed",top:20,right:20,zIndex:9999,background:C.card,border:`1px solid ${notif.color}`,color:notif.color,padding:"12px 22px",borderRadius:12,fontWeight:700,fontSize:13,boxShadow:"0 8px 28px rgba(0,0,0,0.5)",animation:"fadeUp .3s ease"}}>{notif.msg}</div>}
-      {booking&&<BookingModal product={booking} onClose={()=>setBooking(null)} onConfirm={info=>{addToCart(booking,info);setBooking(null);}}/>}
+      {booking&&<BookingModal product={booking} onClose={()=>setBooking(null)} onConfirm={info=>{addToCart(booking,info);setBooking(null);}}/>
+}
+      {/* PRODUCT DETAIL MODAL */}
+      {selectedProduct&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:998,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSelectedProduct(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,width:"100%",maxWidth:680,maxHeight:"90vh",overflowY:"auto",animation:"fadeUp .3s ease",boxShadow:"0 24px 80px rgba(0,0,0,0.95)"}}>
+            {/* Image */}
+            <div style={{position:"relative",height:280,background:"linear-gradient(135deg,#161200,#201a00)",overflow:"hidden",borderRadius:"28px 28px 0 0",flexShrink:0}}>
+              {selectedProduct.image_url
+                ?<img src={selectedProduct.image_url} alt={selectedProduct.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                :<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",fontSize:80}}>{selectedProduct.emoji}</div>
+              }
+              {selectedProduct.orig_price&&<span style={{position:"absolute",top:16,left:16,background:C.red,color:C.white,fontSize:12,fontWeight:800,padding:"5px 12px",borderRadius:999}}>-{pct(selectedProduct.orig_price,selectedProduct.price)}%</span>}
+              {selectedProduct.badge&&<span style={{position:"absolute",top:16,right:52,background:BADGE_C[selectedProduct.badge]||C.gold,color:selectedProduct.badge==="Bestseller"?C.black:C.white,fontSize:11,fontWeight:800,padding:"4px 12px",borderRadius:999}}>{selectedProduct.badge}</span>}
+              <button onClick={()=>setSelectedProduct(null)} style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,0.6)",border:`1px solid ${C.border}`,color:C.white,borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            {/* Content */}
+            <div style={{padding:"28px 32px"}}>
+              <p style={{fontSize:11,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>{CATS.find(c=>c.id===selectedProduct.cat)?.icon} {CATS.find(c=>c.id===selectedProduct.cat)?.label}</p>
+              <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,color:C.white,marginBottom:12}}>{selectedProduct.name}</h2>
+              <p style={{fontSize:15,color:C.muted,lineHeight:1.8,marginBottom:22}}>{selectedProduct.desc||selectedProduct.description||"Aucune description disponible."}</p>
+              <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:22}}/>
+              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:28}}>
+                <span style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:900,color:C.gold}}>{fmt(selectedProduct.price)}</span>
+                {selectedProduct.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:16}}>{fmt(selectedProduct.orig_price)}</span>}
+                {selectedProduct.orig_price&&<span style={{background:`${C.green}20`,color:C.green,fontSize:12,fontWeight:700,padding:"4px 12px",borderRadius:999}}>Économie : {fmt(selectedProduct.orig_price-selectedProduct.price)}</span>}
+              </div>
+              <div style={{display:"flex",gap:12}}>
+                {selectedProduct.bookable&&(
+                  <button onClick={()=>{setBooking(selectedProduct);setSelectedProduct(null);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>
+                )}
+                <button className="btn-g" onClick={()=>{addToCart(selectedProduct);setSelectedProduct(null);}} style={{flex:2,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 Ajouter au panier</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* NAV */}
       <nav style={{background:"rgba(10,10,10,0.97)",backdropFilter:"blur(12px)",padding:"0 36px",height:68,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${C.border}`,position:"sticky",top:0,zIndex:100}}>

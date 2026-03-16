@@ -168,14 +168,16 @@ export default function SMallClient() {
   const updateQty=(idx,d)=>setCart(prev=>prev.map((it,i)=>i===idx?{...it,qty:Math.max(1,it.qty+d)}:it));
   const filtered=products.filter(p=>(cat==="all"||p.cat===cat)&&p.name.toLowerCase().includes(search.toLowerCase()));
 
+  const FEDAPAY_PUBLIC_KEY = "pk_live_EzI5k531w-Iu-LUAu4I2sluv";
+
   const validate=()=>{
     const e={};
     if(!form.name.trim())e.name="Requis";
     if(!form.email.includes("@"))e.email="Email invalide";
     if(!form.tel.trim())e.tel="Requis";
-    if(payMethod==="stripe"){if(form.card.replace(/\s/g,"").length<16)e.card="Invalide";if(!form.expiry.match(/^\d{2}\/\d{2}$/))e.expiry="MM/AA";if(form.cvv.length<3)e.cvv="CVV invalide";}
-    if(payMethod==="paypal"&&!form.paypalEmail.includes("@"))e.paypalEmail="Email invalide";
-    if(payMethod==="systeme"&&!form.sysEmail.includes("@"))e.sysEmail="Email invalide";
+    if(payMethod==="stripe"){if((form.card||"").replace(/\s/g,"").length<16)e.card="Invalide";if(!(form.expiry||"").match(/^\d{2}\/\d{2}$/))e.expiry="MM/AA";if((form.cvv||"").length<3)e.cvv="CVV invalide";}
+    if(payMethod==="paypal"&&!(form.paypalEmail||"").includes("@"))e.paypalEmail="Email invalide";
+    if(payMethod==="systeme"&&!(form.sysEmail||"").includes("@"))e.sysEmail="Email invalide";
     setErrors(e);return Object.keys(e).length===0;
   };
 
@@ -187,7 +189,7 @@ export default function SMallClient() {
       const bookItems = cart.filter(i=>i.booking);
       const shopItems = cart.filter(i=>!i.booking);
 
-      // Enregistrer la commande
+      // Enregistrer la commande dans Supabase
       if(shopItems.length>0){
         await sb.from("orders").insert({
           id: orderId,
@@ -198,8 +200,8 @@ export default function SMallClient() {
           subtotal,
           shipping,
           total: grandTotal,
-          pay_method: payMethod,
-          status: "En cours",
+          pay_method: "FedaPay",
+          status: "En attente paiement",
           country: "Afrique de l'Ouest",
         });
       }
@@ -223,12 +225,34 @@ export default function SMallClient() {
         });
       }
 
-      setProcessing(false);
-      setPage("success");
-      setCart([]);
+      // Lancer le paiement selon la méthode choisie
+      if(payMethod==="fedapay"){
+        window.FedaPay.init({
+          public_key: FEDAPAY_PUBLIC_KEY,
+          transaction: { amount: grandTotal, description: `Commande S-Mall ${orderId}` },
+          customer: {
+            firstname: form.name.split(" ")[0],
+            lastname: form.name.split(" ").slice(1).join(" ")||".",
+            email: form.email,
+            phone_number: { number: form.tel, country: "bj" },
+          },
+          onComplete: async (resp) => {
+            if(resp.reason === "DIALOG DISMISSED"){ setProcessing(false); notify("❌ Paiement annulé.", C.red); return; }
+            await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+            setProcessing(false); setPage("success"); setCart([]);
+          }
+        }).open();
+      } else {
+        // Stripe, PayPal, Systeme.io → simulation (à connecter plus tard)
+        setTimeout(async()=>{
+          await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+          setProcessing(false); setPage("success"); setCart([]);
+        }, 1800);
+      }
+
     } catch(err){
       setProcessing(false);
-      notify("❌ Erreur lors du paiement. Réessayez.",C.red);
+      notify("❌ Erreur. Réessayez.",C.red);
     }
   };
 
@@ -461,7 +485,7 @@ export default function SMallClient() {
               <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:24}}>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,marginBottom:18,color:C.gold}}>💳 Méthode de paiement</h3>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
-                  {[{id:"stripe",label:"Carte",icon:"💳",color:C.stripe,sub:"Visa/MasterCard"},{id:"paypal",label:"PayPal",icon:"🅿️",color:C.paypal,sub:"Sécurisé"},{id:"systeme",label:"Systeme.io",icon:"⚡",color:C.sys,sub:"Formations"}].map(m=>(
+                  {[{id:"fedapay",label:"Mobile Money",icon:"📱",color:"#e8a020",sub:"MTN · Moov · Wave"},{id:"stripe",label:"Carte",icon:"💳",color:C.stripe,sub:"Visa/MasterCard"},{id:"paypal",label:"PayPal",icon:"🅿️",color:C.paypal,sub:"Sécurisé"},{id:"systeme",label:"Systeme.io",icon:"⚡",color:C.sys,sub:"Formations"}].map(m=>(
                     <button key={m.id} onClick={()=>setPayMethod(m.id)} style={{border:`2px solid ${payMethod===m.id?m.color:C.border}`,borderRadius:12,padding:"13px 8px",background:payMethod===m.id?`${m.color}18`:C.dark,cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
                       <div style={{fontSize:22,marginBottom:5}}>{m.icon}</div>
                       <div style={{fontWeight:700,fontSize:12,color:payMethod===m.id?m.color:C.white}}>{m.label}</div>
@@ -469,6 +493,7 @@ export default function SMallClient() {
                     </button>
                   ))}
                 </div>
+                {payMethod==="fedapay"&&<div style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[{icon:"📱",label:"MTN MoMo"},{icon:"💳",label:"Moov/Flooz"},{icon:"🌊",label:"Wave"}].map((m,i)=><div key={i} style={{background:C.card2,border:`1px solid #e8a02044`,borderRadius:10,padding:"10px 6px",textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{m.icon}</div><div style={{fontSize:10,color:"#e8a020",fontWeight:700}}>{m.label}</div></div>)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a1000",borderRadius:10,border:`1px solid #e8a02044`}}><span>🔒</span><span style={{fontSize:12,color:"#e8a020",fontWeight:600}}>Paiement Mobile Money sécurisé via FedaPay · Bénin</span></div></div>}
                 {payMethod==="stripe"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("card","Numéro de carte")}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{inp("expiry","MM/AA",undefined,5)}{inp("cvv","CVV",undefined,4)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#0f1c0f",borderRadius:10,border:`1px solid ${C.green}44`}}><span>🔒</span><span style={{fontSize:12,color:C.green,fontWeight:600}}>SSL sécurisé via Stripe</span></div></div>}
                 {payMethod==="paypal"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("paypalEmail","Email PayPal","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#001525",borderRadius:10,border:`1px solid ${C.paypal}44`}}><span>🔒</span><span style={{fontSize:12,color:C.paypal,fontWeight:600}}>Redirection sécurisée PayPal</span></div></div>}
                 {payMethod==="systeme"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("sysEmail","Email Systeme.io","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a0500",borderRadius:10,border:`1px solid ${C.sys}44`}}><span>⚡</span><span style={{fontSize:12,color:C.sys,fontWeight:600}}>Accès automatique via Systeme.io</span></div></div>}

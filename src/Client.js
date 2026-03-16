@@ -268,11 +268,11 @@ export default function SMallClient() {
 
   const Card=({p,i})=>(
     <div className="pc" style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,0.4)",animation:`fadeUp .35s ease ${i*.04}s both`}}>
-      <div style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`}}>
+      <div style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`,minHeight:120,overflow:"hidden"}}>
         {p.badge&&<span style={{position:"absolute",top:10,right:10,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.black:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,textTransform:"uppercase"}}>{p.badge}</span>}
         {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999}}>-{pct(p.orig_price,p.price)}%</span>}
         {p.dest==="systeme"&&<span style={{position:"absolute",bottom:8,left:10,background:C.sys,color:C.white,fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:999,textTransform:"uppercase"}}>Systeme.io</span>}
-        <div style={{fontSize:50}}>{p.emoji}</div>
+        {p.image_url?<img src={p.image_url} alt={p.name} style={{width:"100%",height:140,objectFit:"cover",position:"absolute",top:0,left:0,opacity:0.85}}/>:<div style={{fontSize:50}}>{p.emoji}</div>}
         <span style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>{CATS.find(c=>c.id===p.cat)?.label}</span>
       </div>
       <div style={{padding:18}}>

@@ -538,37 +538,33 @@ function MessagesSection() {
 
 // ─── CATEGORIES SECTION ───────────────────────────────────────────────────────
 function CategoriesSection() {
-  const [cats, setCats] = useState([
-    {id:"mode",label:"Mode",icon:"👗"},
-    {id:"tech",label:"Électronique",icon:"📱"},
-    {id:"formation",label:"Formations",icon:"🎓"},
-    {id:"avion",label:"Vols",icon:"✈️"},
-    {id:"circuit",label:"Circuits",icon:"🗺️"},
-    {id:"voiture",label:"Voitures",icon:"🚗"},
-    {id:"appart",label:"Appartements",icon:"🏠"},
-  ]);
+  const {data:cats,loading} = useRealtimeTable("categories", sb.from("categories").select("*").order("position"));
   const [form, setForm] = useState({id:"",label:"",icon:""});
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [notif, setNotif] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const notify = (msg, color=C.green) => { setNotif({msg,color}); setTimeout(()=>setNotif(null),3000); };
 
-  const save = () => {
+  const save = async () => {
     if(!form.id||!form.label||!form.icon){ notify("Remplis tous les champs !",C.red); return; }
+    setSaving(true);
     if(editing) {
-      setCats(l=>l.map(c=>c.id===editing?{...form}:c));
-      notify("✓ Catégorie mise à jour !");
+      const {error} = await sb.from("categories").update({label:form.label,icon:form.icon}).eq("id",editing);
+      if(!error) notify("✓ Catégorie mise à jour — visible côté client !");
+      else notify("❌ Erreur",C.red);
     } else {
-      if(cats.find(c=>c.id===form.id)){ notify("Cet ID existe déjà !",C.red); return; }
-      setCats(l=>[...l,{...form}]);
-      notify("✓ Catégorie ajoutée ! Redéployez pour l'afficher côté client.");
+      const {error} = await sb.from("categories").insert({id:form.id,label:form.label,icon:form.icon,position:cats.length+1});
+      if(!error) notify("✓ Catégorie ajoutée — visible côté client instantanément !");
+      else notify("❌ Cet ID existe peut-être déjà",C.red);
     }
+    setSaving(false);
     setShowForm(false); setEditing(null); setForm({id:"",label:"",icon:""});
   };
 
-  const remove = (id) => {
-    setCats(l=>l.filter(c=>c.id!==id));
+  const remove = async (id) => {
+    await sb.from("categories").delete().eq("id",id);
     notify("🗑️ Catégorie supprimée",C.red);
   };
 
@@ -607,7 +603,7 @@ function CategoriesSection() {
             <p style={{fontSize:12,color:C.blue,fontWeight:600}}>💡 Aperçu : <span style={{fontSize:18}}>{form.icon||"❓"}</span> <strong>{form.label||"Nom de la catégorie"}</strong></p>
           </div>
           <div style={{display:"flex",gap:10}}>
-            <button onClick={save} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"12px 24px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>💾 Sauvegarder</button>
+            <button onClick={save} disabled={saving} style={{background:saving?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:saving?C.muted:C.bg,border:"none",borderRadius:12,padding:"12px 24px",fontWeight:700,fontSize:14,cursor:saving?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>{saving?<><Spinner size={16}/>Sauvegarde…</>:"💾 Sauvegarder"}</button>
             <button onClick={()=>{setShowForm(false);setEditing(null);}} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:12,padding:"12px 18px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:14}}>Annuler</button>
           </div>
         </div>
@@ -629,9 +625,9 @@ function CategoriesSection() {
         ))}
       </div>
 
-      <div style={{marginTop:28,background:`${C.orange}10`,border:`1px solid ${C.orange}33`,borderRadius:14,padding:"16px 20px"}}>
-        <p style={{fontWeight:700,fontSize:13,color:C.orange,marginBottom:6}}>⚠️ Important après avoir ajouté une catégorie</p>
-        <p style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Après avoir créé une nouvelle catégorie ici, envoie-moi le nom et l'ID de ta nouvelle catégorie. Je mettrai à jour le code Client.js pour qu'elle apparaisse dans la boutique côté client.</p>
+      <div style={{marginTop:28,background:`${C.green}10`,border:`1px solid ${C.green}33`,borderRadius:14,padding:"16px 20px"}}>
+        <p style={{fontWeight:700,fontSize:13,color:C.green,marginBottom:6}}>✅ Synchronisation temps réel active</p>
+        <p style={{fontSize:13,color:C.muted,lineHeight:1.6}}>Les catégories sont sauvegardées dans Supabase et apparaissent instantanément côté client sans redéploiement.</p>
       </div>
     </div>
   );

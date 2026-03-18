@@ -20,7 +20,7 @@ const pct = (o,s) => Math.round((1-s/o)*100);
 const uid = () => "CMD-" + Date.now().toString(36).toUpperCase();
 const rid = () => "RES-" + Date.now().toString(36).toUpperCase();
 
-const CATS = [
+const DEFAULT_CATS = [
   {id:"all",label:"Tout",icon:"✦"},
   {id:"mode",label:"Mode",icon:"👗"},
   {id:"tech",label:"Électronique",icon:"📱"},
@@ -135,6 +135,22 @@ export default function SMallClient() {
   const [processing,setProcessing]=useState(false);
   const [notif,setNotif]=useState(null);
   const [selectedProduct,setSelectedProduct]=useState(null);
+  const [CATS,setCATS]=useState(DEFAULT_CATS);
+
+  // ── CHARGEMENT TEMPS RÉEL DES CATÉGORIES ─────────────────────────────────
+  useEffect(()=>{
+    const loadCats = async () => {
+      const {data} = await sb.from("categories").select("*").order("position");
+      if(data&&data.length>0){
+        setCATS([{id:"all",label:"Tout",icon:"✦"},...data]);
+      }
+    };
+    loadCats();
+    const chCat = sb.channel("categories-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"categories"},()=>loadCats())
+      .subscribe();
+    return () => sb.removeChannel(chCat);
+  },[]);
 
   // ── CHARGEMENT TEMPS RÉEL DES PRODUITS ──────────────────────────────────
   useEffect(()=>{

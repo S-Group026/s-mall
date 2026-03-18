@@ -136,6 +136,24 @@ export default function SMallClient() {
   const [notif,setNotif]=useState(null);
   const [selectedProduct,setSelectedProduct]=useState(null);
   const [CATS,setCATS]=useState(DEFAULT_CATS);
+  const [reviews,setReviews]=useState([]);
+  const [reviewForm,setReviewForm]=useState({name:"",email:"",rating:5,comment:""});
+  const [reviewSent,setReviewSent]=useState(false);
+  const [contactForm,setContactForm]=useState({name:"",email:"",tel:"",message:""});
+  const [contactSent,setContactSent]=useState(false);
+
+  // ── CHARGEMENT AVIS CLIENTS ──────────────────────────────────────────────
+  useEffect(()=>{
+    const loadReviews = async () => {
+      const {data} = await sb.from("reviews").select("*").eq("approved",true).order("created_at",{ascending:false});
+      if(data) setReviews(data);
+    };
+    loadReviews();
+    const chRev = sb.channel("reviews-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"reviews"},()=>loadReviews())
+      .subscribe();
+    return () => sb.removeChannel(chRev);
+  },[]);
 
   // ── CHARGEMENT TEMPS RÉEL DES CATÉGORIES ─────────────────────────────────
   useEffect(()=>{
@@ -186,6 +204,33 @@ export default function SMallClient() {
   const filtered=products.filter(p=>(cat==="all"||p.cat===cat)&&p.name.toLowerCase().includes(search.toLowerCase()));
 
   const FEDAPAY_PUBLIC_KEY = "pk_live_EzI5k531w-Iu-LUAu4I2sluv";
+
+  const submitReview = async () => {
+    if(!reviewForm.name.trim()||!reviewForm.comment.trim()){notify("Remplis tous les champs",C.red);return;}
+    await sb.from("reviews").insert({
+      client_name:reviewForm.name,
+      client_email:reviewForm.email,
+      rating:reviewForm.rating,
+      comment:reviewForm.comment,
+      approved:false,
+    });
+    setReviewSent(true);
+    setReviewForm({name:"",email:"",rating:5,comment:""});
+    notify("✦ Avis envoyé ! Il sera publié après validation.");
+  };
+
+  const submitContact = async () => {
+    if(!contactForm.name.trim()||!contactForm.message.trim()){notify("Remplis nom et message",C.red);return;}
+    await sb.from("messages").insert({
+      from_name:contactForm.name,
+      from_email:contactForm.email||"Non renseigné",
+      subject:`Contact S-Mall — ${contactForm.name}`,
+      message:contactForm.tel?`Tel: ${contactForm.tel}\n\n${contactForm.message}`:contactForm.message,
+    });
+    setContactSent(true);
+    setContactForm({name:"",email:"",tel:"",message:""});
+    notify("✦ Message envoyé ! Nous vous répondrons rapidement.");
+  };
 
   const validate=()=>{
     const e={};
@@ -381,8 +426,8 @@ export default function SMallClient() {
           </div>
         </div>
         <div style={{display:"flex",gap:26,alignItems:"center"}}>
-          {[["Accueil","home"],["Boutique","shop"],["Voyages","voyages"],["Formations","formations"]].map(([l,k])=>(
-            <span key={k} className="nav-a" style={{fontWeight:600,fontSize:14,color:page===k?C.gold:C.muted}} onClick={()=>{if(k==="home")setPage("home");else if(k==="shop"){setCat("all");setPage("shop");}else if(k==="voyages"){setCat("avion");setPage("shop");}else{setCat("formation");setPage("shop");}}}>{l}</span>
+          {[["Accueil","home"],["Boutique","shop"],["Voyages","voyages"],["Formations","formations"],["Contact","contact"]].map(([l,k])=>(
+            <span key={k} className="nav-a" style={{fontWeight:600,fontSize:14,color:page===k?C.gold:C.muted}} onClick={()=>{if(k==="home")setPage("home");else if(k==="shop"){setCat("all");setPage("shop");}else if(k==="voyages"){setCat("avion");setPage("shop");}else if(k==="contact"){setPage("contact");}else{setCat("formation");setPage("shop");}}}>{l}</span>
           ))}
         </div>
         <button className="btn-g" onClick={()=>setPage("cart")} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:"'DM Sans',sans-serif"}}>
@@ -436,6 +481,38 @@ export default function SMallClient() {
             <GL/>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:20}}>
               {products.filter(p=>p.orig_price).slice(0,4).map((p,i)=><Card key={p.id} p={p} i={i}/>)}
+            </div>
+          </div>
+
+          {/* AVIS CLIENTS */}
+          <div style={{maxWidth:1200,margin:"0 auto",padding:"0 28px 50px"}}>
+            <p style={{color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11,textAlign:"center",marginBottom:8}}>⭐ &nbsp; Témoignages</p>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:900,textAlign:"center",marginBottom:8}}>Ce que disent nos clients</h2>
+            <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 28px"}}/>
+            {reviews.length===0?(
+              <div style={{textAlign:"center",padding:"40px 0",color:C.muted}}>
+                <div style={{fontSize:44,marginBottom:10}}>⭐</div>
+                <p style={{fontSize:15,fontWeight:600}}>Soyez le premier à laisser un avis !</p>
+                <button onClick={()=>setPage("contact")} style={{marginTop:14,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"11px 24px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Laisser un avis →</button>
+              </div>
+            ):(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:18}}>
+                {reviews.slice(0,6).map((r,i)=>(
+                  <div key={r.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:"22px 20px",animation:`fadeUp .4s ease ${i*.06}s both`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12}}>
+                      <div>
+                        <p style={{fontWeight:700,fontSize:15,color:C.white,marginBottom:3}}>{r.client_name}</p>
+                        <p style={{fontSize:11,color:C.muted}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</p>
+                      </div>
+                      <div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(s=><span key={s} style={{fontSize:16,color:s<=r.rating?C.gold:"#333"}}>★</span>)}</div>
+                    </div>
+                    <p style={{fontSize:14,color:C.muted,lineHeight:1.7,fontStyle:"italic"}}>"{r.comment}"</p>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div style={{textAlign:"center",marginTop:22}}>
+              <button onClick={()=>setPage("contact")} style={{background:"transparent",color:C.gold,border:`1.5px solid ${C.gold}`,borderRadius:12,padding:"11px 26px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✦ Laisser un avis</button>
             </div>
           </div>
 
@@ -593,6 +670,99 @@ export default function SMallClient() {
               <p style={{fontWeight:700,fontSize:13,color:C.green}}>🚚 Livraison estimée : 3–5 jours ouvrés</p>
             </div>
             <button className="btn-g" onClick={()=>{setPage("home");setForm({name:"",email:"",tel:"",card:"",expiry:"",cvv:"",paypalEmail:"",sysEmail:""});}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 34px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Retour à l'accueil →</button>
+          </div>
+        </div>
+      )}
+
+      {/* CONTACT PAGE */}
+      {page==="contact"&&(
+        <div style={{maxWidth:800,margin:"0 auto",padding:"44px 28px",animation:"fadeUp .4s ease"}}>
+          <p style={{color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11,marginBottom:6}}>✦ &nbsp; Nous contacter</p>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:32,fontWeight:900,marginBottom:8}}>Parlons-nous</h2>
+          <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 32px"}}/>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
+            {/* FORMULAIRE CONTACT */}
+            <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:28}}>
+              <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:20,marginBottom:6,color:C.white}}>📬 Envoyez-nous un message</h3>
+              <p style={{fontSize:13,color:C.muted,marginBottom:22}}>Nous vous répondons sous 24h</p>
+              {contactSent?(
+                <div style={{textAlign:"center",padding:"40px 0"}}>
+                  <div style={{fontSize:50,marginBottom:12}}>✅</div>
+                  <p style={{fontWeight:700,fontSize:16,color:C.green,marginBottom:8}}>Message envoyé !</p>
+                  <p style={{color:C.muted,fontSize:13,marginBottom:20}}>Nous vous répondrons rapidement.</p>
+                  <button onClick={()=>setContactSent(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"9px 18px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>Envoyer un autre message</button>
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:13}}>
+                  {[["name","Votre nom *","Nom complet"],["email","Email","votre@email.com"],["tel","Téléphone","WhatsApp ou mobile"]].map(([f,l,p])=>(
+                    <div key={f}>
+                      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{l}</label>
+                      <input value={contactForm[f]} onChange={e=>setContactForm(cf=>({...cf,[f]:e.target.value}))} placeholder={p}
+                        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"11px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                    </div>
+                  ))}
+                  <div>
+                    <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>Message *</label>
+                    <textarea value={contactForm.message} onChange={e=>setContactForm(cf=>({...cf,message:e.target.value}))} placeholder="Votre message…" rows={4}
+                      style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"11px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
+                  </div>
+                  <button onClick={submitContact} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"13px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✦ Envoyer le message</button>
+                </div>
+              )}
+            </div>
+
+            {/* WHATSAPP + AVIS */}
+            <div style={{display:"flex",flexDirection:"column",gap:18}}>
+              {/* WhatsApp */}
+              <div style={{background:"linear-gradient(135deg,#0a1f0a,#0f2f0f)",border:"1px solid #25d36633",borderRadius:20,padding:28}}>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:20,marginBottom:6,color:"#25d366"}}>💬 WhatsApp Direct</h3>
+                <p style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}>Discutez avec nous directement sur WhatsApp pour une réponse instantanée !</p>
+                <a href="https://wa.me/2250150512408?text=Bonjour%20S-Mall%2C%20j'aimerais%20avoir%20plus%20d'informations" target="_blank" rel="noreferrer"
+                  style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"#25d366",color:"#fff",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,textDecoration:"none",fontFamily:"'DM Sans',sans-serif"}}>
+                  <span style={{fontSize:22}}>💬</span> Ouvrir WhatsApp
+                </a>
+                <p style={{fontSize:11,color:C.muted,marginTop:12,textAlign:"center"}}>+225 01 50 51 24 08 · Côte d'Ivoire</p>
+              </div>
+
+              {/* Avis */}
+              <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:28,flex:1}}>
+                <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:20,marginBottom:6,color:C.white}}>⭐ Laisser un avis</h3>
+                <p style={{fontSize:13,color:C.muted,marginBottom:18}}>Partagez votre expérience avec S-Mall</p>
+                {reviewSent?(
+                  <div style={{textAlign:"center",padding:"20px 0"}}>
+                    <div style={{fontSize:40,marginBottom:10}}>🙏</div>
+                    <p style={{fontWeight:700,color:C.green,fontSize:14}}>Merci pour votre avis !</p>
+                    <p style={{color:C.muted,fontSize:12,marginTop:6}}>Il sera publié après validation.</p>
+                  </div>
+                ):(
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <div>
+                      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>Votre nom *</label>
+                      <input value={reviewForm.name} onChange={e=>setReviewForm(rf=>({...rf,name:e.target.value}))} placeholder="Nom complet"
+                        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:8}}>Note *</label>
+                      <div style={{display:"flex",gap:6}}>
+                        {[1,2,3,4,5].map(s=>(
+                          <button key={s} onClick={()=>setReviewForm(rf=>({...rf,rating:s}))}
+                            style={{fontSize:26,background:"none",border:"none",cursor:"pointer",color:s<=reviewForm.rating?C.gold:"#333",transition:"transform .15s"}}
+                            onMouseEnter={e=>e.target.style.transform="scale(1.2)"}
+                            onMouseLeave={e=>e.target.style.transform="scale(1)"}>★</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>Commentaire *</label>
+                      <textarea value={reviewForm.comment} onChange={e=>setReviewForm(rf=>({...rf,comment:e.target.value}))} placeholder="Votre expérience avec S-Mall…" rows={3}
+                        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
+                    </div>
+                    <button onClick={submitReview} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⭐ Publier mon avis</button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

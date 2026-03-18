@@ -633,6 +633,56 @@ function CategoriesSection() {
   );
 }
 
+
+// ─── REVIEWS SECTION ─────────────────────────────────────────────────────────
+function ReviewsSection() {
+  const {data:reviews,loading} = useRealtimeTable("reviews", sb.from("reviews").select("*").order("created_at",{ascending:false}));
+  const [filter,setFilter] = useState("Tous");
+
+  const approve = async (id) => { await sb.from("reviews").update({approved:true}).eq("id",id); };
+  const reject  = async (id) => { await sb.from("reviews").delete().eq("id",id); };
+
+  const filtered = filter==="Tous"?reviews:filter==="En attente"?reviews.filter(r=>!r.approved):reviews.filter(r=>r.approved);
+
+  return (
+    <div>
+      <div style={{marginBottom:22}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Avis clients</h2>
+        <p style={{color:C.muted,fontSize:14}}>{reviews.filter(r=>!r.approved).length} en attente · {reviews.filter(r=>r.approved).length} publiés</p>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:18}}>
+        {["Tous","En attente","Publiés"].map(f=>(
+          <button key={f} onClick={()=>setFilter(f)} style={{padding:"8px 16px",borderRadius:999,border:`1.5px solid ${filter===f?C.gold:C.border}`,background:filter===f?`${C.gold}18`:"transparent",color:filter===f?C.gold:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{f}</button>
+        ))}
+      </div>
+      {loading?<div style={{display:"flex",gap:10,alignItems:"center"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>:filtered.length===0?<p style={{color:C.muted,fontSize:14,padding:"40px 0",textAlign:"center"}}>Aucun avis pour l'instant.</p>:(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {filtered.map(r=>(
+            <div key={r.id} style={{background:C.card,border:`1px solid ${r.approved?C.border:`${C.orange}44`}`,borderRadius:16,padding:"18px 22px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:6,flexWrap:"wrap"}}>
+                    <span style={{fontWeight:800,fontSize:16,color:C.white}}>{r.client_name}</span>
+                    <div style={{display:"flex",gap:2}}>{[1,2,3,4,5].map(s=><span key={s} style={{fontSize:15,color:s<=r.rating?C.gold:"#333"}}>★</span>)}</div>
+                    <span style={{background:r.approved?`${C.green}20`:`${C.orange}20`,color:r.approved?C.green:C.orange,fontSize:11,fontWeight:700,padding:"2px 9px",borderRadius:999}}>{r.approved?"✓ Publié":"⏳ En attente"}</span>
+                  </div>
+                  {r.client_email&&<p style={{fontSize:12,color:C.muted,marginBottom:8}}>📧 {r.client_email}</p>}
+                  <p style={{fontSize:14,color:C.white,lineHeight:1.7,fontStyle:"italic"}}>"{r.comment}"</p>
+                  <p style={{fontSize:11,color:C.muted,marginTop:8}}>📅 {new Date(r.created_at).toLocaleDateString("fr-FR")}</p>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:8,flexShrink:0}}>
+                  {!r.approved&&<button onClick={()=>approve(r.id)} style={{background:`${C.green}22`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:10,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✓ Approuver</button>}
+                  <button onClick={()=>reject(r.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}44`,color:C.red,borderRadius:10,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const MENU=[
   {id:"dashboard",label:"Tableau de bord",icon:"📊"},
   {id:"products",label:"Produits",icon:"🛍️"},
@@ -641,6 +691,7 @@ const MENU=[
   {id:"stats",label:"Statistiques",icon:"📈"},
   {id:"messages",label:"Messages",icon:"💬"},
   {id:"categories",label:"Catégories",icon:"🏷️"},
+  {id:"reviews",label:"Avis clients",icon:"⭐"},
 ];
 
 export default function SMallAdmin() {
@@ -650,6 +701,8 @@ export default function SMallAdmin() {
   const [section,setSection]=useState("dashboard");
   const {data:messages}=useRealtimeTable("messages");
   const unread=messages.filter(m=>!m.read).length;
+  const {data:allReviews}=useRealtimeTable("reviews",sb.from("reviews").select("*").eq("approved",false));
+  const pendingReviews=allReviews.length;
   const login=()=>{if(pwd==="small2025"){setAuth(true);setErr("");}else setErr("Mot de passe incorrect.");};
 
   if(!auth) return (
@@ -690,7 +743,7 @@ export default function SMallAdmin() {
               style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",borderRadius:12,border:"none",background:section===m.id?C.card2:"transparent",color:section===m.id?C.gold:C.muted,fontWeight:section===m.id?700:600,fontSize:14,textAlign:"left",fontFamily:"'DM Sans',sans-serif",width:"100%"}}>
               <span style={{fontSize:18}}>{m.icon}</span>
               {m.label}
-              {m.id==="messages"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:C.white,borderRadius:999,padding:"1px 7px",fontSize:11,fontWeight:800}}>{unread}</span>}
+              {m.id==="messages"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:C.white,borderRadius:999,padding:"1px 7px",fontSize:11,fontWeight:800}}>{unread}</span>}{m.id==="reviews"&&pendingReviews>0&&<span style={{marginLeft:"auto",background:C.orange,color:C.white,borderRadius:999,padding:"1px 7px",fontSize:11,fontWeight:800}}>{pendingReviews}</span>}
             </button>
           ))}
         </nav>
@@ -706,6 +759,7 @@ export default function SMallAdmin() {
         {section==="stats"        && <StatsSection/>}
         {section==="messages"     && <MessagesSection/>}
         {section==="categories"   && <CategoriesSection/>}
+        {section==="reviews"      && <ReviewsSection/>}
       </main>
     </div>
   );

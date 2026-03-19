@@ -301,6 +301,7 @@ export default function SMallClient() {
           onComplete: async (resp) => {
             if(resp.reason === "DIALOG DISMISSED"){ setProcessing(false); notify("❌ Paiement annulé.", C.red); return; }
             await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+            await sendConfirmEmail();
             setProcessing(false); setPage("success"); setCart([]);
           }
         }).open();
@@ -308,6 +309,7 @@ export default function SMallClient() {
         // Stripe, PayPal, Systeme.io → simulation (à connecter plus tard)
         setTimeout(async()=>{
           await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+          await sendConfirmEmail();
           setProcessing(false); setPage("success"); setCart([]);
         }, 1800);
       }

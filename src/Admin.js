@@ -473,9 +473,40 @@ function MessagesSection() {
   const sendReply=async()=>{
     if(!reply.trim()||!selected)return;
     setSending(true);
+    // Save reply in Supabase
     await sb.from("messages").update({replied:true,read:true,reply_text:reply}).eq("id",selected.id);
     setMessages(l=>l.map(m=>m.id===selected.id?{...m,replied:true,read:true,reply_text:reply}:m));
     setSelected(s=>({...s,replied:true,reply_text:reply}));
+    // Send email via Resend
+    if(selected.from_email&&selected.from_email!=="Non renseigné"){
+      try {
+        await fetch("https://api.resend.com/emails",{
+          method:"POST",
+          headers:{"Authorization":"Bearer re_KrB2RgwW_LzuCcnrLRMMwsSkmfvGX7rri","Content-Type":"application/json"},
+          body:JSON.stringify({
+            from:"S-Mall <onboarding@resend.dev>",
+            to:[selected.from_email],
+            subject:`Réponse S-Mall — ${selected.subject}`,
+            html:`
+              <div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#0a0a0a;color:#f5f0e8;padding:32px;border-radius:16px;">
+                <div style="text-align:center;margin-bottom:24px;">
+                  <h1 style="color:#c9a84c;font-size:24px;margin:0;">✦ S-Mall</h1>
+                  <p style="color:#888;font-size:12px;margin:4px 0 0;">Premium Store · Bénin · Togo · Côte d'Ivoire</p>
+                </div>
+                <div style="background:#161616;border-radius:12px;padding:24px;margin-bottom:20px;">
+                  <p style="color:#888;font-size:13px;margin:0 0 6px;">Bonjour <strong style="color:#f5f0e8;">${selected.from_name}</strong>,</p>
+                  <p style="color:#888;font-size:13px;margin:0 0 16px;">En réponse à votre message : <em>"${selected.subject}"</em></p>
+                  <div style="border-left:3px solid #c9a84c;padding-left:16px;">
+                    <p style="color:#f5f0e8;font-size:15px;line-height:1.7;margin:0;">${reply}</p>
+                  </div>
+                </div>
+                <p style="color:#555;font-size:12px;text-align:center;">Pour nous contacter : <a href="https://wa.me/2250150512408" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p>
+              </div>
+            `,
+          })
+        });
+      } catch(e){ console.error("Email error",e); }
+    }
     setReply("");setSending(false);
   };
   return (

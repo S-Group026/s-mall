@@ -480,9 +480,9 @@ function MessagesSection() {
     // Send email via Resend
     if(selected.from_email&&selected.from_email!=="Non renseigné"){
       try {
-        await fetch("https://api.resend.com/emails",{
+        await fetch("https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email",{
           method:"POST",
-          headers:{"Authorization":"Bearer re_KrB2RgwW_LzuCcnrLRMMwsSkmfvGX7rri","Content-Type":"application/json"},
+          headers:{"Content-Type":"application/json"},
           body:JSON.stringify({
             from:"S-Mall <onboarding@resend.dev>",
             to:[selected.from_email],

@@ -120,6 +120,43 @@ function BookingModal({product,onClose,onConfirm}) {
   );
 }
 
+
+// ─── IMAGE GALLERY ────────────────────────────────────────────────────────────
+function ImageGallery({productId, mainImage, emoji}) {
+  const [images, setImages] = useState([]);
+  const [current, setCurrent] = useState(0);
+
+  useEffect(()=>{
+    const load = async () => {
+      const {data} = await sb.from("product_images").select("*").eq("product_id",productId).order("position");
+      if(data&&data.length>0) setImages(data.map(i=>i.url));
+      else if(mainImage) setImages([mainImage]);
+    };
+    load();
+  },[productId, mainImage]);
+
+  const imgs = images.length>0 ? images : mainImage ? [mainImage] : [];
+  if(imgs.length===0) return <div style={{height:280,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,background:"linear-gradient(135deg,#161200,#201a00)"}}>{emoji}</div>;
+
+  return (
+    <div style={{position:"relative",height:280,background:"#000",overflow:"hidden",borderRadius:"28px 28px 0 0"}}>
+      <img src={imgs[current]} alt="" style={{width:"100%",height:"100%",objectFit:"cover",transition:"opacity .3s"}}/>
+      {imgs.length>1&&(
+        <>
+          <button onClick={()=>setCurrent(c=>c===0?imgs.length-1:c-1)} style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+          <button onClick={()=>setCurrent(c=>c===imgs.length-1?0:c+1)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,0.6)",border:"none",color:"#fff",borderRadius:"50%",width:36,height:36,cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+          <div style={{position:"absolute",bottom:10,left:0,right:0,display:"flex",gap:6,justifyContent:"center"}}>
+            {imgs.map((_,i)=>(
+              <button key={i} onClick={()=>setCurrent(i)} style={{width:i===current?20:7,height:7,borderRadius:999,background:i===current?"#c9a84c":"rgba(255,255,255,0.4)",border:"none",cursor:"pointer",padding:0,transition:"all .2s"}}/>
+            ))}
+          </div>
+          <div style={{position:"absolute",bottom:10,right:14,background:"rgba(0,0,0,0.6)",color:"#fff",fontSize:11,fontWeight:700,padding:"2px 8px",borderRadius:999}}>{current+1}/{imgs.length}</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── MAIN CLIENT APP ─────────────────────────────────────────────────────────
 export default function SMallClient() {
   const [products,setProducts]=useState([]);
@@ -385,15 +422,12 @@ export default function SMallClient() {
       {selectedProduct&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:998,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setSelectedProduct(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,width:"100%",maxWidth:680,maxHeight:"90vh",overflowY:"auto",animation:"fadeUp .3s ease",boxShadow:"0 24px 80px rgba(0,0,0,0.95)"}}>
-            {/* Image */}
-            <div style={{position:"relative",height:280,background:"linear-gradient(135deg,#161200,#201a00)",overflow:"hidden",borderRadius:"28px 28px 0 0",flexShrink:0}}>
-              {selectedProduct.image_url
-                ?<img src={selectedProduct.image_url} alt={selectedProduct.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                :<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",fontSize:80}}>{selectedProduct.emoji}</div>
-              }
-              {selectedProduct.orig_price&&<span style={{position:"absolute",top:16,left:16,background:C.red,color:C.white,fontSize:12,fontWeight:800,padding:"5px 12px",borderRadius:999}}>-{pct(selectedProduct.orig_price,selectedProduct.price)}%</span>}
-              {selectedProduct.badge&&<span style={{position:"absolute",top:16,right:52,background:BADGE_C[selectedProduct.badge]||C.gold,color:selectedProduct.badge==="Bestseller"?C.black:C.white,fontSize:11,fontWeight:800,padding:"4px 12px",borderRadius:999}}>{selectedProduct.badge}</span>}
-              <button onClick={()=>setSelectedProduct(null)} style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,0.6)",border:`1px solid ${C.border}`,color:C.white,borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            {/* Image Gallery */}
+            <div style={{position:"relative",borderRadius:"28px 28px 0 0",overflow:"hidden",flexShrink:0}}>
+              <ImageGallery productId={selectedProduct.id} mainImage={selectedProduct.image_url} emoji={selectedProduct.emoji}/>
+              {selectedProduct.orig_price&&<span style={{position:"absolute",top:16,left:16,background:C.red,color:C.white,fontSize:12,fontWeight:800,padding:"5px 12px",borderRadius:999,zIndex:10}}>-{pct(selectedProduct.orig_price,selectedProduct.price)}%</span>}
+              {selectedProduct.badge&&<span style={{position:"absolute",top:16,right:52,background:BADGE_C[selectedProduct.badge]||C.gold,color:selectedProduct.badge==="Bestseller"?C.black:C.white,fontSize:11,fontWeight:800,padding:"4px 12px",borderRadius:999,zIndex:10}}>{selectedProduct.badge}</span>}
+              <button onClick={()=>setSelectedProduct(null)} style={{position:"absolute",top:14,right:14,background:"rgba(0,0,0,0.6)",border:`1px solid ${C.border}`,color:C.white,borderRadius:10,width:34,height:34,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",zIndex:10}}>✕</button>
             </div>
             {/* Content */}
             <div style={{padding:"28px 32px"}}>

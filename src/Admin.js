@@ -122,45 +122,71 @@ function Dashboard() {
   );
 }
 
-// ─── IMAGE UPLOADER ───────────────────────────────────────────────────────────
-function ImageUploader({productId, currentUrl, onUploaded}) {
-  const [uploading,setUploading] = useState(false);
-  const [preview,setPreview] = useState(currentUrl||null);
+// ─── MULTI IMAGE UPLOADER ────────────────────────────────────────────────────
+function ImageUploader({productId}) {
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
   const fileRef = useRef();
 
+  const loadImages = async () => {
+    const {data} = await sb.from("product_images").select("*").eq("product_id", productId).order("position");
+    if(data) setImages(data);
+  };
+
+  useEffect(()=>{ if(productId) loadImages(); },[productId]);
+
   const upload = async (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
+    const files = Array.from(e.target.files);
+    if(!files.length) return;
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `product-${productId}-${Date.now()}.${ext}`;
-    const {error} = await sb.storage.from("Products").upload(path, file, {upsert:true});
-    if(!error) {
-      const {data} = sb.storage.from("Products").getPublicUrl(path);
-      const url = data.publicUrl;
-      await sb.from("products").update({image_url:url}).eq("id",productId);
-      setPreview(url);
-      onUploaded(url);
+    for(const file of files) {
+      const ext = file.name.split(".").pop();
+      const path = `product-${productId}-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const {error} = await sb.storage.from("Products").upload(path, file, {upsert:true});
+      if(!error) {
+        const {data} = sb.storage.from("Products").getPublicUrl(path);
+        await sb.from("product_images").insert({product_id:productId, url:data.publicUrl, position:images.length});
+        // Also update main image_url if first image
+        if(images.length===0) await sb.from("products").update({image_url:data.publicUrl}).eq("id",productId);
+      }
     }
+    await loadImages();
     setUploading(false);
   };
 
+  const remove = async (img) => {
+    await sb.from("product_images").delete().eq("id", img.id);
+    // Update main image_url to first remaining image
+    const remaining = images.filter(i=>i.id!==img.id);
+    await sb.from("products").update({image_url: remaining[0]?.url||null}).eq("id",productId);
+    await loadImages();
+  };
+
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block"}}>📸 Image du produit</label>
-      <div style={{display:"flex",gap:12,alignItems:"center"}}>
-        <div style={{width:80,height:80,borderRadius:14,background:C.card2,border:`2px dashed ${preview?C.gold:C.border}`,overflow:"hidden",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          {preview ? <img src={preview} alt="produit" style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <span style={{fontSize:28}}>📷</span>}
-        </div>
-        <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
-            {uploading?<><Spinner size={14}/>Upload en cours…</>:"📤 Choisir une photo"}
-          </button>
-          {preview&&<button onClick={async()=>{await sb.from("products").update({image_url:null}).eq("id",productId);setPreview(null);onUploaded(null);}} style={{background:"none",border:`1px solid ${C.red}44`,color:C.red,borderRadius:10,padding:"6px 14px",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:600}}>🗑️ Supprimer l'image</button>}
-          <p style={{fontSize:11,color:C.muted}}>JPG, PNG, WEBP — max 5 Mo</p>
-        </div>
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <label style={{fontSize:12,fontWeight:700,color:C.muted}}>📸 Photos du produit ({images.length})</label>
+        <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"8px 16px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6}}>
+          {uploading?<><Spinner size={13}/>Upload…</>:"📤 Ajouter des photos"}
+        </button>
       </div>
-      <input ref={fileRef} type="file" accept="image/*" onChange={upload} style={{display:"none"}}/>
+      <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+        {images.length===0&&(
+          <div onClick={()=>fileRef.current.click()} style={{width:90,height:90,borderRadius:12,background:C.card2,border:`2px dashed ${C.border}`,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",flexDirection:"column",gap:4}}>
+            <span style={{fontSize:24}}>📷</span>
+            <span style={{fontSize:10,color:C.muted}}>Ajouter</span>
+          </div>
+        )}
+        {images.map((img,i)=>(
+          <div key={img.id} style={{position:"relative",width:90,height:90,borderRadius:12,overflow:"hidden",border:`2px solid ${i===0?C.gold:C.border}`,flexShrink:0}}>
+            <img src={img.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+            {i===0&&<span style={{position:"absolute",top:3,left:3,background:C.gold,color:C.bg,fontSize:8,fontWeight:800,padding:"1px 5px",borderRadius:999}}>MAIN</span>}
+            <button onClick={()=>remove(img)} style={{position:"absolute",top:3,right:3,background:"rgba(0,0,0,0.7)",border:"none",color:C.red,borderRadius:6,width:20,height:20,cursor:"pointer",fontSize:11,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          </div>
+        ))}
+      </div>
+      <p style={{fontSize:11,color:C.muted}}>La 1ère photo sera l'image principale · JPG, PNG, WEBP — max 5 Mo</p>
+      <input ref={fileRef} type="file" accept="image/*" multiple onChange={upload} style={{display:"none"}}/>
     </div>
   );
 }

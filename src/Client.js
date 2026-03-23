@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, Tag, Star, TrendingUp, Flame } from 'https://esm.sh/lucide-react@0.383.0';
 import { sb } from './supabase';
 
 
@@ -30,6 +31,18 @@ const DEFAULT_CATS = [
   {id:"voiture",label:"Voitures",icon:"🚗"},
   {id:"appart",label:"Appartements",icon:"🏠"},
 ];
+
+// Lucide icon mapping for categories
+const CAT_ICON = {
+  mode: ()=><ShoppingBag size={28} strokeWidth={1.5}/>,
+  tech: ()=><Cpu size={28} strokeWidth={1.5}/>,
+  formation: ()=><GraduationCap size={28} strokeWidth={1.5}/>,
+  avion: ()=><Plane size={28} strokeWidth={1.5}/>,
+  circuit: ()=><Map size={28} strokeWidth={1.5}/>,
+  voiture: ()=><Car size={28} strokeWidth={1.5}/>,
+  appart: ()=><Home size={28} strokeWidth={1.5}/>,
+  all: ()=><Sparkles size={28} strokeWidth={1.5}/>,
+};
 const BADGE_C = {Nouveau:C.green,Bestseller:C.gold,Promo:C.red,Premium:"#9b59b6"};
 
 // ─── CALENDAR ────────────────────────────────────────────────────────────────
@@ -503,7 +516,9 @@ export default function SMallClient() {
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(145px,1fr))",gap:14}}>
               {CATS.filter(c=>c.id!=="all").map((c,i)=>(
                 <div key={c.id} className="pc" onClick={()=>{setCat(c.id);setPage("shop");}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:"22px 14px",textAlign:"center",cursor:"pointer",animation:`fadeUp .4s ease ${i*.06}s both`}}>
-                  <div style={{fontSize:32,marginBottom:8}}>{c.icon}</div>
+                  <div style={{color:C.gold,display:"flex",justifyContent:"center",marginBottom:10}}>
+                    {CAT_ICON[c.id]?CAT_ICON[c.id]():<span style={{fontSize:28}}>{c.icon}</span>}
+                  </div>
                   <p style={{fontWeight:700,fontSize:13,color:C.white}}>{c.label}</p>
                   <p style={{fontSize:11,color:C.gold,marginTop:3}}>{products.filter(p=>p.cat===c.id).length} articles</p>
                 </div>
@@ -511,14 +526,50 @@ export default function SMallClient() {
             </div>
           </div>
 
+          {/* PROMOTIONS */}
+          {products.filter(p=>p.orig_price).length>0&&(
           <div style={{maxWidth:1200,margin:"0 auto",padding:"0 28px 50px"}}>
-            <p style={{color:C.red,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11,marginBottom:8}}>🔥 &nbsp; Offres du moment</p>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <Flame size={18} color={C.red} strokeWidth={2}/>
+              <p style={{color:C.red,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11}}>Offres du moment</p>
+            </div>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:900,marginBottom:8}}>Promotions en cours</h2>
             <GL/>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:20}}>
               {products.filter(p=>p.orig_price).slice(0,4).map((p,i)=><Card key={p.id} p={p} i={i}/>)}
             </div>
           </div>
+          )}
+
+          {/* NOUVEAUTÉS */}
+          {products.filter(p=>p.badge==="Nouveau").length>0&&(
+          <div style={{maxWidth:1200,margin:"0 auto",padding:"0 28px 50px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <Sparkles size={18} color={C.green} strokeWidth={2}/>
+              <p style={{color:C.green,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11}}>Tout juste arrivé</p>
+            </div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:900,marginBottom:8}}>Nouveautés</h2>
+            <GL/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:20}}>
+              {products.filter(p=>p.badge==="Nouveau").slice(0,4).map((p,i)=><Card key={p.id} p={p} i={i}/>)}
+            </div>
+          </div>
+          )}
+
+          {/* BESTSELLERS */}
+          {products.filter(p=>p.badge==="Bestseller").length>0&&(
+          <div style={{maxWidth:1200,margin:"0 auto",padding:"0 28px 50px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+              <TrendingUp size={18} color={C.gold} strokeWidth={2}/>
+              <p style={{color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11}}>Les plus demandés</p>
+            </div>
+            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:900,marginBottom:8}}>Bestsellers</h2>
+            <GL/>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:20}}>
+              {products.filter(p=>p.badge==="Bestseller").slice(0,4).map((p,i)=><Card key={p.id} p={p} i={i}/>)}
+            </div>
+          </div>
+          )}
 
           {/* AVIS CLIENTS */}
           <div style={{maxWidth:1200,margin:"0 auto",padding:"0 28px 50px"}}>
@@ -758,7 +809,7 @@ export default function SMallClient() {
                   style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"#25d366",color:"#fff",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,textDecoration:"none",fontFamily:"'DM Sans',sans-serif"}}>
                   <span style={{fontSize:22}}>💬</span> Ouvrir WhatsApp
                 </a>
-                <p style={{fontSize:11,color:C.muted,marginTop:12,textAlign:"center"}}>+225 01 50 51 24 08 · Côte d'Ivoire</p>
+                <p style={{fontSize:11,color:C.muted,marginTop:12,textAlign:"center"}}>Disponible tous les jours · Réponse rapide</p>
               </div>
 
               {/* Avis */}

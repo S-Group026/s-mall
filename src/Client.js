@@ -517,7 +517,7 @@ export default function SMallClient() {
               {CATS.filter(c=>c.id!=="all").map((c,i)=>(
                 <div key={c.id} className="pc" onClick={()=>{setCat(c.id);setPage("shop");}} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:"22px 14px",textAlign:"center",cursor:"pointer",animation:`fadeUp .4s ease ${i*.06}s both`}}>
                   <div style={{color:C.gold,display:"flex",justifyContent:"center",marginBottom:10}}>
-                    {CAT_ICON[c.id]?CAT_ICON[c.id]():<span style={{fontSize:28}}>{c.icon}</span>}
+                    {CAT_ICON[c.id]?CAT_ICON[c.id]():<Tag size={28} strokeWidth={1.5} color={C.gold}/>}
                   </div>
                   <p style={{fontWeight:700,fontSize:13,color:C.white}}>{c.label}</p>
                   <p style={{fontSize:11,color:C.gold,marginTop:3}}>{products.filter(p=>p.cat===c.id).length} articles</p>

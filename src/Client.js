@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, Tag, Star, TrendingUp, Flame } from 'https://esm.sh/lucide-react@0.383.0';
+import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, TrendingUp, Flame, ShoppingCart, Calendar, Search, ChevronLeft, ChevronRight, X, Shield, Lock, CreditCard, Zap, Package, CheckCircle, Truck, MessageCircle, Send, Star, Phone, Mail, ArrowRight, Eye, Minus, Plus, Trash2, Tag, Globe, Award, Clock, MapPin } from 'https://esm.sh/lucide-react@0.383.0';
 import { sb } from './supabase';
 
 
@@ -63,7 +63,7 @@ function MiniCalendar({label,value,onChange}) {
     <div style={{position:"relative"}}>
       <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:6}}>{label}</label>
       <button onClick={()=>setOpen(!open)} style={{width:"100%",background:C.card2,border:`1.5px solid ${value?C.gold:C.border}`,borderRadius:10,padding:"10px 14px",color:value?C.gold:C.muted,fontSize:14,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <span>{value||"JJ/MM/AAAA"}</span><span>📅</span>
+        <span>{value||"JJ/MM/AAAA"}</span><Calendar size={16} color={C.gold} strokeWidth={1.5}/>
       </button>
       {open&&(
         <div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:500,background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:14,width:240,boxShadow:"0 16px 40px rgba(0,0,0,0.8)"}}>
@@ -385,7 +385,7 @@ export default function SMallClient() {
       <div onClick={()=>setSelectedProduct(p)} style={{background:"linear-gradient(135deg,#161200,#201a00)",padding:"26px 14px",textAlign:"center",position:"relative",borderBottom:`1px solid ${C.border}`,minHeight:140,overflow:"hidden",cursor:"pointer"}}>
         {p.badge&&<span style={{position:"absolute",top:10,right:10,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.black:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,textTransform:"uppercase",zIndex:2}}>{p.badge}</span>}
         {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:C.white,fontSize:9,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:2}}>-{pct(p.orig_price,p.price)}%</span>}
-        {p.dest==="systeme"&&<span style={{position:"absolute",bottom:8,left:10,background:C.sys,color:C.white,fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:999,textTransform:"uppercase",zIndex:2}}>Systeme.io</span>}
+        {p.dest==="systeme"&&<span style={{position:"absolute",bottom:8,left:10,background:C.sys,color:C.white,fontSize:8,fontWeight:800,padding:"2px 7px",borderRadius:999,textTransform:"uppercase",zIndex:2,display:"flex",alignItems:"center",gap:3}}><Zap size={8} strokeWidth={2}/>Systeme.io</span>}
         {p.image_url?<img src={p.image_url} alt={p.name} style={{width:"100%",height:140,objectFit:"cover",position:"absolute",top:0,left:0}}/>:<div style={{fontSize:50,paddingTop:20}}>{p.emoji}</div>}
         <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,0.7))",padding:"20px 8px 8px",zIndex:2}}>
           <span style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:2,textTransform:"uppercase"}}>{CATS.find(c=>c.id===p.cat)?.label}</span>
@@ -402,11 +402,11 @@ export default function SMallClient() {
           {p.orig_price&&<p style={{fontSize:11,color:C.green,fontWeight:700,marginTop:2}}>Économie : {fmt(p.orig_price-p.price)}</p>}
         </div>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <button onClick={()=>setSelectedProduct(p)} style={{flex:1,background:"transparent",border:`1.5px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"8px",fontWeight:600,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>👁 Voir détail</button>
+          <button onClick={()=>setSelectedProduct(p)} style={{flex:1,background:"transparent",border:`1.5px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"8px",fontWeight:600,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Eye size={13} style={{display:"inline",verticalAlign:"middle",marginRight:4}}/>Voir détail</button>
         </div>
         <div style={{display:"flex",gap:8}}>
-          {p.bookable&&<button onClick={()=>setBooking(p)} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>}
-          <button onClick={()=>addToCart(p)} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 {p.bookable?"Acheter":"Ajouter"}</button>
+          {p.bookable&&<button onClick={()=>setBooking(p)} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Calendar size={13} style={{display:"inline",verticalAlign:"middle",marginRight:4}}/>Réserver</button>}
+          <button onClick={()=>addToCart(p)} style={{flex:1,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:10,padding:"9px 8px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><ShoppingCart size={13} style={{display:"inline",verticalAlign:"middle",marginRight:4}}/>{p.bookable?"Acheter":"Ajouter"}</button>
         </div>
       </div>
     </div>
@@ -455,7 +455,7 @@ export default function SMallClient() {
               </div>
               <div style={{display:"flex",gap:12}}>
                 {selectedProduct.bookable&&(
-                  <button onClick={()=>{setBooking(selectedProduct);setSelectedProduct(null);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>📅 Réserver</button>
+                  <button onClick={()=>{setBooking(selectedProduct);setSelectedProduct(null);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Calendar size={13} style={{display:"inline",verticalAlign:"middle",marginRight:4}}/>Réserver</button>
                 )}
                 <button className="btn-g" onClick={()=>{addToCart(selectedProduct);setSelectedProduct(null);}} style={{flex:2,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 Ajouter au panier</button>
               </div>
@@ -480,7 +480,7 @@ export default function SMallClient() {
           ))}
         </div>
         <button className="btn-g" onClick={()=>setPage("cart")} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",gap:8,fontFamily:"'DM Sans',sans-serif"}}>
-          🛒 {cartCount>0&&<span style={{background:C.black,color:C.gold,borderRadius:999,padding:"2px 8px",fontSize:12,fontWeight:800}}>{cartCount}</span>} Panier
+          <ShoppingCart size={18} strokeWidth={2}/> {cartCount>0&&<span style={{background:C.black,color:C.gold,borderRadius:999,padding:"2px 8px",fontSize:12,fontWeight:800}}>{cartCount}</span>} Panier
         </button>
       </nav>
 
@@ -488,7 +488,7 @@ export default function SMallClient() {
       {loading&&(
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",padding:"80px 0",gap:14}}>
           <span style={{display:"inline-block",width:24,height:24,border:`3px solid ${C.border}`,borderTopColor:C.gold,borderRadius:"50%",animation:"spin .8s linear infinite"}}/>
-          <span style={{color:C.muted,fontSize:15,fontWeight:600}}>Chargement des produits…</span>
+          <span style={{color:C.muted,fontSize:15,fontWeight:600}}>Chargement…</span>
         </div>
       )}
 
@@ -502,9 +502,9 @@ export default function SMallClient() {
               <h1 style={{fontFamily:"'Playfair Display',serif",fontSize:52,fontWeight:900,lineHeight:1.1,marginBottom:20}}>Mode. Tech. Voyages.<br/><span style={{background:`linear-gradient(90deg,${C.gold},${C.goldL})`,WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Tout en un lieu.</span></h1>
               <p style={{color:C.muted,fontSize:16,lineHeight:1.7,maxWidth:500,marginBottom:32}}>Vêtements, électronique, formations, billets d'avion, circuits Bénin · Togo · Côte d'Ivoire, location voitures & appartements.</p>
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                <button className="btn-g" onClick={()=>{setCat("all");setPage("shop");}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 30px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Explorer →</button>
-                <button onClick={()=>{setCat("circuit");setPage("shop");}} style={{background:"transparent",color:C.gold,border:`1.5px solid ${C.gold}`,borderRadius:14,padding:"14px 26px",fontWeight:600,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗺️ Circuits</button>
-                <button onClick={()=>{setCat("avion");setPage("shop");}} style={{background:"transparent",color:C.muted,border:`1.5px solid ${C.border}`,borderRadius:14,padding:"14px 26px",fontWeight:600,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✈️ Vols</button>
+                <button className="btn-g" onClick={()=>{setCat("all");setPage("shop");}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 30px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Explorer <ArrowRight size={16} style={{display:"inline",verticalAlign:"middle"}}/></button>
+                <button onClick={()=>{setCat("circuit");setPage("shop");}} style={{background:"transparent",color:C.gold,border:`1.5px solid ${C.gold}`,borderRadius:14,padding:"14px 26px",fontWeight:600,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Circuits</button>
+                <button onClick={()=>{setCat("avion");setPage("shop");}} style={{background:"transparent",color:C.muted,border:`1.5px solid ${C.border}`,borderRadius:14,padding:"14px 26px",fontWeight:600,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Vols</button>
               </div>
             </div>
           </div>
@@ -578,7 +578,7 @@ export default function SMallClient() {
             <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 28px"}}/>
             {reviews.length===0?(
               <div style={{textAlign:"center",padding:"40px 0",color:C.muted}}>
-                <div style={{fontSize:44,marginBottom:10}}>⭐</div>
+                <div style={{color:C.gold,display:"flex",justifyContent:"center",marginBottom:10}}><Star size={44} strokeWidth={1}/></div>
                 <p style={{fontSize:15,fontWeight:600}}>Soyez le premier à laisser un avis !</p>
                 <button onClick={()=>setPage("contact")} style={{marginTop:14,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"11px 24px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Laisser un avis →</button>
               </div>
@@ -599,7 +599,7 @@ export default function SMallClient() {
               </div>
             )}
             <div style={{textAlign:"center",marginTop:22}}>
-              <button onClick={()=>setPage("contact")} style={{background:"transparent",color:C.gold,border:`1.5px solid ${C.gold}`,borderRadius:12,padding:"11px 26px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✦ Laisser un avis</button>
+              <button onClick={()=>setPage("contact")} style={{background:"transparent",color:C.gold,border:`1.5px solid ${C.gold}`,borderRadius:12,padding:"11px 26px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Star size={15} style={{display:"inline",verticalAlign:"middle",marginRight:6}}/>Laisser un avis</button>
             </div>
           </div>
 
@@ -621,7 +621,7 @@ export default function SMallClient() {
         <div style={{maxWidth:1200,margin:"0 auto",padding:"44px 28px",animation:"fadeUp .4s ease"}}>
           <div style={{display:"flex",gap:12,marginBottom:20,flexWrap:"wrap",alignItems:"center"}}>
             <div style={{flex:1,minWidth:200,display:"flex",alignItems:"center",background:C.card,border:`1px solid ${C.border}`,borderRadius:12,padding:"10px 14px",gap:8}}>
-              <span style={{color:C.gold}}>🔍</span>
+              <Search size={16} color={C.gold} strokeWidth={2}/>
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher…" style={{border:"none",outline:"none",background:"transparent",color:C.white,fontSize:14,width:"100%",fontFamily:"'DM Sans',sans-serif"}}/>
             </div>
             <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
@@ -631,7 +631,7 @@ export default function SMallClient() {
             </div>
           </div>
           <p style={{color:C.muted,fontSize:13,marginBottom:18}}>{filtered.length} article{filtered.length!==1?"s":""} trouvé{filtered.length!==1?"s":""}</p>
-          {filtered.length===0?(<div style={{textAlign:"center",padding:"80px 0",color:C.muted}}><div style={{fontSize:48,marginBottom:12}}>🔍</div><p style={{fontWeight:700,fontSize:17}}>Aucun résultat</p></div>):(
+          {filtered.length===0?(<div style={{textAlign:"center",padding:"80px 0",color:C.muted}}><div style={{color:C.muted,display:"flex",justifyContent:"center",marginBottom:12}}><Search size={48} strokeWidth={1}/></div><p style={{fontWeight:700,fontSize:17}}>Aucun résultat</p></div>):(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(255px,1fr))",gap:20}}>
               {filtered.map((p,i)=><Card key={p.id} p={p} i={i}/>)}
             </div>
@@ -647,9 +647,9 @@ export default function SMallClient() {
           <GL/>
           {cart.length===0?(
             <div style={{textAlign:"center",padding:"80px 0"}}>
-              <div style={{fontSize:60,marginBottom:14}}>🛒</div>
+              <div style={{color:C.gold,marginBottom:14,display:"flex",justifyContent:"center"}}><ShoppingCart size={56} strokeWidth={1}/></div>
               <p style={{fontWeight:700,fontSize:17,color:C.muted,marginBottom:22}}>Votre panier est vide</p>
-              <button className="btn-g" onClick={()=>setPage("shop")} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"13px 30px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Parcourir la boutique →</button>
+              <button className="btn-g" onClick={()=>setPage("shop")} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"13px 30px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Parcourir la boutique <ArrowRight size={16} style={{display:"inline",verticalAlign:"middle"}}/></button>
             </div>
           ):(
             <div style={{display:"grid",gridTemplateColumns:"1fr 310px",gap:24}}>
@@ -664,25 +664,25 @@ export default function SMallClient() {
                     </div>
                     {!item.booking&&(
                       <div style={{display:"flex",alignItems:"center",gap:8}}>
-                        <button onClick={()=>updateQty(idx,-1)} style={{width:28,height:28,borderRadius:7,border:`1.5px solid ${C.border}`,background:"transparent",cursor:"pointer",fontWeight:800,fontSize:15,color:C.muted,fontFamily:"'DM Sans',sans-serif"}}>−</button>
+                        <button onClick={()=>updateQty(idx,-1)} style={{width:28,height:28,borderRadius:7,border:`1.5px solid ${C.border}`,background:"transparent",cursor:"pointer",fontWeight:800,fontSize:15,color:C.muted,fontFamily:"'DM Sans',sans-serif"}}><Minus size={12}/></button>
                         <span style={{fontWeight:800,fontSize:14,minWidth:18,textAlign:"center"}}>{item.qty}</span>
                         <button onClick={()=>updateQty(idx,1)} style={{width:28,height:28,borderRadius:7,border:`1.5px solid ${C.border}`,background:"transparent",cursor:"pointer",fontWeight:800,fontSize:15,color:C.muted,fontFamily:"'DM Sans',sans-serif"}}>+</button>
                       </div>
                     )}
                     <div style={{textAlign:"right",minWidth:85}}>
                       <p style={{fontWeight:900,fontSize:15,color:C.white}}>{fmt(item.booking?item.price:item.price*item.qty)}</p>
-                      <button onClick={()=>removeItem(idx)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:"'DM Sans',sans-serif",marginTop:3}}>Retirer</button>
+                      <button onClick={()=>removeItem(idx)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:11,fontWeight:700,fontFamily:"'DM Sans',sans-serif",marginTop:3}}><Trash2 size={11} style={{display:"inline",verticalAlign:"middle",marginRight:3}}/>Retirer</button>
                     </div>
                   </div>
                 ))}
-                <button onClick={()=>setPage("shop")} style={{background:"none",border:`1.5px solid ${C.border}`,borderRadius:12,padding:"11px",fontWeight:600,fontSize:14,color:C.muted,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>← Continuer mes achats</button>
+                <button onClick={()=>setPage("shop")} style={{background:"none",border:`1.5px solid ${C.border}`,borderRadius:12,padding:"11px",fontWeight:600,fontSize:14,color:C.muted,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><ChevronLeft size={15} style={{display:"inline",verticalAlign:"middle"}}/>Continuer mes achats</button>
               </div>
               <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:24,height:"fit-content"}}>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:19,marginBottom:18}}>Récapitulatif</h3>
                 <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span style={{color:C.muted}}>Sous-total</span><span style={{fontWeight:700}}>{fmt(subtotal)}</span></div>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shipping===0?C.green:C.white}}>{shipping===0?"Gratuite 🎉":fmt(shipping)}</span></div>
-                  {shipping>0&&<p style={{fontSize:11,color:C.muted,background:"#1a1200",padding:"7px 11px",borderRadius:9,border:`1px solid ${C.border}`}}>💡 Encore {fmt(100000-subtotal)} pour la livraison offerte</p>}
+                  {shipping>0&&<p style={{fontSize:11,color:C.muted,background:"#1a1200",padding:"7px 11px",borderRadius:9,border:`1px solid ${C.border}`}}>Encore {fmt(100000-subtotal)} pour la livraison offerte</p>}
                   <div style={{height:1,background:C.border}}/>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontFamily:"'Playfair Display',serif",fontWeight:900}}><span>Total</span><span style={{color:C.gold}}>{fmt(grandTotal)}</span></div>
                 </div>
@@ -708,17 +708,17 @@ export default function SMallClient() {
               <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:24}}>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,marginBottom:18,color:C.gold}}>💳 Méthode de paiement</h3>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
-                  {[{id:"fedapay",label:"Mobile Money",icon:"📱",color:"#e8a020",sub:"MTN · Moov · Wave"},{id:"stripe",label:"Carte",icon:"💳",color:C.stripe,sub:"Visa/MasterCard"},{id:"paypal",label:"PayPal",icon:"🅿️",color:C.paypal,sub:"Sécurisé"},{id:"systeme",label:"Systeme.io",icon:"⚡",color:C.sys,sub:"Formations"}].map(m=>(
+                  {[{id:"fedapay",label:"Mobile Money",icon:null,color:"#e8a020",sub:"MTN · Moov · Wave"},{id:"stripe",label:"Carte",icon:null,color:C.stripe,sub:"Visa/MasterCard"},{id:"paypal",label:"PayPal",icon:null,color:C.paypal,sub:"Sécurisé"},{id:"systeme",label:"Systeme.io",icon:null,color:C.sys,sub:"Formations"}].map(m=>(
                     <button key={m.id} onClick={()=>setPayMethod(m.id)} style={{border:`2px solid ${payMethod===m.id?m.color:C.border}`,borderRadius:12,padding:"13px 8px",background:payMethod===m.id?`${m.color}18`:C.dark,cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                      <div style={{fontSize:22,marginBottom:5}}>{m.icon}</div>
+                      <div style={{marginBottom:5,display:"flex",justifyContent:"center",color:payMethod===m.id?m.color:"#555"}}>{m.id==="fedapay"?<Phone size={20} strokeWidth={1.5}/>:m.id==="stripe"?<CreditCard size={20} strokeWidth={1.5}/>:m.id==="paypal"?<Globe size={20} strokeWidth={1.5}/>:<Zap size={20} strokeWidth={1.5}/>}</div>
                       <div style={{fontWeight:700,fontSize:12,color:payMethod===m.id?m.color:C.white}}>{m.label}</div>
                       <div style={{fontSize:10,color:C.muted,marginTop:2}}>{m.sub}</div>
                     </button>
                   ))}
                 </div>
-                {payMethod==="fedapay"&&<div style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[{icon:"📱",label:"MTN MoMo"},{icon:"💳",label:"Moov/Flooz"},{icon:"🌊",label:"Wave"}].map((m,i)=><div key={i} style={{background:C.card2,border:`1px solid #e8a02044`,borderRadius:10,padding:"10px 6px",textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{m.icon}</div><div style={{fontSize:10,color:"#e8a020",fontWeight:700}}>{m.label}</div></div>)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a1000",borderRadius:10,border:`1px solid #e8a02044`}}><span>🔒</span><span style={{fontSize:12,color:"#e8a020",fontWeight:600}}>Paiement Mobile Money sécurisé via FedaPay · Bénin</span></div></div>}
-                {payMethod==="stripe"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("card","Numéro de carte")}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{inp("expiry","MM/AA",undefined,5)}{inp("cvv","CVV",undefined,4)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#0f1c0f",borderRadius:10,border:`1px solid ${C.green}44`}}><span>🔒</span><span style={{fontSize:12,color:C.green,fontWeight:600}}>SSL sécurisé via Stripe</span></div></div>}
-                {payMethod==="paypal"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("paypalEmail","Email PayPal","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#001525",borderRadius:10,border:`1px solid ${C.paypal}44`}}><span>🔒</span><span style={{fontSize:12,color:C.paypal,fontWeight:600}}>Redirection sécurisée PayPal</span></div></div>}
+                {payMethod==="fedapay"&&<div style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[{icon:"📱",label:"MTN MoMo"},{icon:"💳",label:"Moov/Flooz"},{icon:"🌊",label:"Wave"}].map((m,i)=><div key={i} style={{background:C.card2,border:`1px solid #e8a02044`,borderRadius:10,padding:"10px 6px",textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{m.icon}</div><div style={{fontSize:10,color:"#e8a020",fontWeight:700}}>{m.label}</div></div>)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a1000",borderRadius:10,border:`1px solid #e8a02044`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:"#e8a020",fontWeight:600}}>Paiement Mobile Money sécurisé via FedaPay · Bénin</span></div></div>}
+                {payMethod==="stripe"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("card","Numéro de carte")}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{inp("expiry","MM/AA",undefined,5)}{inp("cvv","CVV",undefined,4)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#0f1c0f",borderRadius:10,border:`1px solid ${C.green}44`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:C.green,fontWeight:600}}>SSL sécurisé via Stripe</span></div></div>}
+                {payMethod==="paypal"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("paypalEmail","Email PayPal","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#001525",borderRadius:10,border:`1px solid ${C.paypal}44`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:C.paypal,fontWeight:600}}>Redirection sécurisée PayPal</span></div></div>}
                 {payMethod==="systeme"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("sysEmail","Email Systeme.io","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a0500",borderRadius:10,border:`1px solid ${C.sys}44`}}><span>⚡</span><span style={{fontSize:12,color:C.sys,fontWeight:600}}>Accès automatique via Systeme.io</span></div></div>}
               </div>
             </div>
@@ -738,9 +738,9 @@ export default function SMallClient() {
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:14,fontSize:13}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shipping===0?C.green:C.white}}>{shipping===0?"Gratuite":fmt(shipping)}</span></div>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontFamily:"'Playfair Display',serif",fontWeight:900,marginBottom:18}}><span>Total</span><span style={{color:C.gold}}>{fmt(grandTotal)}</span></div>
               <button className="btn-g" onClick={handlePay} disabled={processing} style={{width:"100%",background:processing?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:processing?C.muted:C.black,border:"none",borderRadius:13,padding:"14px",fontWeight:700,fontSize:14,cursor:processing?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
-                {processing?<><span style={{display:"inline-block",width:17,height:17,border:"3px solid #33330033",borderTopColor:C.gold,borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Enregistrement…</>:`Confirmer — ${fmt(grandTotal)}`}
+                {processing?<><span style={{display:"inline-block",width:17,height:17,border:"3px solid #33330033",borderTopColor:C.gold,borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Enregistrement…</>:`Confirmer — ${fmt(grandTotal)} →`}
               </button>
-              <button onClick={()=>setPage("cart")} style={{width:"100%",marginTop:9,background:"none",border:"none",color:C.muted,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:"7px"}}>← Retour au panier</button>
+              <button onClick={()=>setPage("cart")} style={{width:"100%",marginTop:9,background:"none",border:"none",color:C.muted,fontWeight:600,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:"7px"}}><ChevronLeft size={15} style={{display:"inline",verticalAlign:"middle"}}/>Retour au panier</button>
             </div>
           </div>
         </div>
@@ -750,13 +750,13 @@ export default function SMallClient() {
       {page==="success"&&(
         <div style={{maxWidth:520,margin:"70px auto",padding:"0 24px",textAlign:"center",animation:"fadeUp .5s ease"}}>
           <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,padding:"52px 44px"}}>
-            <div style={{width:84,height:84,borderRadius:"50%",background:`linear-gradient(135deg,${C.goldD},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:34,margin:"0 auto 24px",animation:"glow 2s ease infinite",color:C.black,fontWeight:900}}>✦</div>
+            <div style={{width:84,height:84,borderRadius:"50%",background:`linear-gradient(135deg,${C.goldD},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 24px",animation:"glow 2s ease infinite",color:C.black}}><CheckCircle size={40} strokeWidth={2}/></div>
             <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:30,fontWeight:900,marginBottom:10}}>Commande confirmée !</h2>
             <p style={{color:C.muted,fontSize:15,lineHeight:1.7,marginBottom:26}}>Merci pour votre confiance.<br/><span style={{color:C.gold,fontWeight:700}}>S-Mall</span> vous remercie de votre achat.<br/>Un email de confirmation vous a été envoyé.</p>
             <div style={{background:"#0f1a0f",border:`1px solid ${C.green}44`,borderRadius:12,padding:"14px 18px",marginBottom:26}}>
-              <p style={{fontWeight:700,fontSize:13,color:C.green}}>🚚 Livraison estimée : 3–5 jours ouvrés</p>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Truck size={16} color={C.green} strokeWidth={2}/><p style={{fontWeight:700,fontSize:13,color:C.green}}>Livraison estimée : 3–5 jours ouvrés</p></div>
             </div>
-            <button className="btn-g" onClick={()=>{setPage("home");setForm({name:"",email:"",tel:"",card:"",expiry:"",cvv:"",paypalEmail:"",sysEmail:""});}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 34px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Retour à l'accueil →</button>
+            <button className="btn-g" onClick={()=>{setPage("home");setForm({name:"",email:"",tel:"",card:"",expiry:"",cvv:"",paypalEmail:"",sysEmail:""});}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 34px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Retour à l'accueil <ArrowRight size={16} style={{display:"inline",verticalAlign:"middle"}}/></button>
           </div>
         </div>
       )}
@@ -794,7 +794,7 @@ export default function SMallClient() {
                     <textarea value={contactForm.message} onChange={e=>setContactForm(cf=>({...cf,message:e.target.value}))} placeholder="Votre message…" rows={4}
                       style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"11px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
                   </div>
-                  <button onClick={submitContact} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"13px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✦ Envoyer le message</button>
+                  <button onClick={submitContact} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"13px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Send size={15} style={{display:"inline",verticalAlign:"middle",marginRight:6}}/>Envoyer le message</button>
                 </div>
               )}
             </div>
@@ -807,7 +807,7 @@ export default function SMallClient() {
                 <p style={{fontSize:13,color:C.muted,marginBottom:20,lineHeight:1.6}}>Discutez avec nous directement sur WhatsApp pour une réponse instantanée !</p>
                 <a href="https://wa.me/2250150512408?text=Bonjour%20S-Mall%2C%20j'aimerais%20avoir%20plus%20d'informations" target="_blank" rel="noreferrer"
                   style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,background:"#25d366",color:"#fff",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,textDecoration:"none",fontFamily:"'DM Sans',sans-serif"}}>
-                  <span style={{fontSize:22}}>💬</span> Ouvrir WhatsApp
+                  <MessageCircle size={20} strokeWidth={2}/> Ouvrir WhatsApp
                 </a>
                 <p style={{fontSize:11,color:C.muted,marginTop:12,textAlign:"center"}}>Disponible tous les jours · Réponse rapide</p>
               </div>
@@ -845,7 +845,7 @@ export default function SMallClient() {
                       <textarea value={reviewForm.comment} onChange={e=>setReviewForm(rf=>({...rf,comment:e.target.value}))} placeholder="Votre expérience avec S-Mall…" rows={3}
                         style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
                     </div>
-                    <button onClick={submitReview} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⭐ Publier mon avis</button>
+                    <button onClick={submitReview} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Star size={15} style={{display:"inline",verticalAlign:"middle",marginRight:6}}/>Publier mon avis</button>
                   </div>
                 )}
               </div>

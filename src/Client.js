@@ -179,8 +179,8 @@ export default function SMallClient() {
   const [search,setSearch]=useState("");
   const [cart,setCart]=useState([]);
   const [booking,setBooking]=useState(null);
-  const [payMethod,setPayMethod]=useState("stripe");
-  const [form,setForm]=useState({name:"",email:"",tel:"",card:"",expiry:"",cvv:"",paypalEmail:"",sysEmail:""});
+  const [payMethod,setPayMethod]=useState("fedapay");
+  const [form,setForm]=useState({name:"",email:"",tel:""});
   const [errors,setErrors]=useState({});
   const [processing,setProcessing]=useState(false);
   const [notif,setNotif]=useState(null);
@@ -287,9 +287,7 @@ export default function SMallClient() {
     if(!form.name.trim())e.name="Requis";
     if(!form.email.includes("@"))e.email="Email invalide";
     if(!form.tel.trim())e.tel="Requis";
-    if(payMethod==="stripe"){if((form.card||"").replace(/\s/g,"").length<16)e.card="Invalide";if(!(form.expiry||"").match(/^\d{2}\/\d{2}$/))e.expiry="MM/AA";if((form.cvv||"").length<3)e.cvv="CVV invalide";}
-    if(payMethod==="paypal"&&!(form.paypalEmail||"").includes("@"))e.paypalEmail="Email invalide";
-    if(payMethod==="systeme"&&!(form.sysEmail||"").includes("@"))e.sysEmail="Email invalide";
+    if(payMethod==="systeme"&&!(form.email||"").includes("@"))e.email="Email invalide";
     setErrors(e);return Object.keys(e).length===0;
   };
 
@@ -300,6 +298,10 @@ export default function SMallClient() {
       const orderId = uid();
       const bookItems = cart.filter(i=>i.booking);
       const shopItems = cart.filter(i=>!i.booking);
+      // Security: sanitize inputs
+      const safeName = (form.name||"").replace(/[<>'"]/g,"").trim().slice(0,100);
+      const safeEmail = (form.email||"").toLowerCase().trim().slice(0,150);
+      const safeTel = (form.tel||"").replace(/[^0-9+\s]/g,"").trim().slice(0,20);
 
       // Enregistrer la commande dans Supabase
       if(shopItems.length>0){
@@ -355,8 +357,45 @@ export default function SMallClient() {
             setProcessing(false); setPage("success"); setCart([]);
           }
         }).open();
+      } else if(payMethod==="flutterwave"){
+        // Flutterwave — carte internationale
+        const flwKey = "FLUTTERWAVE_PUBLIC_KEY_ICI"; // Remplacer après création compte
+        if(window.FlutterwaveCheckout){
+          window.FlutterwaveCheckout({
+            public_key: flwKey,
+            tx_ref: orderId,
+            amount: grandTotal,
+            currency: "XOF",
+            payment_options: "card",
+            customer: { email: safeEmail, phone_number: safeTel, name: safeName },
+            customizations: { title:"S-Mall Premium Store", description:"Commande S-Mall", logo:"https://sgroupmall.vercel.app/favicon.ico" },
+            callback: async(response) => {
+              if(response.status==="successful"||response.status==="completed"){
+                await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+                await sendConfirmEmail();
+                setProcessing(false); setPage("success"); setCart([]);
+              } else {
+                setProcessing(false);
+                notify("❌ Paiement échoué. Réessayez.",C.red);
+              }
+            },
+            onclose: () => { setProcessing(false); notify("Paiement annulé.",C.muted); }
+          });
+        } else {
+          // Flutterwave SDK not loaded yet
+          notify("⏳ Chargement du paiement...",C.gold);
+          setTimeout(async()=>{
+            await sb.from("orders").update({status:"En attente paiement"}).eq("id",orderId);
+            setProcessing(false);
+            notify("⚠️ Configurez votre clé Flutterwave dans le code.",C.red);
+          },1500);
+        }
+      } else if(payMethod==="systeme"){
+        // Systeme.io — formations uniquement
+        await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
+        await sendConfirmEmail();
+        setProcessing(false); setPage("success"); setCart([]);
       } else {
-        // Stripe, PayPal, Systeme.io → simulation (à connecter plus tard)
         setTimeout(async()=>{
           await sb.from("orders").update({status:"En cours"}).eq("id",orderId);
           await sendConfirmEmail();
@@ -708,18 +747,58 @@ export default function SMallClient() {
               <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:24}}>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:17,marginBottom:18,color:C.gold}}>💳 Méthode de paiement</h3>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
-                  {[{id:"fedapay",label:"Mobile Money",icon:null,color:"#e8a020",sub:"MTN · Moov · Wave"},{id:"stripe",label:"Carte",icon:null,color:C.stripe,sub:"Visa/MasterCard"},{id:"paypal",label:"PayPal",icon:null,color:C.paypal,sub:"Sécurisé"},{id:"systeme",label:"Systeme.io",icon:null,color:C.sys,sub:"Formations"}].map(m=>(
+                  {[
+                    {id:"fedapay",label:"Mobile Money",color:"#e8a020",sub:"MTN · Moov · Wave · Orange",icon:<Phone size={20} strokeWidth={1.5}/>},
+                    {id:"flutterwave",label:"Carte bancaire",color:"#f5a623",sub:"Visa · Mastercard · Monde entier",icon:<CreditCard size={20} strokeWidth={1.5}/>},
+                    {id:"systeme",label:"Formations",color:C.sys,sub:"Accès automatique cours",icon:<Zap size={20} strokeWidth={1.5}/>},
+                  ].map(m=>(
                     <button key={m.id} onClick={()=>setPayMethod(m.id)} style={{border:`2px solid ${payMethod===m.id?m.color:C.border}`,borderRadius:12,padding:"13px 8px",background:payMethod===m.id?`${m.color}18`:C.dark,cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
-                      <div style={{marginBottom:5,display:"flex",justifyContent:"center",color:payMethod===m.id?m.color:"#555"}}>{m.id==="fedapay"?<Phone size={20} strokeWidth={1.5}/>:m.id==="stripe"?<CreditCard size={20} strokeWidth={1.5}/>:m.id==="paypal"?<Globe size={20} strokeWidth={1.5}/>:<Zap size={20} strokeWidth={1.5}/>}</div>
+                      <div style={{marginBottom:5,display:"flex",justifyContent:"center",color:payMethod===m.id?m.color:"#555"}}>{m.icon}</div>
                       <div style={{fontWeight:700,fontSize:12,color:payMethod===m.id?m.color:C.white}}>{m.label}</div>
                       <div style={{fontSize:10,color:C.muted,marginTop:2}}>{m.sub}</div>
                     </button>
                   ))}
                 </div>
-                {payMethod==="fedapay"&&<div style={{display:"flex",flexDirection:"column",gap:12}}><div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>{[{icon:"📱",label:"MTN MoMo"},{icon:"💳",label:"Moov/Flooz"},{icon:"🌊",label:"Wave"}].map((m,i)=><div key={i} style={{background:C.card2,border:`1px solid #e8a02044`,borderRadius:10,padding:"10px 6px",textAlign:"center"}}><div style={{fontSize:20,marginBottom:4}}>{m.icon}</div><div style={{fontSize:10,color:"#e8a020",fontWeight:700}}>{m.label}</div></div>)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a1000",borderRadius:10,border:`1px solid #e8a02044`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:"#e8a020",fontWeight:600}}>Paiement Mobile Money sécurisé via FedaPay · Bénin</span></div></div>}
-                {payMethod==="stripe"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("card","Numéro de carte")}<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{inp("expiry","MM/AA",undefined,5)}{inp("cvv","CVV",undefined,4)}</div><div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#0f1c0f",borderRadius:10,border:`1px solid ${C.green}44`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:C.green,fontWeight:600}}>SSL sécurisé via Stripe</span></div></div>}
-                {payMethod==="paypal"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("paypalEmail","Email PayPal","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#001525",borderRadius:10,border:`1px solid ${C.paypal}44`}}><Lock size={13} color={C.green} strokeWidth={2}/><span style={{fontSize:12,color:C.paypal,fontWeight:600}}>Redirection sécurisée PayPal</span></div></div>}
-                {payMethod==="systeme"&&<div style={{display:"flex",flexDirection:"column",gap:12}}>{inp("sysEmail","Email Systeme.io","email")}<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 13px",background:"#1a0500",borderRadius:10,border:`1px solid ${C.sys}44`}}><span>⚡</span><span style={{fontSize:12,color:C.sys,fontWeight:600}}>Accès automatique via Systeme.io</span></div></div>}
+                {payMethod==="fedapay"&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                      {[{label:"MTN MoMo",color:"#ffcb00"},{label:"Moov/Flooz",color:"#00a651"},{label:"Wave",color:"#1ba8de"},{label:"Orange",color:"#ff6600"}].map((m,i)=>(
+                        <div key={i} style={{background:C.card2,border:`1px solid ${m.color}33`,borderRadius:10,padding:"10px 6px",textAlign:"center"}}>
+                          <div style={{width:8,height:8,borderRadius:"50%",background:m.color,margin:"0 auto 6px"}}/>
+                          <div style={{fontSize:10,color:m.color,fontWeight:700}}>{m.label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#0a1a00",borderRadius:10,border:`1px solid ${C.green}44`}}>
+                      <Lock size={13} color={C.green} strokeWidth={2}/>
+                      <span style={{fontSize:12,color:C.green,fontWeight:600}}>Paiement Mobile Money sécurisé · FedaPay · Bénin</span>
+                    </div>
+                  </div>
+                )}
+                {payMethod==="flutterwave"&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <div style={{background:`#f5a62315`,border:`1px solid #f5a62344`,borderRadius:12,padding:"16px 18px"}}>
+                      <p style={{fontWeight:700,fontSize:13,color:"#f5a623",marginBottom:8}}>💳 Paiement par carte internationale</p>
+                      <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Visa · Mastercard · Cartes de partout dans le monde.<br/>Vous serez redirigé vers la page de paiement sécurisée Flutterwave.</p>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#0a1a00",borderRadius:10,border:`1px solid ${C.green}44`}}>
+                      <Lock size={13} color={C.green} strokeWidth={2}/>
+                      <span style={{fontSize:12,color:C.green,fontWeight:600}}>Paiement carte sécurisé · Flutterwave · SSL 256-bit</span>
+                    </div>
+                  </div>
+                )}
+                {payMethod==="systeme"&&(
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <div style={{background:`${C.sys}15`,border:`1px solid ${C.sys}44`,borderRadius:12,padding:"16px 18px"}}>
+                      <p style={{fontWeight:700,fontSize:13,color:C.sys,marginBottom:8}}>⚡ Accès automatique à votre formation</p>
+                      <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Dès le paiement confirmé, vous recevrez par email le lien d'accès à votre formation ou votre ebook.</p>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#1a0500",borderRadius:10,border:`1px solid ${C.sys}44`}}>
+                      <Zap size={13} color={C.sys} strokeWidth={2}/>
+                      <span style={{fontSize:12,color:C.sys,fontWeight:600}}>Lien envoyé automatiquement par email · Systeme.io</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:22,height:"fit-content",position:"sticky",top:80}}>
@@ -756,7 +835,7 @@ export default function SMallClient() {
             <div style={{background:"#0f1a0f",border:`1px solid ${C.green}44`,borderRadius:12,padding:"14px 18px",marginBottom:26}}>
               <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Truck size={16} color={C.green} strokeWidth={2}/><p style={{fontWeight:700,fontSize:13,color:C.green}}>Livraison estimée : 3–5 jours ouvrés</p></div>
             </div>
-            <button className="btn-g" onClick={()=>{setPage("home");setForm({name:"",email:"",tel:"",card:"",expiry:"",cvv:"",paypalEmail:"",sysEmail:""});}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 34px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Retour à l'accueil <ArrowRight size={16} style={{display:"inline",verticalAlign:"middle"}}/></button>
+            <button className="btn-g" onClick={()=>{setPage("home");setForm({name:"",email:"",tel:""});}} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px 34px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Retour à l'accueil <ArrowRight size={16} style={{display:"inline",verticalAlign:"middle"}}/></button>
           </div>
         </div>
       )}

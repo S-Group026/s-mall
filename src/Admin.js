@@ -197,7 +197,7 @@ function ProductsSection() {
   const [filterCat,setFilterCat]=useState("all");
   const [showForm,setShowForm]=useState(false);
   const [editing,setEditing]=useState(null);
-  const [form,setForm]=useState({cat:"mode",name:"",price:"",orig_price:"",emoji:"🛍️",desc:"",badge:"",bookable:false,book_type:"",dest:"",active:true,image_url:""});
+  const [form,setForm]=useState({cat:"mode",name:"",price:"",orig_price:"",emoji:"🛍️",desc:"",badge:"",bookable:false,book_type:"",dest:"",active:true,image_url:"",download_url:""});
   const [saving,setSaving]=useState(false);
   const [notif,setNotif]=useState(null);
   const [savedId,setSavedId]=useState(null);
@@ -206,11 +206,11 @@ function ProductsSection() {
   const filtered=products.filter(p=>(filterCat==="all"||p.cat===filterCat)&&p.name.toLowerCase().includes(search.toLowerCase()));
 
   const startEdit=p=>{setEditing(p.id);setSavedId(p.id);setForm({...p,price:String(p.price),orig_price:String(p.orig_price||"")});setShowForm(true);};
-  const startNew=()=>{setEditing(null);setSavedId(null);setForm({cat:"mode",name:"",price:"",orig_price:"",emoji:"🛍️",desc:"",badge:"",bookable:false,book_type:"",dest:"",active:true,image_url:""});setShowForm(true);};
+  const startNew=()=>{setEditing(null);setSavedId(null);setForm({cat:"mode",name:"",price:"",orig_price:"",emoji:"🛍️",desc:"",badge:"",bookable:false,book_type:"",dest:"",active:true,image_url:"",download_url:""});setShowForm(true);};
 
   const save=async()=>{
     setSaving(true);
-    const payload={cat:form.cat,name:form.name,price:Number(form.price),orig_price:form.orig_price?Number(form.orig_price):null,emoji:form.emoji,description:form.desc,badge:form.badge||null,bookable:!!form.bookable,book_type:form.book_type||null,dest:form.dest||null,active:form.active};
+    const payload={cat:form.cat,name:form.name,price:Number(form.price),orig_price:form.orig_price?Number(form.orig_price):null,emoji:form.emoji,description:form.desc,badge:form.badge||null,bookable:!!form.bookable,book_type:form.book_type||null,dest:form.dest||null,active:form.active,download_url:form.download_url||null};
     if(editing){
       const {error}=await sb.from("products").update(payload).eq("id",editing);
       if(!error){notify("✓ Produit mis à jour — visible côté client instantanément !");setSavedId(editing);}
@@ -262,6 +262,13 @@ function ProductsSection() {
             </div>
           </div>
           <div style={{marginBottom:14}}>{inp2("desc","Description","Description courte du produit…")}</div>
+          {(form.cat==="formation"||form.dest==="systeme")&&(
+            <div style={{marginBottom:14,background:`${C.sys}10`,border:`1px solid ${C.sys}33`,borderRadius:12,padding:"14px 18px"}}>
+              <p style={{fontWeight:700,fontSize:13,color:C.sys,marginBottom:10}}>⚡ Formations & Ebooks — Lien de livraison automatique</p>
+              {inp2("download_url","Lien de téléchargement / accès formation","https://... (lien Ebook PDF ou lien Systeme.io)")}
+              <p style={{fontSize:11,color:C.muted,marginTop:6}}>Ce lien sera envoyé automatiquement au client par email après paiement.</p>
+            </div>
+          )}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:14,marginBottom:14}}>
             {inp2("price","Prix actuel (FCFA)","45000","number")}
             {inp2("orig_price","Prix barré","60000","number")}

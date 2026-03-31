@@ -392,7 +392,7 @@ export default function SMallClient() {
     if(!form.name.trim())e.name="Requis";
     if(!form.email.includes("@"))e.email="Email invalide";
     if(!form.tel.trim())e.tel="Requis";
-    if(payMethod==="systeme"&&!(form.email||"").includes("@"))e.email="Email invalide";
+
     setErrors(e);return Object.keys(e).length===0;
   };
 
@@ -855,7 +855,6 @@ export default function SMallClient() {
                   {[
                     {id:"fedapay",label:"Mobile Money",color:"#e8a020",sub:"MTN · Moov · Wave · Orange",icon:<Phone size={20} strokeWidth={1.5}/>},
                     {id:"flutterwave",label:"Carte bancaire",color:"#f5a623",sub:"Visa · Mastercard · Monde entier",icon:<CreditCard size={20} strokeWidth={1.5}/>},
-                    {id:"systeme",label:"Formations",color:C.sys,sub:"Accès automatique cours",icon:<Zap size={20} strokeWidth={1.5}/>},
                   ].map(m=>(
                     <button key={m.id} onClick={()=>setPayMethod(m.id)} style={{border:`2px solid ${payMethod===m.id?m.color:C.border}`,borderRadius:12,padding:"13px 8px",background:payMethod===m.id?`${m.color}18`:C.dark,cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
                       <div style={{marginBottom:5,display:"flex",justifyContent:"center",color:payMethod===m.id?m.color:"#555"}}>{m.icon}</div>
@@ -892,18 +891,7 @@ export default function SMallClient() {
                     </div>
                   </div>
                 )}
-                {payMethod==="systeme"&&(
-                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                    <div style={{background:`${C.sys}15`,border:`1px solid ${C.sys}44`,borderRadius:12,padding:"16px 18px"}}>
-                      <p style={{fontWeight:700,fontSize:13,color:C.sys,marginBottom:8}}>⚡ Accès automatique à votre formation</p>
-                      <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Dès le paiement confirmé, vous recevrez par email le lien d'accès à votre formation ou votre ebook.</p>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#1a0500",borderRadius:10,border:`1px solid ${C.sys}44`}}>
-                      <Zap size={13} color={C.sys} strokeWidth={2}/>
-                      <span style={{fontSize:12,color:C.sys,fontWeight:600}}>Lien envoyé automatiquement par email · Systeme.io</span>
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
             <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:22,height:"fit-content",position:"sticky",top:80}}>

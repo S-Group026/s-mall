@@ -494,11 +494,13 @@ function ProductsSection() {
           </div>
 
           {savedId&&(
-            <div style={{background:C.card2,border:`1px solid ${C.gold}33`,borderRadius:14,padding:18}}>
-              <ImageUploader productId={savedId} currentUrl={form.image_url} onUploaded={url=>setForm(f=>({...f,image_url:url}))}/>
-            </div>
-            <div style={{background:C.card2,border:`1px solid ${C.blue}33`,borderRadius:14,padding:18}}>
-              <VariantsManager productId={savedId} productCat={form.cat}/>
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              <div style={{background:C.card2,border:`1px solid ${C.gold}33`,borderRadius:14,padding:18}}>
+                <ImageUploader productId={savedId}/>
+              </div>
+              <div style={{background:C.card2,border:`1px solid ${C.blue}33`,borderRadius:14,padding:18}}>
+                <VariantsManager productId={savedId} productCat={form.cat}/>
+              </div>
             </div>
           )}
         </div>

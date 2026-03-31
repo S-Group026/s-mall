@@ -417,7 +417,7 @@ export default function SMallClient() {
           client_tel: form.tel,
           items: shopItems.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price})),
           subtotal,
-          shipping,
+          shipping: shippingCost,
           total: grandTotal,
           pay_method: "FedaPay",
           status: "En attente paiement",
@@ -825,8 +825,8 @@ export default function SMallClient() {
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:19,marginBottom:18}}>Récapitulatif</h3>
                 <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span style={{color:C.muted}}>Sous-total</span><span style={{fontWeight:700}}>{fmt(subtotal)}</span></div>
-                  <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shipping===0?C.green:C.white}}>{shipping===0?"Gratuite 🎉":fmt(shipping)}</span></div>
-                  {shipping>0&&<p style={{fontSize:11,color:C.muted,background:"#1a1200",padding:"7px 11px",borderRadius:9,border:`1px solid ${C.border}`}}>Encore {fmt(100000-subtotal)} pour la livraison offerte</p>}
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:14}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shippingCost===0&&shippingZone?C.green:C.white}}>{shippingZone?(shippingCost===0?"Gratuite 🎉":fmt(shippingCost)):"À choisir"}</span></div>
+                  
                   <div style={{height:1,background:C.border}}/>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontFamily:"'Playfair Display',serif",fontWeight:900}}><span>Total</span><span style={{color:C.gold}}>{fmt(grandTotal)}</span></div>
                 </div>
@@ -907,7 +907,7 @@ export default function SMallClient() {
               </div>
               <div style={{height:1,background:C.border,marginBottom:12}}/>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:7,fontSize:13}}><span style={{color:C.muted}}>Sous-total</span><span style={{fontWeight:700}}>{fmt(subtotal)}</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:14,fontSize:13}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shipping===0?C.green:C.white}}>{shipping===0?"Gratuite":fmt(shipping)}</span></div>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:14,fontSize:13}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shippingCost===0?C.green:C.white}}>{shippingCost===0?"Gratuite":fmt(shippingCost)}</span></div>
               <div style={{display:"flex",justifyContent:"space-between",fontSize:17,fontFamily:"'Playfair Display',serif",fontWeight:900,marginBottom:18}}><span>Total</span><span style={{color:C.gold}}>{fmt(grandTotal)}</span></div>
               <button className="btn-g" onClick={handlePay} disabled={processing} style={{width:"100%",background:processing?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:processing?C.muted:C.black,border:"none",borderRadius:13,padding:"14px",fontWeight:700,fontSize:14,cursor:processing?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:9}}>
                 {processing?<><span style={{display:"inline-block",width:17,height:17,border:"3px solid #33330033",borderTopColor:C.gold,borderRadius:"50%",animation:"spin .7s linear infinite"}}/>Enregistrement…</>:`Confirmer — ${fmt(grandTotal)} →`}

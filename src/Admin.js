@@ -191,6 +191,194 @@ function ImageUploader({productId}) {
   );
 }
 
+
+// ─── VARIANTS MANAGER ────────────────────────────────────────────────────────
+function VariantsManager({productId, productCat}) {
+  const [variants, setVariants] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [vForm, setVForm] = useState({color:"", color_hex:"#000000", storage:"", size:"", price:""});
+
+  const load = async () => {
+    const {data} = await sb.from("product_variants").select("*").eq("product_id", productId).order("id");
+    if(data) setVariants(data);
+  };
+  useEffect(()=>{ if(productId) load(); },[productId]);
+
+  const addVariant = async () => {
+    if(!vForm.price){ return; }
+    await sb.from("product_variants").insert({
+      product_id: productId,
+      color: vForm.color||null,
+      color_hex: vForm.color_hex||null,
+      storage: vForm.storage||null,
+      size: vForm.size||null,
+      price: Number(vForm.price),
+      stock: 999,
+      active: true
+    });
+    setVForm({color:"", color_hex:"#000000", storage:"", size:"", price:""});
+    setShowAdd(false);
+    load();
+  };
+
+  const removeVariant = async (id) => {
+    await sb.from("product_variants").delete().eq("id", id);
+    load();
+  };
+
+  const isTech = productCat === "tech";
+  const isMode = productCat === "mode";
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <label style={{fontSize:12,fontWeight:700,color:C.muted}}>🎛️ Variantes ({variants.length})</label>
+        <button onClick={()=>setShowAdd(!showAdd)} style={{background:`${C.blue}22`,border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:9,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+      </div>
+
+      {showAdd&&(
+        <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:12,padding:16,display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Couleur (nom)</label>
+              <input value={vForm.color} onChange={e=>setVForm(f=>({...f,color:e.target.value}))} placeholder="Ex: Noir, Blanc, Bleu…"
+                style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+            </div>
+            <div>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Couleur (code hex)</label>
+              <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                <input type="color" value={vForm.color_hex} onChange={e=>setVForm(f=>({...f,color_hex:e.target.value}))}
+                  style={{width:42,height:36,borderRadius:8,border:`1px solid ${C.border}`,cursor:"pointer",padding:2,background:"none"}}/>
+                <span style={{fontSize:12,color:C.muted}}>{vForm.color_hex}</span>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+            {isTech&&(
+              <div>
+                <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Capacité (Go/To)</label>
+                <select value={vForm.storage} onChange={e=>setVForm(f=>({...f,storage:e.target.value}))}
+                  style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
+                  <option value="">— Aucune —</option>
+                  {["64Go","128Go","256Go","512Go","1To","2To"].map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+            {isMode&&(
+              <div>
+                <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Taille</label>
+                <select value={vForm.size} onChange={e=>setVForm(f=>({...f,size:e.target.value}))}
+                  style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
+                  <option value="">— Aucune —</option>
+                  {["XS","S","M","L","XL","XXL","3XL"].map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
+            <div>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Prix (FCFA) *</label>
+              <input type="number" value={vForm.price} onChange={e=>setVForm(f=>({...f,price:e.target.value}))} placeholder="450000"
+                style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={addVariant} disabled={!vForm.price} style={{background:vForm.price?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:vForm.price?C.bg:C.muted,border:"none",borderRadius:9,padding:"8px 18px",fontWeight:700,fontSize:13,cursor:vForm.price?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>✓ Ajouter</button>
+            <button onClick={()=>setShowAdd(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:9,padding:"8px 14px",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
+          </div>
+        </div>
+      )}
+
+      {variants.length>0&&(
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {variants.map(v=>(
+            <div key={v.id} style={{display:"flex",alignItems:"center",gap:10,background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px"}}>
+              {v.color_hex&&<div style={{width:20,height:20,borderRadius:"50%",background:v.color_hex,border:`2px solid ${C.border}`,flexShrink:0}}/>}
+              <span style={{fontSize:13,color:C.white,flex:1}}>
+                {[v.color,v.storage,v.size].filter(Boolean).join(" · ")||"Variante"}
+              </span>
+              <span style={{fontWeight:800,color:C.gold,fontSize:13}}>{new Intl.NumberFormat("fr-FR").format(v.price)} FCFA</span>
+              <button onClick={()=>removeVariant(v.id)} style={{background:"none",border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {variants.length===0&&!showAdd&&<p style={{fontSize:12,color:C.muted}}>Aucune variante — le produit sera vendu à prix fixe.</p>}
+    </div>
+  );
+}
+
+// ─── SHIPPING ZONES SECTION ──────────────────────────────────────────────────
+function ShippingSection() {
+  const {data:zones, loading} = useRealtimeTable("shipping_zones", sb.from("shipping_zones").select("*").order("price"));
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
+  const fmt2 = n => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
+
+  const save = async (id) => {
+    await sb.from("shipping_zones").update({
+      price: Number(editForm.price),
+      free_above: Number(editForm.free_above)||0,
+      delay: editForm.delay
+    }).eq("id", id);
+    setEditId(null);
+  };
+
+  return (
+    <div>
+      <div style={{marginBottom:22}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Zones de livraison</h2>
+        <p style={{color:C.muted,fontSize:14}}>Configure les frais de livraison par zone géographique</p>
+      </div>
+      {loading?<div style={{display:"flex",gap:10,alignItems:"center"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>:(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {zones.map(z=>(
+            <div key={z.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:"20px 24px"}}>
+              {editId===z.id?(
+                <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                  <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:17,color:C.gold}}>{z.name}</h3>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+                    <div>
+                      <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:5}}>Prix livraison (FCFA)</label>
+                      <input type="number" value={editForm.price} onChange={e=>setEditForm(f=>({...f,price:e.target.value}))}
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:5}}>Livraison gratuite à partir de</label>
+                      <input type="number" value={editForm.free_above} onChange={e=>setEditForm(f=>({...f,free_above:e.target.value}))}
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                    </div>
+                    <div>
+                      <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:5}}>Délai de livraison</label>
+                      <input value={editForm.delay} onChange={e=>setEditForm(f=>({...f,delay:e.target.value}))}
+                        style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>save(z.id)} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"9px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>💾 Sauvegarder</button>
+                    <button onClick={()=>setEditId(null)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"9px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>Annuler</button>
+                  </div>
+                </div>
+              ):(
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+                  <div>
+                    <h3 style={{fontWeight:700,fontSize:16,color:C.white,marginBottom:6}}>📍 {z.name}</h3>
+                    <div style={{display:"flex",gap:16,fontSize:13,color:C.muted,flexWrap:"wrap"}}>
+                      <span>💰 {fmt2(z.price)}</span>
+                      <span>🎁 Gratuit dès {fmt2(z.free_above||0)}</span>
+                      <span>⏱ {z.delay}</span>
+                    </div>
+                  </div>
+                  <button onClick={()=>{setEditId(z.id);setEditForm({price:z.price,free_above:z.free_above||0,delay:z.delay});}} style={{background:C.card2,border:`1px solid ${C.border}`,color:C.gold,borderRadius:10,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✏️ Modifier</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProductsSection() {
   const {data:products,loading} = useRealtimeTable("products",sb.from("products").select("*").order("id"));
   const [search,setSearch]=useState("");
@@ -308,6 +496,9 @@ function ProductsSection() {
           {savedId&&(
             <div style={{background:C.card2,border:`1px solid ${C.gold}33`,borderRadius:14,padding:18}}>
               <ImageUploader productId={savedId} currentUrl={form.image_url} onUploaded={url=>setForm(f=>({...f,image_url:url}))}/>
+            </div>
+            <div style={{background:C.card2,border:`1px solid ${C.blue}33`,borderRadius:14,padding:18}}>
+              <VariantsManager productId={savedId} productCat={form.cat}/>
             </div>
           )}
         </div>
@@ -756,6 +947,7 @@ const MENU=[
   {id:"messages",label:"Messages",icon:"💬"},
   {id:"categories",label:"Catégories",icon:"🏷️"},
   {id:"reviews",label:"Avis clients",icon:"⭐"},
+  {id:"shipping",label:"Livraisons",icon:"🚚"},
 ];
 
 export default function SMallAdmin() {
@@ -824,6 +1016,7 @@ export default function SMallAdmin() {
         {section==="messages"     && <MessagesSection/>}
         {section==="categories"   && <CategoriesSection/>}
         {section==="reviews"      && <ReviewsSection/>}
+        {section==="shipping"     && <ShippingSection/>}
       </main>
     </div>
   );

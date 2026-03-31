@@ -134,6 +134,98 @@ function BookingModal({product,onClose,onConfirm}) {
 }
 
 
+
+// ─── VARIANT SELECTOR ────────────────────────────────────────────────────────
+function VariantSelector({product, onVariantChange, onAddToCart, onBooking}) {
+  const [variants, setVariants] = useState([]);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedStorage, setSelectedStorage] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
+
+  useEffect(()=>{
+    const load = async () => {
+      const {data} = await sb.from("product_variants").select("*").eq("product_id",product.id).eq("active",true);
+      if(data&&data.length>0) setVariants(data);
+    };
+    load();
+  },[product.id]);
+
+  const colors = [...new Set(variants.filter(v=>v.color).map(v=>({name:v.color,hex:v.color_hex})).map(JSON.stringify))].map(JSON.parse);
+  const storages = [...new Set(variants.filter(v=>v.storage).map(v=>v.storage))];
+  const sizes = [...new Set(variants.filter(v=>v.size).map(v=>v.size))];
+
+  const matchedVariant = variants.find(v=>
+    (!colors.length||v.color===selectedColor) &&
+    (!storages.length||v.storage===selectedStorage) &&
+    (!sizes.length||v.size===selectedSize)
+  );
+
+  const currentPrice = matchedVariant ? matchedVariant.price : product.price;
+
+  useEffect(()=>{ onVariantChange(matchedVariant||null); },[matchedVariant]);
+
+  const fmt2 = n => new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA";
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      {colors.length>0&&(
+        <div>
+          <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Couleur {selectedColor&&<span style={{color:C.white}}>— {selectedColor}</span>}</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {colors.map(c=>(
+              <button key={c.name} onClick={()=>setSelectedColor(c.name===selectedColor?null:c.name)}
+                style={{width:32,height:32,borderRadius:"50%",background:c.hex||"#888",border:`3px solid ${selectedColor===c.name?C.gold:"transparent"}`,cursor:"pointer",outline:"none",transition:"border .15s"}}
+                title={c.name}/>
+            ))}
+          </div>
+        </div>
+      )}
+      {storages.length>0&&(
+        <div>
+          <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Capacité</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {storages.map(s=>(
+              <button key={s} onClick={()=>setSelectedStorage(s===selectedStorage?null:s)}
+                style={{padding:"7px 14px",borderRadius:9,border:`1.5px solid ${selectedStorage===s?C.gold:C.border}`,background:selectedStorage===s?`${C.gold}18`:C.card2,color:selectedStorage===s?C.gold:C.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {sizes.length>0&&(
+        <div>
+          <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Taille</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+            {sizes.map(s=>(
+              <button key={s} onClick={()=>setSelectedSize(s===selectedSize?null:s)}
+                style={{width:44,height:44,borderRadius:10,border:`1.5px solid ${selectedSize===s?C.gold:C.border}`,background:selectedSize===s?`${C.gold}18`:C.card2,color:selectedSize===s?C.gold:C.muted,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:4}}>
+        <span style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,color:C.gold}}>{fmt2(currentPrice)}</span>
+        {product.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:14}}>{fmt2(product.orig_price)}</span>}
+        {matchedVariant&&variants.length>0&&<span style={{background:`${C.green}20`,color:C.green,fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:999}}>Variante sélectionnée ✓</span>}
+      </div>
+      <div style={{display:"flex",gap:12}}>
+        {product.bookable&&(
+          <button onClick={onBooking} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+            <Calendar size={16} strokeWidth={2}/>Réserver
+          </button>
+        )}
+        <button className="btn-g" onClick={()=>onAddToCart(product, matchedVariant||null)}
+          style={{flex:2,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          <ShoppingCart size={16} strokeWidth={2}/>Ajouter au panier
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── IMAGE GALLERY ────────────────────────────────────────────────────────────
 function ImageGallery({productId, mainImage, emoji}) {
   const [images, setImages] = useState([]);
@@ -185,6 +277,10 @@ export default function SMallClient() {
   const [processing,setProcessing]=useState(false);
   const [notif,setNotif]=useState(null);
   const [selectedProduct,setSelectedProduct]=useState(null);
+  const [selectedVariant,setSelectedVariant]=useState(null);
+  const [shippingZone,setShippingZone]=useState(null);
+  const [shippingZones,setShippingZones]=useState([]);
+  const [productVariants,setProductVariants]=useState([]);
   const [CATS,setCATS]=useState(DEFAULT_CATS);
   const [reviews,setReviews]=useState([]);
   const [reviewForm,setReviewForm]=useState({name:"",email:"",rating:5,comment:""});
@@ -203,6 +299,15 @@ export default function SMallClient() {
       .on("postgres_changes",{event:"*",schema:"public",table:"reviews"},()=>loadReviews())
       .subscribe();
     return () => sb.removeChannel(chRev);
+  },[]);
+
+  // ── CHARGEMENT ZONES DE LIVRAISON ────────────────────────────────────────
+  useEffect(()=>{
+    const loadZones = async () => {
+      const {data} = await sb.from("shipping_zones").select("*").eq("active",true).order("price");
+      if(data) setShippingZones(data);
+    };
+    loadZones();
   },[]);
 
   // ── CHARGEMENT TEMPS RÉEL DES CATÉGORIES ─────────────────────────────────
@@ -239,8 +344,8 @@ export default function SMallClient() {
 
   const cartCount=cart.reduce((s,i)=>s+i.qty,0);
   const subtotal=cart.reduce((s,i)=>s+(i.booking?i.price:i.price*i.qty),0);
-  const shipping=subtotal>100000?0:2500;
-  const grandTotal=subtotal+shipping;
+  const shippingCost = shippingZone ? (subtotal>=(shippingZone.free_above||0)&&shippingZone.free_above>0 ? 0 : shippingZone.price) : 0;
+  const grandTotal=subtotal+shippingCost;
 
   const notify=(msg,color=C.gold)=>{setNotif({msg,color});setTimeout(()=>setNotif(null),3000);};
 

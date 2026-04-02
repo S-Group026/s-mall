@@ -196,32 +196,45 @@ function ImageUploader({productId}) {
 function VariantsManager({productId, productCat}) {
   const [variants, setVariants] = useState([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [editId, setEditId] = useState(null);
   const [vForm, setVForm] = useState({color:"", color_hex:"#000000", storage:"", size:"", price:""});
+  const fmt2 = n => new Intl.NumberFormat("fr-FR").format(n) + " FCFA";
 
   const load = async () => {
-    const {data} = await sb.from("product_variants").select("*").eq("product_id", productId).order("id");
+    const {data} = await sb.from("product_variants").select("*").eq("product_id", productId).order("storage").order("color");
     if(data) setVariants(data);
   };
   useEffect(()=>{ if(productId) load(); },[productId]);
 
-  const addVariant = async () => {
-    if(!vForm.price){ return; }
-    await sb.from("product_variants").insert({
+  const save = async () => {
+    if(!vForm.price) return;
+    const payload = {
       product_id: productId,
       color: vForm.color||null,
       color_hex: vForm.color_hex||null,
       storage: vForm.storage||null,
       size: vForm.size||null,
       price: Number(vForm.price),
-      stock: 999,
       active: true
-    });
+    };
+    if(editId) {
+      await sb.from("product_variants").update(payload).eq("id", editId);
+      setEditId(null);
+    } else {
+      await sb.from("product_variants").insert({...payload, stock:999});
+    }
     setVForm({color:"", color_hex:"#000000", storage:"", size:"", price:""});
     setShowAdd(false);
     load();
   };
 
-  const removeVariant = async (id) => {
+  const startEdit = (v) => {
+    setEditId(v.id);
+    setVForm({color:v.color||"", color_hex:v.color_hex||"#000000", storage:v.storage||"", size:v.size||"", price:String(v.price)});
+    setShowAdd(true);
+  };
+
+  const remove = async (id) => {
     await sb.from("product_variants").delete().eq("id", id);
     load();
   };
@@ -229,60 +242,68 @@ function VariantsManager({productId, productCat}) {
   const isTech = productCat === "tech";
   const isMode = productCat === "mode";
 
+  const InpField = ({label, field, placeholder, type="text"}) => (
+    <div>
+      <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>{label}</label>
+      <input type={type} value={vForm[field]} onChange={e=>setVForm(f=>({...f,[field]:e.target.value}))} placeholder={placeholder}
+        style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+    </div>
+  );
+
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <label style={{fontSize:12,fontWeight:700,color:C.muted}}>🎛️ Variantes ({variants.length})</label>
-        <button onClick={()=>setShowAdd(!showAdd)} style={{background:`${C.blue}22`,border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:9,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+        <button onClick={()=>{setShowAdd(!showAdd);setEditId(null);setVForm({color:"",color_hex:"#000000",storage:"",size:"",price:""}); }}
+          style={{background:`${C.blue}22`,border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:9,padding:"6px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+          {showAdd?"✕ Fermer":"+ Ajouter variante"}
+        </button>
       </div>
 
       {showAdd&&(
-        <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:12,padding:16,display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{background:C.bg,border:`1px solid ${editId?C.gold:C.blue}44`,borderRadius:12,padding:16,display:"flex",flexDirection:"column",gap:12}}>
+          <p style={{fontSize:13,fontWeight:700,color:editId?C.gold:C.blue,marginBottom:4}}>{editId?"✏️ Modifier la variante":"➕ Nouvelle variante"}</p>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <InpField label="Couleur (nom)" field="color" placeholder="Ex: Noir, Blanc, Bleu…"/>
             <div>
-              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Couleur (nom)</label>
-              <input value={vForm.color} onChange={e=>setVForm(f=>({...f,color:e.target.value}))} placeholder="Ex: Noir, Blanc, Bleu…"
-                style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
-            </div>
-            <div>
-              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Couleur (code hex)</label>
+              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Code couleur</label>
               <div style={{display:"flex",gap:8,alignItems:"center"}}>
                 <input type="color" value={vForm.color_hex} onChange={e=>setVForm(f=>({...f,color_hex:e.target.value}))}
-                  style={{width:42,height:36,borderRadius:8,border:`1px solid ${C.border}`,cursor:"pointer",padding:2,background:"none"}}/>
-                <span style={{fontSize:12,color:C.muted}}>{vForm.color_hex}</span>
+                  style={{width:42,height:36,borderRadius:8,border:`1px solid ${C.border}`,cursor:"pointer",padding:2}}/>
+                <div style={{width:24,height:24,borderRadius:"50%",background:vForm.color_hex,border:`2px solid ${C.border}`}}/>
+                <span style={{fontSize:11,color:C.muted}}>{vForm.color_hex}</span>
               </div>
             </div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
-            {isTech&&(
+            {(isTech||true)&&(
               <div>
                 <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Capacité (Go/To)</label>
                 <select value={vForm.storage} onChange={e=>setVForm(f=>({...f,storage:e.target.value}))}
                   style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
                   <option value="">— Aucune —</option>
-                  {["64Go","128Go","256Go","512Go","1To","2To"].map(s=><option key={s} value={s}>{s}</option>)}
+                  {["32Go","64Go","128Go","256Go","512Go","1To","2To"].map(s=><option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             )}
-            {isMode&&(
+            {(isMode||true)&&(
               <div>
                 <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Taille</label>
                 <select value={vForm.size} onChange={e=>setVForm(f=>({...f,size:e.target.value}))}
                   style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
                   <option value="">— Aucune —</option>
-                  {["XS","S","M","L","XL","XXL","3XL"].map(s=><option key={s} value={s}>{s}</option>)}
+                  {["XS","S","M","L","XL","XXL","3XL","38","39","40","41","42","43","44","45"].map(s=><option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
             )}
-            <div>
-              <label style={{fontSize:11,color:C.muted,display:"block",marginBottom:4}}>Prix (FCFA) *</label>
-              <input type="number" value={vForm.price} onChange={e=>setVForm(f=>({...f,price:e.target.value}))} placeholder="450000"
-                style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,padding:"8px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
-            </div>
+            <InpField label="Prix (FCFA) *" field="price" placeholder="450000" type="number"/>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={addVariant} disabled={!vForm.price} style={{background:vForm.price?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:vForm.price?C.bg:C.muted,border:"none",borderRadius:9,padding:"8px 18px",fontWeight:700,fontSize:13,cursor:vForm.price?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>✓ Ajouter</button>
-            <button onClick={()=>setShowAdd(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:9,padding:"8px 14px",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
+            <button onClick={save} disabled={!vForm.price}
+              style={{background:vForm.price?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:vForm.price?C.bg:C.muted,border:"none",borderRadius:9,padding:"9px 20px",fontWeight:700,fontSize:13,cursor:vForm.price?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>
+              {editId?"💾 Modifier":"✓ Ajouter"}
+            </button>
+            <button onClick={()=>{setShowAdd(false);setEditId(null);}} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:9,padding:"9px 14px",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
           </div>
         </div>
       )}
@@ -291,17 +312,22 @@ function VariantsManager({productId, productCat}) {
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {variants.map(v=>(
             <div key={v.id} style={{display:"flex",alignItems:"center",gap:10,background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px"}}>
-              {v.color_hex&&<div style={{width:20,height:20,borderRadius:"50%",background:v.color_hex,border:`2px solid ${C.border}`,flexShrink:0}}/>}
+              {v.color_hex&&<div style={{width:22,height:22,borderRadius:"50%",background:v.color_hex,border:`2px solid rgba(255,255,255,0.2)`,flexShrink:0}}/>}
               <span style={{fontSize:13,color:C.white,flex:1}}>
-                {[v.color,v.storage,v.size].filter(Boolean).join(" · ")||"Variante"}
+                {[v.storage,v.color,v.size].filter(Boolean).join(" · ")||"Variante de base"}
               </span>
-              <span style={{fontWeight:800,color:C.gold,fontSize:13}}>{new Intl.NumberFormat("fr-FR").format(v.price)} FCFA</span>
-              <button onClick={()=>removeVariant(v.id)} style={{background:"none",border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✕</button>
+              <span style={{fontWeight:800,color:C.gold,fontSize:13,minWidth:110,textAlign:"right"}}>{fmt2(v.price)}</span>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>startEdit(v)} style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:7,padding:"4px 10px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>✏️</button>
+                <button onClick={()=>remove(v.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 10px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>🗑️</button>
+              </div>
             </div>
           ))}
         </div>
       )}
-      {variants.length===0&&!showAdd&&<p style={{fontSize:12,color:C.muted}}>Aucune variante — le produit sera vendu à prix fixe.</p>}
+      {variants.length===0&&!showAdd&&(
+        <p style={{fontSize:12,color:C.muted,fontStyle:"italic"}}>Aucune variante — prix fixe. Ajoutez des variantes pour permettre au client de choisir couleur, capacité ou taille.</p>
+      )}
     </div>
   );
 }

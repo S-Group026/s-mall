@@ -304,8 +304,20 @@ export default function SMallClient() {
   // ── CHARGEMENT ZONES DE LIVRAISON ────────────────────────────────────────
   useEffect(()=>{
     const loadZones = async () => {
-      const {data} = await sb.from("shipping_zones").select("*").eq("active",true).order("price");
-      if(data) setShippingZones(data);
+      try {
+        const {data,error} = await sb.from("shipping_zones").select("*").order("price");
+        if(data&&data.length>0) setShippingZones(data);
+        else {
+          // Fallback zones if table empty
+          setShippingZones([
+            {id:1,name:"Cotonou",price:1500,free_above:50000,delay:"24-48h"},
+            {id:2,name:"Bénin (hors Cotonou)",price:3000,free_above:100000,delay:"2-4 jours"},
+            {id:3,name:"Togo",price:5000,free_above:150000,delay:"3-5 jours"},
+            {id:4,name:"Côte d'Ivoire",price:7500,free_above:200000,delay:"4-6 jours"},
+            {id:5,name:"International",price:25000,free_above:500000,delay:"7-14 jours"},
+          ]);
+        }
+      } catch(e) { console.error("Shipping zones error:",e); }
     };
     loadZones();
   },[]);
@@ -590,19 +602,19 @@ export default function SMallClient() {
             <div style={{padding:"28px 32px"}}>
               <p style={{fontSize:11,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:8}}>{CATS.find(c=>c.id===selectedProduct.cat)?.icon} {CATS.find(c=>c.id===selectedProduct.cat)?.label}</p>
               <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,color:C.white,marginBottom:12}}>{selectedProduct.name}</h2>
-              <p style={{fontSize:15,color:C.muted,lineHeight:1.8,marginBottom:22}}>{selectedProduct.desc||selectedProduct.description||"Aucune description disponible."}</p>
-              <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:22}}/>
-              <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:28}}>
-                <span style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:900,color:C.gold}}>{fmt(selectedProduct.price)}</span>
-                {selectedProduct.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:16}}>{fmt(selectedProduct.orig_price)}</span>}
-                {selectedProduct.orig_price&&<span style={{background:`${C.green}20`,color:C.green,fontSize:12,fontWeight:700,padding:"4px 12px",borderRadius:999}}>Économie : {fmt(selectedProduct.orig_price-selectedProduct.price)}</span>}
-              </div>
-              <div style={{display:"flex",gap:12}}>
-                {selectedProduct.bookable&&(
-                  <button onClick={()=>{setBooking(selectedProduct);setSelectedProduct(null);}} style={{flex:1,background:`${C.blue}22`,border:`1.5px solid ${C.blue}`,color:C.blue,borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}><Calendar size={13} style={{display:"inline",verticalAlign:"middle",marginRight:4}}/>Réserver</button>
-                )}
-                <button className="btn-g" onClick={()=>{addToCart(selectedProduct);setSelectedProduct(null);}} style={{flex:2,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"14px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🛒 Ajouter au panier</button>
-              </div>
+              <p style={{fontSize:15,color:C.muted,lineHeight:1.8,marginBottom:16}}>{selectedProduct.desc||selectedProduct.description||"Aucune description disponible."}</p>
+              <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:20}}/>
+              <VariantSelector
+                product={selectedProduct}
+                onVariantChange={v=>setSelectedVariant(v)}
+                onAddToCart={(p,v)=>{
+                  const fp = v ? {...p, price:v.price, variantLabel:[v.color,v.storage,v.size].filter(Boolean).join(" · ")} : p;
+                  addToCart(fp);
+                  setSelectedProduct(null);
+                  setSelectedVariant(null);
+                }}
+                onBooking={()=>{setBooking(selectedProduct);setSelectedProduct(null);}}
+              />
             </div>
           </div>
         </div>
@@ -854,7 +866,7 @@ export default function SMallClient() {
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:20}}>
                   {[
                     {id:"fedapay",label:"Mobile Money",color:"#e8a020",sub:"MTN · Moov · Wave · Orange",icon:<Phone size={20} strokeWidth={1.5}/>},
-                    {id:"flutterwave",label:"Carte bancaire",color:"#f5a623",sub:"Visa · Mastercard · Monde entier",icon:<CreditCard size={20} strokeWidth={1.5}/>},
+                    {id:"card",label:"Carte bancaire",color:C.stripe,sub:"Visa · Mastercard (bientôt)",icon:<CreditCard size={20} strokeWidth={1.5}/>},
                   ].map(m=>(
                     <button key={m.id} onClick={()=>setPayMethod(m.id)} style={{border:`2px solid ${payMethod===m.id?m.color:C.border}`,borderRadius:12,padding:"13px 8px",background:payMethod===m.id?`${m.color}18`:C.dark,cursor:"pointer",textAlign:"center",transition:"all .2s",fontFamily:"'DM Sans',sans-serif"}}>
                       <div style={{marginBottom:5,display:"flex",justifyContent:"center",color:payMethod===m.id?m.color:"#555"}}>{m.icon}</div>
@@ -879,16 +891,10 @@ export default function SMallClient() {
                     </div>
                   </div>
                 )}
-                {payMethod==="flutterwave"&&(
-                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
-                    <div style={{background:`#f5a62315`,border:`1px solid #f5a62344`,borderRadius:12,padding:"16px 18px"}}>
-                      <p style={{fontWeight:700,fontSize:13,color:"#f5a623",marginBottom:8}}>💳 Paiement par carte internationale</p>
-                      <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Visa · Mastercard · Cartes de partout dans le monde.<br/>Vous serez redirigé vers la page de paiement sécurisée Flutterwave.</p>
-                    </div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,padding:"10px 14px",background:"#0a1a00",borderRadius:10,border:`1px solid ${C.green}44`}}>
-                      <Lock size={13} color={C.green} strokeWidth={2}/>
-                      <span style={{fontSize:12,color:C.green,fontWeight:600}}>Paiement carte sécurisé · Flutterwave · SSL 256-bit</span>
-                    </div>
+                {payMethod==="card"&&(
+                  <div style={{background:`${C.stripe}15`,border:`1px solid ${C.stripe}33`,borderRadius:12,padding:"18px 20px"}}>
+                    <p style={{fontWeight:700,fontSize:13,color:C.stripe,marginBottom:8}}>💳 Paiement par carte — Bientôt disponible</p>
+                    <p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Le paiement par carte Visa/Mastercard sera disponible très prochainement.<br/>En attendant, utilisez le Mobile Money FedaPay.</p>
                   </div>
                 )}
 

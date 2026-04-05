@@ -13,13 +13,13 @@ function Spinner({size=18}) {
   return <span style={{display:"inline-block",width:size,height:size,border:`2px solid ${C.border}`,borderTopColor:C.gold,borderRadius:"50%",animation:"spin .7s linear infinite"}}/>;
 }
 
-function useRealtimeTable(table, query) {
+function useRealtimeTable(table, loadFn) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const load = async()=>{ const {data:d}=await loadFn(); setData(d||[]); setLoading(false); };
   useEffect(()=>{
-    const load = async()=>{ const {data:d}=await query; setData(d||[]); setLoading(false); };
     load();
-    const ch = sb.channel(`rt-${table}-${Math.random()}`).on("postgres_changes",{event:"*",schema:"public",table},load).subscribe();
+    const ch = sb.channel(`rt-${table}-${Date.now()}`).on("postgres_changes",{event:"*",schema:"public",table},load).subscribe();
     return ()=>sb.removeChannel(ch);
   },[]);
   return {data,loading};
@@ -194,7 +194,7 @@ function VariantsManager({productId}) {
 // ── PRODUCTS SECTION ──────────────────────────────────────────────────────────
 function ProductsSection() {
   const [CATS,setCATS]=useState([]);
-  const {data:products,loading}=useRealtimeTable("products",sb.from("products").select("*").order("id"));
+  const {data:products,loading}=useRealtimeTable("products", ()=>sb.from("products").select("*").order("id"));
   const [showForm,setShowForm]=useState(false);
   const [editing,setEditing]=useState(null);
   const [savedId,setSavedId]=useState(null);
@@ -374,7 +374,7 @@ function ProductsSection() {
 
 // ── ORDERS SECTION ────────────────────────────────────────────────────────────
 function OrdersSection() {
-  const {data:orders,loading}=useRealtimeTable("orders",sb.from("orders").select("*").order("created_at",{ascending:false}));
+  const {data:orders,loading}=useRealtimeTable("orders", ()=>sb.from("orders").select("*").order("created_at",{ascending:false}));
   const STATUSES=["En cours","Confirmé","Expédié","Livré","Annulé"];
   const updateStatus=async(id,status)=>{ await sb.from("orders").update({status}).eq("id",id); };
 
@@ -423,7 +423,7 @@ function OrdersSection() {
 
 // ── RESERVATIONS SECTION ──────────────────────────────────────────────────────
 function ReservationsSection() {
-  const {data:reservations,loading}=useRealtimeTable("reservations",sb.from("reservations").select("*").order("created_at",{ascending:false}));
+  const {data:reservations,loading}=useRealtimeTable("reservations", ()=>sb.from("reservations").select("*").order("created_at",{ascending:false}));
   const updateStatus=async(id,status)=>{ await sb.from("reservations").update({status}).eq("id",id); };
 
   return (
@@ -465,7 +465,7 @@ function ReservationsSection() {
 
 // ── MESSAGES SECTION ──────────────────────────────────────────────────────────
 function MessagesSection() {
-  const {data:messages,loading}=useRealtimeTable("messages",sb.from("messages").select("*").order("created_at",{ascending:false}));
+  const {data:messages,loading}=useRealtimeTable("messages", ()=>sb.from("messages").select("*").order("created_at",{ascending:false}));
   const [selected,setSelected]=useState(null);
   const [reply,setReply]=useState("");
   const [sending,setSending]=useState(false);
@@ -554,10 +554,10 @@ function MessagesSection() {
 
 // ── STATS SECTION ─────────────────────────────────────────────────────────────
 function StatsSection() {
-  const {data:orders}=useRealtimeTable("orders",sb.from("orders").select("*"));
-  const {data:reservations}=useRealtimeTable("reservations",sb.from("reservations").select("*"));
-  const {data:products}=useRealtimeTable("products",sb.from("products").select("*"));
-  const {data:reviews}=useRealtimeTable("reviews",sb.from("reviews").select("*"));
+  const {data:orders}=useRealtimeTable("orders", ()=>sb.from("orders").select("*"));
+  const {data:reservations}=useRealtimeTable("reservations", ()=>sb.from("reservations").select("*"));
+  const {data:products}=useRealtimeTable("products", ()=>sb.from("products").select("*"));
+  const {data:reviews}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("*"));
 
   const revenue=orders.reduce((s,o)=>s+(o.total||0),0);
   const confirmed=orders.filter(o=>o.status==="Confirmé"||o.status==="Livré").length;
@@ -608,7 +608,7 @@ function StatsSection() {
 
 // ── REVIEWS SECTION ───────────────────────────────────────────────────────────
 function ReviewsSection() {
-  const {data:reviews,loading}=useRealtimeTable("reviews",sb.from("reviews").select("*").order("created_at",{ascending:false}));
+  const {data:reviews,loading}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("*").order("created_at",{ascending:false}));
   const [filter,setFilter]=useState("Tous");
   const approve=async(id)=>{ await sb.from("reviews").update({approved:true}).eq("id",id); };
   const remove=async(id)=>{ await sb.from("reviews").delete().eq("id",id); };
@@ -655,7 +655,7 @@ function ReviewsSection() {
 
 // ── CATEGORIES SECTION ────────────────────────────────────────────────────────
 function CategoriesSection() {
-  const {data:cats,loading}=useRealtimeTable("categories",sb.from("categories").select("*").order("position"));
+  const {data:cats,loading}=useRealtimeTable("categories", ()=>sb.from("categories").select("*").order("position"));
   const [showForm,setShowForm]=useState(false);
   const [cf,setCf]=useState({id:"",label:"",icon:"🏷️",position:0});
   const [saving,setSaving]=useState(false);
@@ -706,7 +706,7 @@ function CategoriesSection() {
 
 // ── SHIPPING SECTION ──────────────────────────────────────────────────────────
 function ShippingSection() {
-  const {data:zones,loading}=useRealtimeTable("shipping_zones",sb.from("shipping_zones").select("*").order("price"));
+  const {data:zones,loading}=useRealtimeTable("shipping_zones", ()=>sb.from("shipping_zones").select("*").order("price"));
   const [editId,setEditId]=useState(null);
   const [ef,setEf]=useState({price:"",free_above:"",delay:""});
 
@@ -763,7 +763,7 @@ function ShippingSection() {
 
 // ── BANNERS SECTION ───────────────────────────────────────────────────────────
 function BannersSection() {
-  const {data:banners,loading}=useRealtimeTable("banners",sb.from("banners").select("*").order("created_at",{ascending:false}));
+  const {data:banners,loading}=useRealtimeTable("banners", ()=>sb.from("banners").select("*").order("created_at",{ascending:false}));
   const [showForm,setShowForm]=useState(false);
   const [bf,setBf]=useState({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});
   const [saving,setSaving]=useState(false);
@@ -910,8 +910,8 @@ export default function SMallAdmin() {
   const [auth,setAuth]=useState(false);
   const [pwd,setPwd]=useState("");
   const [section,setSection]=useState("stats");
-  const {data:messages}=useRealtimeTable("messages",sb.from("messages").select("id,read"));
-  const {data:reviews}=useRealtimeTable("reviews",sb.from("reviews").select("id,approved"));
+  const {data:messages}=useRealtimeTable("messages", ()=>sb.from("messages").select("id,read"));
+  const {data:reviews}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("id,approved"));
   const unreadMsg=messages.filter(m=>!m.read).length;
   const pendingRev=reviews.filter(r=>!r.approved).length;
 

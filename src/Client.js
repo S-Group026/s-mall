@@ -125,11 +125,14 @@ function ImageGallery({productId,mainImage,emoji}) {
   const [imgs,setImgs]=useState([]);
   const [cur,setCur]=useState(0);
   useEffect(()=>{
-    sb.from("product_images").select("*").eq("product_id",productId).order("position").then(({data})=>{
-      if(data&&data.length>0)setImgs(data.map(i=>i.url));
-      else if(mainImage)setImgs([mainImage]);
-      else setImgs([]);
-    });
+    if(!productId) { if(mainImage) setImgs([mainImage]); return; }
+    sb.from("product_images").select("*").eq("product_id",productId).order("position")
+      .then(({data})=>{
+        if(data&&data.length>0) setImgs(data.map(i=>i.url));
+        else if(mainImage) setImgs([mainImage]);
+        else setImgs([]);
+      })
+      .catch(()=>{ if(mainImage) setImgs([mainImage]); else setImgs([]); });
   },[productId,mainImage]);
   if(imgs.length===0)return <div style={{height:280,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,background:"linear-gradient(135deg,#161200,#201a00)"}}>{emoji||"🛍️"}</div>;
   return (
@@ -157,11 +160,13 @@ function VariantSelector({product,onAddToCart,onBooking}) {
   const [selSize,setSelSize]=useState(null);
 
   useEffect(()=>{
-    setSelStorage(null);setSelColor(null);setSelSize(null);
-    sb.from("product_variants").select("*").eq("product_id",product.id).eq("active",true).then(({data})=>setVariants(data||[]));
-  },[product.id]);
+    setSelStorage(null);setSelColor(null);setSelSize(null);setVariants([]);
+    if(!product?.id) return;
+    sb.from("product_variants").select("*").eq("product_id",product.id).eq("active",true)
+      .then(({data})=>setVariants(data||[]))
+      .catch(()=>setVariants([]));
+  },[product?.id]);
 
-  // Reset color when storage changes
   useEffect(()=>{setSelColor(null);},[selStorage]);
 
   const storages=[...new Set(variants.filter(v=>v.storage).map(v=>v.storage))];
@@ -562,7 +567,7 @@ export default function SMallClient() {
       {booking&&<BookingModal product={booking} onClose={()=>setBooking(null)} onConfirm={info=>{addBooking(booking,info);setBooking(null);}}/>}
 
       {/* PRODUCT MODAL */}
-      {selProd&&(
+      {selProd&&selProd.id&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:998,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setSelProd(null)}>
           <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.95)"}}>
             <div style={{position:"relative",borderRadius:"28px 28px 0 0",overflow:"hidden"}}>

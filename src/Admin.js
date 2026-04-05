@@ -211,14 +211,16 @@ function ProductsSection() {
   const startEdit=(p)=>{ setEditing(p);setSavedId(p.id);setForm({cat:p.cat,name:p.name,price:String(p.price),orig_price:p.orig_price?String(p.orig_price):"",emoji:p.emoji||"🛍️",desc:p.desc||p.description||"",badge:p.badge||"",bookable:!!p.bookable,book_type:p.book_type||"",dest:p.dest||"",active:p.active!==false,image_url:p.image_url||"",download_url:p.download_url||""});setShowForm(true); };
 
   const save=async()=>{
-    if(!form.name||!form.price){return;}
+    if(!form.name.trim()||!form.price){return;}
     setSaving(true);
-    const payload={cat:form.cat,name:form.name,price:Number(form.price),orig_price:form.orig_price?Number(form.orig_price):null,emoji:form.emoji,description:form.desc,badge:form.badge||null,bookable:!!form.bookable,book_type:form.book_type||null,dest:form.dest||null,active:form.active,download_url:form.download_url||null};
+    const payload={cat:form.cat,name:form.name.trim(),price:Number(form.price),orig_price:form.orig_price?Number(form.orig_price):null,emoji:form.emoji||"🛍️",description:form.desc,badge:form.badge||null,bookable:!!form.bookable,book_type:form.book_type||null,dest:form.dest||null,active:form.active,download_url:form.download_url||null};
     if(editing){
       await sb.from("products").update(payload).eq("id",editing.id);
+      setSavedId(editing.id);
     } else {
-      const {data}=await sb.from("products").insert({...payload,image_url:null}).select().single();
-      if(data)setSavedId(data.id);
+      const {data,error}=await sb.from("products").insert({...payload,image_url:null}).select().single();
+      if(data){setSavedId(data.id);setEditing(data);}
+      if(error)alert("Erreur: "+error.message);
     }
     setSaving(false);
   };
@@ -503,7 +505,7 @@ function MessagesSection() {
         <p style={{color:C.muted,fontSize:14}}>{unread} non lu{unread!==1?"s":""}</p>
       </div>
       {loading?<div style={{display:"flex",gap:10,alignItems:"center"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>:(
-        <div style={{display:"grid",gridTemplateColumns:"280px 1fr",gap:16,minHeight:400}}>
+        <div style={{display:"grid",gridTemplateColumns:"clamp(200px,280px,30%) 1fr",gap:16,minHeight:400}}>
           <div style={{display:"flex",flexDirection:"column",gap:8,overflowY:"auto",maxHeight:600}}>
             {messages.length===0?<p style={{color:C.muted,fontSize:14}}>Aucun message.</p>:messages.map(m=>(
               <div key={m.id} onClick={()=>select(m)} style={{background:selected?.id===m.id?`${C.gold}10`:C.card,border:`1px solid ${selected?.id===m.id?C.gold:C.border}`,borderRadius:12,padding:"12px 14px",cursor:"pointer",transition:"all .2s"}}>
@@ -538,8 +540,8 @@ function MessagesSection() {
                 <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder={`Répondre à ${selected.from_name}…`} rows={4}
                   style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 16px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
                 <button onClick={sendReply} disabled={sending||!reply.trim()}
-                  style={{marginTop:10,background:reply.trim()&&!sending?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:reply.trim()&&!sending?C.bg:C.muted,border:"none",borderRadius:11,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:reply.trim()&&!sending?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
-                  {sending?<><Spinner size={14}/>Envoi…</>:"✦ Envoyer"}
+                  style={{marginTop:10,background:reply.trim()&&!sending?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:reply.trim()&&!sending?C.bg:C.muted,border:"none",borderRadius:11,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:reply.trim()&&!sending?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
+                  {sending?<><Spinner size={14}/>Envoi en cours…</>:"✦ Envoyer la réponse"}
                 </button>
               </div>
             </div>
@@ -786,10 +788,20 @@ function BannersSection() {
   };
 
   const save=async()=>{
-    if(!bf.media_url)return;
+    if(!bf.media_url){alert("Veuillez d'abord uploader une image ou vidéo.");return;}
     setSaving(true);
-    await sb.from("banners").insert({title:bf.title||null,media_url:bf.media_url,media_type:bf.media_type,link_url:bf.link_url||null,position:bf.position,active:bf.active});
-    setShowForm(false);setBf({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});setSaving(false);
+    const {error}=await sb.from("banners").insert({
+      title:bf.title||null,
+      media_url:bf.media_url,
+      media_type:bf.media_type,
+      link_url:bf.link_url||null,
+      position:bf.position,
+      active:bf.active
+    });
+    if(error){alert("Erreur: "+error.message);setSaving(false);return;}
+    setShowForm(false);
+    setBf({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});
+    setSaving(false);
   };
 
   const remove=async(id)=>{ if(!window.confirm("Supprimer cette bannière ?"))return; await sb.from("banners").delete().eq("id",id); };

@@ -16,12 +16,22 @@ function Spinner({size=18}) {
 function useRealtimeTable(table, loadFn) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const load = async()=>{ const {data:d}=await loadFn(); setData(d||[]); setLoading(false); };
+  const [tick, setTick] = useState(0);
+  
   useEffect(()=>{
+    let mounted = true;
+    const load = async()=>{
+      try {
+        const {data:d} = await loadFn();
+        if(mounted) { setData(d||[]); setLoading(false); }
+      } catch(e) { if(mounted) setLoading(false); }
+    };
     load();
-    const ch = sb.channel(`rt-${table}-${Date.now()}`).on("postgres_changes",{event:"*",schema:"public",table},load).subscribe();
-    return ()=>sb.removeChannel(ch);
-  },[]);
+    const chName = `rt-${table}-${Math.random().toString(36).slice(2)}`;
+    const ch = sb.channel(chName).on("postgres_changes",{event:"*",schema:"public",table},()=>{ if(mounted) setTick(t=>t+1); }).subscribe();
+    return ()=>{ mounted=false; sb.removeChannel(ch); };
+  },[tick]);
+  
   return {data,loading};
 }
 
@@ -790,14 +800,16 @@ function BannersSection() {
   const save=async()=>{
     if(!bf.media_url){alert("Veuillez d'abord uploader une image ou vidéo.");return;}
     setSaving(true);
-    const {error}=await sb.from("banners").insert({
-      title:bf.title||null,
+    // Build payload with only existing columns
+    const bannerPayload = {
       media_url:bf.media_url,
-      media_type:bf.media_type,
-      link_url:bf.link_url||null,
-      position:bf.position,
-      active:bf.active
-    });
+      active:bf.active,
+    };
+    if(bf.title) bannerPayload.title = bf.title;
+    if(bf.media_type) bannerPayload.media_type = bf.media_type;
+    if(bf.position) bannerPayload.position = bf.position;
+    if(bf.link_url) bannerPayload.link_url = bf.link_url;
+    const {error}=await sb.from("banners").insert(bannerPayload);
     if(error){alert("Erreur: "+error.message);setSaving(false);return;}
     setShowForm(false);
     setBf({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});

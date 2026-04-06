@@ -278,16 +278,15 @@ function VariantSelector({product,onAddToCart,onBooking}) {
 // ── BANNER SLIDER ─────────────────────────────────────────────────────────────
 function BannerSlider({banners}) {
   const [idx,setIdx]=useState(0);
-  useEffect(()=>{setIdx(0);},[banners.length]);
+  useEffect(()=>{setIdx(0);},[banners]);
   useEffect(()=>{
-    if(banners.length<=1)return;
+    if(!banners||banners.length<=1)return;
     const t=setInterval(()=>setIdx(i=>(i+1)%banners.length),5000);
     return ()=>clearInterval(t);
-  },[banners.length]);
+  },[banners]);
   if(!banners||banners.length===0)return null;
-  const safeIdx=Math.min(idx,banners.length-1);
-  const b=banners[safeIdx];
-  if(!b)return null;
+  const b=banners[Math.min(idx,banners.length-1)];
+  if(!b||!b.media_url)return null;
   return (
     <div style={{position:"relative",width:"100%",borderRadius:18,overflow:"hidden",background:C.card,border:`1px solid ${C.border}`,cursor:b.link_url?"pointer":"default"}}
       onClick={()=>b.link_url&&window.open(b.link_url,"_blank")}>
@@ -567,7 +566,16 @@ export default function SMallClient() {
         .nav-a{cursor:pointer;transition:color .2s;}.nav-a:hover{color:${C.gold}!important;}
         select option{background:${C.card2};color:${C.white};}
         @media(max-width:768px){.nav-a{display:none!important;} .resp-grid{grid-template-columns:1fr!important;} .resp-grid-2{grid-template-columns:1fr 1fr!important;}}
-        @media(max-width:480px){.resp-grid-2{grid-template-columns:1fr!important;}}
+        @media(max-width:768px){
+          .cart-grid{grid-template-columns:1fr!important;}
+          .checkout-grid{grid-template-columns:1fr!important;}
+          .hero-pad{padding:50px 24px 44px!important;}
+          .nav-desktop{display:none!important;}
+        }
+        @media(max-width:480px){
+          .resp-grid-2{grid-template-columns:1fr!important;}
+          .cats-grid{grid-template-columns:repeat(3,1fr)!important;}
+        }
       `}</style>
 
       {notif&&<div style={{position:"fixed",top:20,right:20,zIndex:9999,background:C.card,border:`1px solid ${notif.color}`,color:notif.color,padding:"12px 20px",borderRadius:12,fontWeight:700,fontSize:13,boxShadow:"0 8px 28px rgba(0,0,0,0.5)",animation:"fadeUp .3s ease",maxWidth:300}}>{notif.msg}</div>}
@@ -576,7 +584,7 @@ export default function SMallClient() {
       {/* PRODUCT MODAL */}
       {selProd&&selProd.id&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",zIndex:999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,overflowY:"auto"}} onClick={()=>setSelProd(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,width:"100%",maxWidth:680,maxHeight:"92vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.95)"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:28,width:"100%",maxWidth:680,maxHeight:"88vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,0.95)",position:"relative"}}>
             <div style={{position:"relative",borderRadius:"28px 28px 0 0",overflow:"hidden"}}>
               <ImageGallery productId={selProd.id} mainImage={selProd.image_url} emoji={selProd.emoji}/>
               {selProd.orig_price&&<span style={{position:"absolute",top:14,left:14,background:C.red,color:C.white,fontSize:11,fontWeight:800,padding:"4px 10px",borderRadius:999,zIndex:10}}>-{pct(selProd.orig_price,selProd.price)}%</span>}
@@ -607,7 +615,7 @@ export default function SMallClient() {
             <span style={{fontSize:8,color:C.muted,display:"block",letterSpacing:3,textTransform:"uppercase"}}>Premium Store</span>
           </div>
         </div>
-        <div style={{display:"flex",gap:18,alignItems:"center"}}>
+        <div className="nav-desktop" style={{display:"flex",gap:18,alignItems:"center"}}>
           {[["Accueil","home"],["Boutique","shop"],["Voyages","voyages"],["Formations","formations"],["Contact","contact"]].map(([l,k])=>(
             <span key={k} className="nav-a" style={{fontWeight:600,fontSize:13,color:page===k?C.gold:C.muted,display:"var(--nav-show,inline)"}}
               onClick={()=>{if(k==="home")setPage("home");else if(k==="shop"){setCat("all");setPage("shop");}else if(k==="voyages"){setCat("avion");setPage("shop");}else if(k==="contact")setPage("contact");else{setCat("formation");setPage("shop");}}}>
@@ -626,7 +634,7 @@ export default function SMallClient() {
       {!loading&&page==="home"&&(
         <div>
           {/* HERO */}
-          <div style={{position:"relative",overflow:"hidden",padding:"80px 60px 70px",background:"linear-gradient(135deg,#0a0a0a 0%,#1a1400 50%,#0a0a0a 100%)"}}>
+          <div className="hero-pad" style={{position:"relative",overflow:"hidden",padding:"80px 60px 70px",background:"linear-gradient(135deg,#0a0a0a 0%,#1a1400 50%,#0a0a0a 100%)"}}>
             <div style={{position:"absolute",top:"-80px",left:"-60px",width:"400px",height:"400px",borderRadius:"50%",background:`radial-gradient(circle,${C.gold}15 0%,transparent 70%)`,pointerEvents:"none"}}/>
             <div style={{maxWidth:640,animation:"fadeUp .7s ease"}}>
               <p style={{color:C.gold,fontWeight:700,letterSpacing:4,textTransform:"uppercase",fontSize:11,marginBottom:14}}>✦ Bienvenue sur S-Mall</p>
@@ -784,7 +792,7 @@ export default function SMallClient() {
               <button className="btn-g" onClick={()=>setPage("shop")} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.black,border:"none",borderRadius:14,padding:"12px 28px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Parcourir la boutique</button>
             </div>
           ):(
-            <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,100%) min(310px,100%)",gap:22,alignItems:"start"}}>
+            <div className="cart-grid" style={{display:"grid",gridTemplateColumns:"1fr 310px",gap:22,alignItems:"start"}}>
               <div style={{display:"flex",flexDirection:"column",gap:10}}>
                 {cart.map((item,idx)=>(
                   <div key={idx} style={{background:C.card,border:`1px solid ${item.booking?C.blue:C.border}`,borderRadius:16,padding:"14px 16px",display:"flex",alignItems:"center",gap:14}}>
@@ -873,7 +881,7 @@ export default function SMallClient() {
           <p style={{color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",fontSize:11,marginBottom:6}}>✦ Finaliser</p>
           <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:28,fontWeight:900,marginBottom:20}}>Paiement sécurisé</h2>
           <GL/>
-          <div style={{display:"grid",gridTemplateColumns:"clamp(200px,1fr,100%) min(290px,100%)",gap:22,alignItems:"start"}}>
+          <div className="checkout-grid" style={{display:"grid",gridTemplateColumns:"1fr 290px",gap:22,alignItems:"start"}}>
             <div style={{display:"flex",flexDirection:"column",gap:18}}>
               <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:22}}>
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:16,marginBottom:16,color:C.gold}}>👤 Vos informations</h3>

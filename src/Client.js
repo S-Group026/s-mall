@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, TrendingUp, Flame, ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, Tag, X, MapPin, Clock, Eye, Percent } from 'lucide-react';
 import { sb } from './supabase';
+import React from 'react';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 const C = {
@@ -16,6 +17,7 @@ const rid = () => "RES-" + Date.now().toString(36).toUpperCase();
 const EDGE = "https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email";
 const WA = "https://wa.me/2250150512408";
 const BOOKING_CATS = ["avion","circuit","voiture","appart"];
+const NO_SHIPPING_CATS = ["formation","avion","circuit","voiture","appart"]; // No delivery needed
 const ACOMPTE = 0.10; // 10%
 
 const DEFAULT_CATS = [
@@ -559,10 +561,13 @@ export default function SMallClient() {
   // ── CART LOGIC ──────────────────────────────────────────────────────────────
   const cartCount = cart.reduce((s,i)=>s+i.qty,0);
   const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
-  const shipCost = zone ? (zone.free_above>0&&subtotal>=zone.free_above ? 0 : zone.price) : 0;
+  const shippableTotal = cart.filter(i=>!NO_SHIPPING_CATS.includes(i.cat)).reduce((s,i)=>s+i.price*i.qty,0);
+  const shipCost = zone && shippableTotal>0 ? (zone.free_above>0&&shippableTotal>=zone.free_above ? 0 : zone.price) : 0;
+  const hasShipping = cart.some(i=>!NO_SHIPPING_CATS.includes(i.cat));
   const grandTotal = subtotal + shipCost;
   const hasBookingInCart = cart.some(i=>i.isBooking);
   const hasShopInCart = cart.some(i=>!i.isBooking);
+  const hasFormation = cart.some(i=>i.cat==="formation");
 
   const notify = (msg, color=C.gold) => {
     setNotif({msg,color});
@@ -662,7 +667,8 @@ export default function SMallClient() {
 
   const handlePay = async () => {
     if(!validate()) return;
-    if(hasShopInCart && !zone) { notify("Choisissez une zone de livraison",C.red); return; }
+    const needsShipping = cart.some(i=>!NO_SHIPPING_CATS.includes(i.cat));
+    if(needsShipping && !zone) { notify("Choisissez une zone de livraison",C.red); return; }
     setProcessing(true);
     try {
       const orderId = uid();
@@ -680,7 +686,11 @@ export default function SMallClient() {
       try {
         await fetch(EDGE,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
           to:safeEmail, subject:`✦ Confirmation S-Mall — ${orderId}`,
-          html:`<div style="font-family:sans-serif;max-width:540px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:20px;margin:18px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${orderId}</b></p></div><p>Bonjour <b>${safeName}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${fmt(grandTotal)}</b>.</p><p style="color:#555;font-size:12px;text-align:center;margin-top:18px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`
+          html:(()=>{
+        const downloads = cart.filter(i=>i.download_url);
+        const dlSection = downloads.length>0 ? downloads.map(i=>`<div style="background:#0a1a0a;border:1px solid #4caf7d44;border-radius:10px;padding:14px;margin:10px 0;"><p style="color:#4caf7d;font-weight:bold;margin-bottom:6px;">📥 ${i.name}</p><a href="${i.download_url}" style="color:#c9a84c;word-break:break-all;font-size:13px;">${i.download_url}</a></div>`).join("") : "";
+        return `<div style="font-family:sans-serif;max-width:540px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:20px;margin:18px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${orderId}</b></p></div><p>Bonjour <b>${safeName}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${fmt(grandTotal)}</b>.</p>${dlSection}${downloads.length>0?'<p style="color:#4caf7d;font-size:13px;margin-top:10px;">⬆️ Vos liens de téléchargement sont ci-dessus.</p>':''}<p style="color:#555;font-size:12px;text-align:center;margin-top:18px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`;
+      })()
         })});
       } catch(e) {}
       if(payMethod==="fedapay"&&window.FedaPay) {
@@ -743,14 +753,24 @@ export default function SMallClient() {
       )}
 
       {/* PRODUCT MODAL */}
-      {openProd && (
-        <ProductModal
-          product={openProd}
-          cats={cats}
-          onClose={()=>setOpenProd(null)}
-          onAddToCart={addToCart}
-          onBook={handleBook}
-        />
+      {openProd && openProd.id && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"16px",overflowY:"auto"}} onClick={()=>setOpenProd(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,width:"100%",maxWidth:640,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)"}}>
+            <div style={{position:"relative",borderRadius:"22px 22px 0 0",overflow:"hidden"}}>
+              <ImageGallery productId={openProd.id} mainImage={openProd.image_url} emoji={openProd.emoji}/>
+              {openProd.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(openProd.orig_price,openProd.price)}%</span>}
+              {openProd.badge&&<span style={{position:"absolute",top:10,right:44,background:BADGE_C[openProd.badge]||C.gold,color:openProd.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:5}}>{openProd.badge}</span>}
+              <button type="button" onClick={()=>setOpenProd(null)} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,fontSize:18}}>×</button>
+            </div>
+            <div style={{padding:"20px 24px"}}>
+              <p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:5}}>{cats.find(c=>c.id===openProd.cat)?.label||""}</p>
+              <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{openProd.name}</h2>
+              {(openProd.desc||openProd.description)&&<p style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:12}}>{openProd.desc||openProd.description}</p>}
+              <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:16}}/>
+              <VariantSelector product={openProd} onAddToCart={(p,v)=>{addToCart(p,v);setOpenProd(null);}} onBook={handleBook}/>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* BOOKING CONFIRM MODAL */}
@@ -980,7 +1000,7 @@ export default function SMallClient() {
                 <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:17,marginBottom:16}}>Récapitulatif</h3>
                 <div style={{display:"flex",flexDirection:"column",gap:11}}>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:13}}><span style={{color:C.muted}}>Sous-total</span><span style={{fontWeight:700}}>{fmt(subtotal)}</span></div>
-                  {hasShopInCart && (
+                  {hasShipping && (
                     <>
                       <div>
                         <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"flex",alignItems:"center",gap:5,marginBottom:6}}><MapPin size={11}/>Zone de livraison</label>
@@ -1001,9 +1021,9 @@ export default function SMallClient() {
                   <div style={{height:1,background:C.border}}/>
                   <div style={{display:"flex",justifyContent:"space-between",fontSize:16,fontFamily:"'Playfair Display',serif",fontWeight:900}}><span>Total</span><span style={{color:C.gold}}>{fmt(grandTotal)}</span></div>
                 </div>
-                <button type="button" className="btn-t" onClick={()=>setPage("checkout")} disabled={hasShopInCart&&!zone}
-                  style={{width:"100%",marginTop:14,background:(!hasShopInCart||zone)?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:(!hasShopInCart||zone)?C.bg:C.muted,border:"none",borderRadius:13,padding:"12px",fontWeight:700,fontSize:14,cursor:(!hasShopInCart||zone)?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>
-                  {hasShopInCart&&!zone?"Choisissez une zone":"Passer la commande →"}
+                <button type="button" className="btn-t" onClick={()=>setPage("checkout")} disabled={hasShipping&&!zone}
+                  style={{width:"100%",marginTop:14,background:(!hasShipping||zone)?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:(!hasShipping||zone)?C.bg:C.muted,border:"none",borderRadius:13,padding:"12px",fontWeight:700,fontSize:14,cursor:(!hasShipping||zone)?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>
+                  {hasShipping&&!zone?"Choisissez une zone":"Passer la commande →"}
                 </button>
               </div>
             </div>

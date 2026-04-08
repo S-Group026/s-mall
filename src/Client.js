@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, TrendingUp, Flame, ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, Tag, X, MapPin, Clock, Eye, Percent } from 'https://esm.sh/lucide-react@0.383.0';
+import { ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Sparkles, TrendingUp, Flame, ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, Tag, X, MapPin, Clock, Eye, Percent } from 'lucide-react';
 import { sb } from './supabase';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────

@@ -184,43 +184,34 @@ function ImageGallery({productId, mainImage, emoji}) {
 }
 
 // ── VARIANT SELECTOR ─────────────────────────────────────────────────────────
-function VariantSelector({product, onAddToCart, onBook}) {
-  const [variants, setVariants] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+function VariantSelector({product, onAddToCart, onBook, variants}) {
   const [selStorage, setSelStorage] = useState(null);
   const [selColor, setSelColor] = useState(null);
   const [selSize, setSelSize] = useState(null);
 
-  useEffect(() => {
-    setVariants([]); setLoaded(false);
-    setSelStorage(null); setSelColor(null); setSelSize(null);
-    if(!product?.id) { setLoaded(true); return; }
-    sb.from("product_variants").select("*").eq("product_id", product.id).eq("active", true)
-      .then(({data}) => { setVariants(data||[]); setLoaded(true); })
-      .catch(() => { setVariants([]); setLoaded(true); });
-  }, [product?.id]);
-
-  useEffect(() => { setSelColor(null); }, [selStorage]);
-
-  if(!loaded) return <div style={{display:"flex",justifyContent:"center",padding:"20px 0"}}><Spin/></div>;
-
   const storages = [...new Set(variants.filter(v=>v.storage).map(v=>v.storage))];
   const sizes    = [...new Set(variants.filter(v=>v.size).map(v=>v.size))];
-  const colors = storages.length > 0
+  const colors   = storages.length > 0
     ? (selStorage ? [...new Map(variants.filter(v=>v.storage===selStorage&&v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()] : [])
     : [...new Map(variants.filter(v=>v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()];
 
+  const isBooking = BOOKING_CATS.includes(product.cat);
   const hasVariants = variants.length > 0;
+
   const matched = hasVariants ? variants.find(v =>
     (storages.length===0 || v.storage===selStorage) &&
     (colors.length===0 || v.color===selColor) &&
     (sizes.length===0 || v.size===selSize)
-  ) || null : null;
+  ) : null;
 
-  const basePrice = matched ? matched.price : (hasVariants ? Math.min(...variants.map(v=>v.price)) : product.price);
-  const isBooking = BOOKING_CATS.includes(product.cat);
-  const acompte = Math.round(basePrice * ACOMPTE);
+  const price = matched ? matched.price : (hasVariants ? Math.min(...variants.map(v=>v.price)) : product.price);
+  const acompte = Math.round(price * ACOMPTE);
   const canAdd = !hasVariants || !!matched;
+
+  const handleStorageClick = (s) => {
+    setSelStorage(selStorage===s ? null : s);
+    setSelColor(null);
+  };
 
   const needs = [
     storages.length>0 && !selStorage ? "une capacité" : null,
@@ -230,166 +221,70 @@ function VariantSelector({product, onAddToCart, onBook}) {
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
-      {/* Capacité */}
-      {storages.length > 0 && (
+      {storages.length>0&&(
         <div>
           <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Capacité</p>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {storages.map(s => {
-              const minP = Math.min(...variants.filter(v=>v.storage===s).map(v=>v.price));
-              const sel = selStorage===s;
-              return (
-                <button type="button" key={s} onClick={()=>setSelStorage(sel?null:s)}
-                  style={{padding:"7px 14px",borderRadius:10,border:`2px solid ${sel?C.gold:C.border}`,background:sel?`${C.gold}18`:C.card2,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-                  <span style={{fontWeight:700,fontSize:13,color:sel?C.gold:C.white}}>{s}</span>
-                  <span style={{fontSize:10,color:C.muted}}>{fmt(minP)}</span>
-                </button>
-              );
+            {storages.map(s=>{
+              const minP=Math.min(...variants.filter(v=>v.storage===s).map(v=>v.price));
+              return <button type="button" key={s} onClick={()=>handleStorageClick(s)}
+                style={{padding:"7px 14px",borderRadius:10,border:`2px solid ${selStorage===s?C.gold:C.border}`,background:selStorage===s?`${C.gold}18`:C.card2,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all .15s"}}>
+                <span style={{fontWeight:700,fontSize:13,color:selStorage===s?C.gold:C.white}}>{s}</span>
+                <span style={{fontSize:10,color:C.muted}}>{fmt(minP)}</span>
+              </button>;
             })}
           </div>
         </div>
       )}
-
-      {/* Couleurs */}
-      {colors.length > 0 && (
+      {colors.length>0&&(
         <div>
-          <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>
-            Couleur{selColor ? <span style={{color:C.white,fontWeight:400}}> — {selColor}</span> : ""}
-          </p>
+          <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Couleur{selColor?<span style={{color:C.white,fontWeight:400}}> — {selColor}</span>:""}</p>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {colors.map(col => {
-              const sel = selColor===col.name;
-              return (
-                <button type="button" key={col.name} onClick={()=>setSelColor(sel?null:col.name)} title={col.name}
-                  style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",borderRadius:999,border:`2px solid ${sel?C.gold:"transparent"}`,background:C.card2,cursor:"pointer",transition:"all .15s",fontFamily:"'DM Sans',sans-serif"}}>
-                  <div style={{width:16,height:16,borderRadius:"50%",background:col.hex,border:"1px solid rgba(255,255,255,.2)",flexShrink:0}}/>
-                  <span style={{fontSize:12,color:sel?C.gold:C.muted,fontWeight:600}}>{col.name}</span>
-                </button>
-              );
-            })}
+            {colors.map(col=><button type="button" key={col.name} onClick={()=>setSelColor(selColor===col.name?null:col.name)} title={col.name}
+              style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",borderRadius:999,border:`2px solid ${selColor===col.name?C.gold:"transparent"}`,background:C.card2,cursor:"pointer",transition:"all .15s",fontFamily:"'DM Sans',sans-serif"}}>
+              <div style={{width:16,height:16,borderRadius:"50%",background:col.hex,border:"1px solid rgba(255,255,255,.2)",flexShrink:0}}/>
+              <span style={{fontSize:12,color:selColor===col.name?C.gold:C.muted,fontWeight:600}}>{col.name}</span>
+            </button>)}
           </div>
         </div>
       )}
-
-      {/* Tailles */}
-      {sizes.length > 0 && (
+      {sizes.length>0&&(
         <div>
           <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Taille</p>
           <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-            {sizes.map(s => {
-              const sel = selSize===s;
-              return (
-                <button type="button" key={s} onClick={()=>setSelSize(sel?null:s)}
-                  style={{width:44,height:44,borderRadius:10,border:`2px solid ${sel?C.gold:C.border}`,background:sel?`${C.gold}18`:C.card2,color:sel?C.gold:C.white,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
-                  {s}
-                </button>
-              );
-            })}
+            {sizes.map(s=><button type="button" key={s} onClick={()=>setSelSize(selSize===s?null:s)}
+              style={{width:44,height:44,borderRadius:10,border:`2px solid ${selSize===s?C.gold:C.border}`,background:selSize===s?`${C.gold}18`:C.card2,color:selSize===s?C.gold:C.white,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>
+              {s}
+            </button>)}
           </div>
         </div>
       )}
-
-      {/* Prix */}
-      <div style={{background:C.card2,border:`1px solid ${matched||!hasVariants?C.gold:C.border}`,borderRadius:12,padding:"12px 16px",transition:"border-color .2s"}}>
-        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:isBooking?8:0}}>
-          <span style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.gold}}>{fmt(basePrice)}</span>
-          {product.orig_price && <span style={{textDecoration:"line-through",color:C.muted,fontSize:13}}>{fmt(product.orig_price)}</span>}
-          {matched && <span style={{fontSize:11,color:C.green,fontWeight:700,background:`${C.green}15`,padding:"2px 9px",borderRadius:999}}>✓ Sélectionné</span>}
+      <div style={{background:C.card2,border:`1px solid ${matched||!hasVariants?C.gold:C.border}`,borderRadius:12,padding:"12px 16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:isBooking?8:0}}>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.gold}}>{fmt(price)}</span>
+          {product.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:13}}>{fmt(product.orig_price)}</span>}
+          {matched&&<span style={{fontSize:11,color:C.green,fontWeight:700,background:`${C.green}15`,padding:"2px 9px",borderRadius:999}}>✓</span>}
         </div>
-        {isBooking && (
-          <div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 10px",background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:8}}>
-            <Percent size={12} color={C.orange}/>
-            <span style={{fontSize:12,color:C.orange,fontWeight:700}}>Acompte de 10% requis : {fmt(acompte)}</span>
-          </div>
-        )}
+        {isBooking&&<div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 10px",background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:8}}>
+          <Percent size={12} color={C.orange}/>
+          <span style={{fontSize:12,color:C.orange,fontWeight:700}}>Acompte 10% : {fmt(acompte)}</span>
+        </div>}
       </div>
-
-      {/* Alerte sélection */}
-      {hasVariants && !matched && needs.length > 0 && (
-        <p style={{fontSize:12,color:C.orange,fontWeight:600,background:`${C.orange}10`,padding:"8px 12px",borderRadius:8,textAlign:"center"}}>
-          Veuillez sélectionner {needs.join(" et ")}
-        </p>
+      {hasVariants&&!matched&&needs.length>0&&(
+        <p style={{fontSize:12,color:C.orange,fontWeight:600,background:`${C.orange}10`,padding:"8px 12px",borderRadius:8,textAlign:"center"}}>Veuillez sélectionner {needs.join(" et ")}</p>
       )}
-
-      {/* Boutons */}
       <div style={{display:"flex",gap:10,marginTop:4}}>
-        {isBooking ? (
-          <button type="button" className="btn-t" onClick={()=>canAdd&&onBook(product, basePrice, acompte)} disabled={!canAdd}
-            style={{flex:1,background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
-            <Calendar size={15}/>{canAdd ? `Réserver (acompte ${fmt(acompte)})` : "Sélectionner les options"}
-          </button>
-        ) : (
-          <button type="button" className="btn-t" onClick={()=>canAdd&&onAddToCart(product, matched)} disabled={!canAdd}
-            style={{flex:1,background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
-            <ShoppingCart size={15}/>{canAdd ? "Ajouter au panier" : "Sélectionner les options"}
-          </button>
-        )}
+        {isBooking
+          ? <button type="button" className="btn-t" onClick={()=>canAdd&&onBook(product,price,acompte)} disabled={!canAdd}
+              style={{flex:1,background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
+              <Calendar size={15}/>{canAdd?`Réserver — acompte ${fmt(acompte)}`:"Sélectionner les options"}
+            </button>
+          : <button type="button" className="btn-t" onClick={()=>canAdd&&onAddToCart(product,matched)} disabled={!canAdd}
+              style={{flex:1,background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8,transition:"all .2s"}}>
+              <ShoppingCart size={15}/>{canAdd?"Ajouter au panier":"Sélectionner les options"}
+            </button>
+        }
       </div>
-    </div>
-  );
-}
-
-// ── PRODUCT MODAL ─────────────────────────────────────────────────────────────
-function ProductModal({product, cats, onClose, onAddToCart, onBook}) {
-  const cat = cats.find(c=>c.id===product.cat);
-  return (
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"20px 16px",overflowY:"auto"}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:24,width:"100%",maxWidth:660,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)",position:"relative"}}>
-        {/* Gallery */}
-        <div style={{position:"relative",borderRadius:"24px 24px 0 0",overflow:"hidden"}}>
-          <ImageGallery productId={product.id} mainImage={product.image_url} emoji={product.emoji}/>
-          {product.orig_price && <span style={{position:"absolute",top:12,left:12,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(product.orig_price,product.price)}%</span>}
-          {product.badge && <span style={{position:"absolute",top:12,right:46,background:BADGE_C[product.badge]||C.gold,color:product.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>{product.badge}</span>}
-          <button type="button" onClick={onClose} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5}}><X size={15}/></button>
-        </div>
-        {/* Content */}
-        <div className="modal-pad" style={{padding:"22px 26px"}}>
-          {cat && <p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:6}}>{cat.label}</p>}
-          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{product.name}</h2>
-          {(product.desc||product.description) && <p style={{fontSize:14,color:C.muted,lineHeight:1.8,marginBottom:14}}>{product.desc||product.description}</p>}
-          <GL/>
-          <VariantSelector
-            product={product}
-            onAddToCart={onAddToCart}
-            onBook={onBook}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── BANNER SLIDER ─────────────────────────────────────────────────────────────
-function BannerSlider({items}) {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => { setIdx(0); }, [items]);
-  useEffect(() => {
-    if(!items||items.length<=1) return;
-    const t = setInterval(() => setIdx(i=>(i+1)%items.length), 5000);
-    return () => clearInterval(t);
-  }, [items]);
-  if(!items||items.length===0) return null;
-  const b = items[idx]||items[0];
-  if(!b||!b.media_url) return null;
-  return (
-    <div style={{position:"relative",borderRadius:16,overflow:"hidden",cursor:b.link_url?"pointer":"default"}} onClick={()=>b.link_url&&window.open(b.link_url,"_blank")}>
-      {b.media_type==="video"
-        ? <video src={b.media_url} autoPlay muted loop playsInline style={{width:"100%",maxHeight:220,objectFit:"cover",display:"block"}}/>
-        : <img src={b.media_url} alt={b.title||""} style={{width:"100%",maxHeight:220,objectFit:"cover",display:"block"}}/>
-      }
-      {b.title && (
-        <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,.75))",padding:"20px 16px 12px"}}>
-          <p style={{color:"#fff",fontWeight:700,fontSize:15}}>{b.title}</p>
-        </div>
-      )}
-      {items.length > 1 && (
-        <div style={{position:"absolute",bottom:10,right:12,display:"flex",gap:5}}>
-          {items.map((_,i)=>(
-            <div key={i} onClick={e=>{e.stopPropagation();setIdx(i);}}
-              style={{width:i===idx?18:6,height:6,borderRadius:999,background:i===idx?C.gold:"rgba(255,255,255,.45)",cursor:"pointer",transition:"all .2s"}}/>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -478,6 +373,49 @@ function BookConfirmModal({product, basePrice, acompte, onClose, onConfirm}) {
             <Calendar size={15}/>Confirmer et payer {fmt(acompte*persons)}
           </button>
           <p style={{fontSize:11,color:C.muted,textAlign:"center"}}>Le solde restant ({fmt((basePrice-acompte)*persons)}) sera réglé ultérieurement via WhatsApp / Email</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── MODAL WITH VARIANTS (loads variants internally) ───────────────────────────
+function ModalWithVariants({product, cats, onClose, onAddToCart, onBook}) {
+  const [variants, setVariants] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setVariants([]);
+    setLoading(true);
+    if(!product?.id) { setLoading(false); return; }
+    sb.from("product_variants")
+      .select("*")
+      .eq("product_id", product.id)
+      .eq("active", true)
+      .then(({data}) => { setVariants(data||[]); setLoading(false); })
+      .catch(() => { setVariants([]); setLoading(false); });
+  }, [product?.id]);
+
+  const cat = cats.find(c=>c.id===product.cat);
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"16px",overflowY:"auto"}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,width:"100%",maxWidth:640,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)"}}>
+        <div style={{position:"relative",borderRadius:"22px 22px 0 0",overflow:"hidden"}}>
+          <ImageGallery productId={product.id} mainImage={product.image_url} emoji={product.emoji}/>
+          {product.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(product.orig_price,product.price)}%</span>}
+          {product.badge&&<span style={{position:"absolute",top:10,right:44,background:BADGE_C[product.badge]||C.gold,color:product.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:5}}>{product.badge}</span>}
+          <button type="button" onClick={onClose} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,fontSize:18}}>×</button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {cat&&<p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:5}}>{cat.label}</p>}
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{product.name}</h2>
+          {(product.desc||product.description)&&<p style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:12}}>{product.desc||product.description}</p>}
+          <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:16}}/>
+          {loading
+            ? <div style={{display:"flex",justifyContent:"center",padding:"20px 0"}}><Spin s={22}/></div>
+            : <VariantSelector product={product} variants={variants} onAddToCart={onAddToCart} onBook={onBook}/>
+          }
         </div>
       </div>
     </div>
@@ -754,23 +692,13 @@ export default function SMallClient() {
 
       {/* PRODUCT MODAL */}
       {openProd && openProd.id && (
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:"16px",overflowY:"auto"}} onClick={()=>setOpenProd(null)}>
-          <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,width:"100%",maxWidth:640,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)"}}>
-            <div style={{position:"relative",borderRadius:"22px 22px 0 0",overflow:"hidden"}}>
-              <ImageGallery productId={openProd.id} mainImage={openProd.image_url} emoji={openProd.emoji}/>
-              {openProd.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(openProd.orig_price,openProd.price)}%</span>}
-              {openProd.badge&&<span style={{position:"absolute",top:10,right:44,background:BADGE_C[openProd.badge]||C.gold,color:openProd.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:5}}>{openProd.badge}</span>}
-              <button type="button" onClick={()=>setOpenProd(null)} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,fontSize:18}}>×</button>
-            </div>
-            <div style={{padding:"20px 24px"}}>
-              <p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:5}}>{cats.find(c=>c.id===openProd.cat)?.label||""}</p>
-              <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{openProd.name}</h2>
-              {(openProd.desc||openProd.description)&&<p style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:12}}>{openProd.desc||openProd.description}</p>}
-              <div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,marginBottom:16}}/>
-              <VariantSelector product={openProd} onAddToCart={(p,v)=>{addToCart(p,v);setOpenProd(null);}} onBook={handleBook}/>
-            </div>
-          </div>
-        </div>
+        <ModalWithVariants
+          product={openProd}
+          cats={cats}
+          onClose={()=>setOpenProd(null)}
+          onAddToCart={(p,v)=>{addToCart(p,v);setOpenProd(null);}}
+          onBook={(p,price,acompte)=>{handleBook(p,price,acompte);}}
+        />
       )}
 
       {/* BOOKING CONFIRM MODAL */}

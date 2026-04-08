@@ -800,15 +800,14 @@ function BannersSection() {
   const save=async()=>{
     if(!bf.media_url){alert("Veuillez d'abord uploader une image ou vidéo.");return;}
     setSaving(true);
-    // Build payload with only existing columns
     const bannerPayload = {
-      media_url:bf.media_url,
-      active:bf.active,
+      media_url: bf.media_url,
+      active: bf.active,
+      title: bf.title||null,
+      media_type: bf.media_type||"image",
+      position: bf.position||"home_top",
+      link_url: bf.link_url||null,
     };
-    if(bf.title) bannerPayload.title = bf.title;
-    if(bf.media_type) bannerPayload.media_type = bf.media_type;
-    if(bf.position) bannerPayload.position = bf.position;
-    if(bf.link_url) bannerPayload.link_url = bf.link_url;
     const {error}=await sb.from("banners").insert(bannerPayload);
     if(error){alert("Erreur: "+error.message);setSaving(false);return;}
     setShowForm(false);

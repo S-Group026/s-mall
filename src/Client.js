@@ -165,8 +165,19 @@ export default function App() {
       const oid=uid();
       await sb.from("orders").insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal,shipping:shipCost,total,pay_method:pay,status:"En cours",country:zone?.name||"N/A"});
       try{const dlItems=cart.filter(i=>i.download_url);const dlSection=dlItems.map(i=>`<div style="background:#0a1a0a;border:1px solid #4caf7d44;border-radius:8px;padding:12px;margin:8px 0;"><p style="color:#4caf7d;font-weight:bold;">${i.name}</p><a href="${i.download_url}" style="color:#c9a84c;">${i.download_url}</a></div>`).join("");await fetch(EDGE,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:form.email.trim(),subject:`✦ Confirmation S-Mall — ${oid}`,html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:18px;margin:16px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${oid}</b></p></div><p>Bonjour <b>${form.name}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${fmt(total)}</b>.</p>${dlSection}<p style="color:#555;font-size:12px;text-align:center;margin-top:16px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`})});}catch(e){}
-      if(pay==="fedapay"&&window.FedaPay){window.FedaPay.init({public_key:"pk_live_EzI5k531w-Iu-LUAu4I2sluv",transaction:{amount:total,description:`Commande S-Mall ${oid}`},customer:{firstname:form.name.split(" ")[0],lastname:form.name.split(" ").slice(1).join(" ")||".",email:form.email,phone_number:{number:form.tel,country:"bj"}},onComplete:async(r)=>{if(r.reason==="DIALOG DISMISSED"){setProc(false);notify("Annulé",C.red);return;}await sb.from("orders").update({status:"Confirmé"}).eq("id",oid);setProc(false);setCart([]);setZone(null);setPage("ok");}}).open();}
-      else{setProc(false);setCart([]);setZone(null);setPage("ok");}
+      if(window.FedaPay){
+        // FedaPay handles both Mobile Money and Card payments
+        window.FedaPay.init({
+          public_key:"pk_live_EzI5k531w-Iu-LUAu4I2sluv",
+          transaction:{amount:total,description:`Commande S-Mall ${oid}`},
+          customer:{firstname:form.name.split(" ")[0],lastname:form.name.split(" ").slice(1).join(" ")||".",email:form.email,phone_number:{number:form.tel,country:"bj"}},
+          onComplete:async(r)=>{
+            if(r.reason==="DIALOG DISMISSED"){setProc(false);notify("Annulé",C.red);return;}
+            await sb.from("orders").update({status:"Confirmé"}).eq("id",oid);
+            setProc(false);setCart([]);setZone(null);setPage("ok");
+          }
+        }).open();
+      } else {setProc(false);setCart([]);setZone(null);setPage("ok");}
     }catch(e){setProc(false);notify("Erreur. Réessayez.",C.red);}
   };
 
@@ -450,10 +461,10 @@ export default function App() {
             <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:20}}>
               <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:15,marginBottom:14,color:C.gold}}>💳 Paiement</h3>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-                {[{id:"fedapay",l:"Mobile Money",c:"#e8a020",s:"MTN·Moov·Wave·Orange",i:<Phone size={17} strokeWidth={1.5}/>},{id:"card",l:"Carte bancaire",c:"#635BFF",s:"Bientôt disponible",i:<CreditCard size={17} strokeWidth={1.5}/>}].map(m=><button key={m.id} type="button" onClick={()=>setPay(m.id)} style={{border:`2px solid ${pay===m.id?m.c:C.border}`,borderRadius:11,padding:"12px 8px",background:pay===m.id?`${m.c}14`:"#111",cursor:"pointer",textAlign:"center",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}><div style={{marginBottom:4,display:"flex",justifyContent:"center",color:pay===m.id?m.c:"#444"}}>{m.i}</div><div style={{fontWeight:700,fontSize:12,color:pay===m.id?m.c:C.white}}>{m.l}</div><div style={{fontSize:10,color:C.muted,marginTop:2}}>{m.s}</div></button>)}
+                {[{id:"fedapay",l:"Mobile Money",c:"#e8a020",s:"MTN · Moov · Wave · Orange",i:<Phone size={17} strokeWidth={1.5}/>},{id:"card",l:"Carte Visa/Mastercard",c:"#635BFF",s:"Cartes internationales",i:<CreditCard size={17} strokeWidth={1.5}/>}].map(m=><button key={m.id} type="button" onClick={()=>setPay(m.id)} style={{border:`2px solid ${pay===m.id?m.c:C.border}`,borderRadius:11,padding:"12px 8px",background:pay===m.id?`${m.c}14`:"#111",cursor:"pointer",textAlign:"center",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}><div style={{marginBottom:4,display:"flex",justifyContent:"center",color:pay===m.id?m.c:"#444"}}>{m.i}</div><div style={{fontWeight:700,fontSize:12,color:pay===m.id?m.c:C.white}}>{m.l}</div><div style={{fontSize:10,color:C.muted,marginTop:2}}>{m.s}</div></button>)}
               </div>
               {pay==="fedapay"&&<div style={{display:"flex",alignItems:"center",gap:8,padding:"9px 12px",background:"#0a1800",borderRadius:9,border:`1px solid ${C.green}44`}}><Lock size={11} color={C.green}/><span style={{fontSize:12,color:C.green,fontWeight:600}}>Paiement sécurisé via FedaPay</span></div>}
-              {pay==="card"&&<div style={{background:"#635BFF12",border:"1px solid #635BFF33",borderRadius:10,padding:"12px 14px"}}><p style={{fontSize:12,color:"#635BFF",fontWeight:700}}>Bientôt disponible — utilisez Mobile Money en attendant.</p></div>}
+              {pay==="card"&&<div style={{background:"#635BFF12",border:"1px solid #635BFF33",borderRadius:10,padding:"12px 14px"}}><p style={{fontWeight:700,fontSize:12,color:"#635BFF",marginBottom:6}}>💳 Paiement par carte via FedaPay</p><p style={{fontSize:12,color:C.muted,lineHeight:1.6}}>Visa · Mastercard · Cartes internationales acceptées.<br/>Vous serez redirigé vers la page sécurisée FedaPay.</p><div style={{display:"flex",alignItems:"center",gap:7,marginTop:10,padding:"7px 10px",background:"#0a1800",borderRadius:8,border:`1px solid ${C.green}44`}}><Lock size={11} color={C.green}/><span style={{fontSize:11,color:C.green,fontWeight:600}}>SSL sécurisé · FedaPay</span></div></div>}
             </div>
           </div>
           <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:18,position:"sticky",top:76}}>
@@ -465,7 +476,7 @@ export default function App() {
             <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:6}}><span style={{color:C.muted}}>Sous-total</span><span style={{fontWeight:700}}>{fmt(subtotal)}</span></div>
             <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:10}}><span style={{color:C.muted}}>Livraison</span><span style={{fontWeight:700,color:shipCost===0?C.green:C.white}}>{shipCost===0?"Gratuite":fmt(shipCost)}</span></div>
             <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:16,marginBottom:14}}><span>Total</span><span style={{color:C.gold}}>{fmt(total)}</span></div>
-            <button type="button" className="bt" onClick={doPay} disabled={proc||pay==="card"} style={{width:"100%",background:proc||pay==="card"?"#2a2a2a":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:proc||pay==="card"?C.muted:C.bg,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:13,cursor:proc||pay==="card"?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{proc?<><Spin s={15}/>Traitement…</>:pay==="card"?"Carte bientôt dispo.":`Confirmer — ${fmt(total)}`}</button>
+            <button type="button" className="bt" onClick={doPay} disabled={proc} style={{width:"100%",background:proc?"#2a2a2a":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:proc?C.muted:C.bg,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:13,cursor:proc?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>{proc?<><Spin s={15}/>Traitement…</>:`Confirmer — ${fmt(total)}`}</button>
             <button type="button" onClick={()=>setPage("cart")} style={{width:"100%",marginTop:8,background:"none",border:"none",color:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",padding:"6px",display:"flex",alignItems:"center",justifyContent:"center",gap:4}}><ChevronLeft size={12}/>Retour au panier</button>
           </div>
         </div>

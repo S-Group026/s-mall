@@ -1,3 +1,124 @@
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function ProductModal({modal, cats, allVariants, allImages, BOOKING, C, fmt, pct, setModal, addCart, openBook}) {
+  if(!modal)return null;
+  const p=modal;
+  const variants=allVariants[p.id]||[];
+  const imgs=allImages[p.id]||[];
+  const allImgs=imgs.length>0?imgs:(p.image_url?[p.image_url]:[]);
+  const isB=BOOKING.includes(p.cat);
+  const [cur,setCur]=useState(0);
+  const [selS,setSelS]=useState(null);
+  const [selC,setSelC]=useState(null);
+  const [selZ,setSelZ]=useState(null);
+  const storages=[...new Set(variants.filter(v=>v.storage).map(v=>v.storage))];
+  const sizes=[...new Set(variants.filter(v=>v.size).map(v=>v.size))];
+  const colors=storages.length>0?(selS?[...new Map(variants.filter(v=>v.storage===selS&&v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()]:[]):[...new Map(variants.filter(v=>v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()];
+  const hasV=variants.length>0;
+  const matched=hasV?variants.find(v=>(storages.length===0||v.storage===selS)&&(colors.length===0||v.color===selC)&&(sizes.length===0||v.size===selZ)):null;
+  const price=matched?matched.price:(hasV?Math.min(...variants.map(v=>v.price)):p.price);
+  const acompte=Math.round(price*.10);
+  const canAdd=!hasV||!!matched;
+  const cat=cats.find(c=>c.id===p.cat);
+  const GL=()=><div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 20px"}}/>;
+  const Percent2=()=><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>;
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:16,overflowY:"auto"}} onClick={()=>setModal(null)}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,width:"100%",maxWidth:640,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)"}}>
+        <div style={{position:"relative",borderRadius:"22px 22px 0 0",overflow:"hidden",height:260,background:"#000"}}>
+          {allImgs.length>0?<img src={allImgs[cur]} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<div style={{height:260,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,background:"linear-gradient(135deg,#161200,#201a00)"}}>{p.emoji}</div>}
+          {allImgs.length>1&&<>
+            <button type="button" onClick={()=>setCur(c=>c===0?allImgs.length-1:c-1)} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",color:"#fff",borderRadius:"50%",width:34,height:34,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+            <button type="button" onClick={()=>setCur(c=>c===allImgs.length-1?0:c+1)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",color:"#fff",borderRadius:"50%",width:34,height:34,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+            <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5}}>{allImgs.map((_,i)=><button key={i} type="button" onClick={()=>setCur(i)} style={{width:i===cur?18:6,height:6,borderRadius:999,background:i===cur?C.gold:"rgba(255,255,255,.4)",border:"none",cursor:"pointer",padding:0,transition:"all .2s"}}/>)}</div>
+          </>}
+          {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(p.orig_price,p.price)}%</span>}
+          {p.badge&&<span style={{position:"absolute",top:10,right:44,background:{Nouveau:C.green,Bestseller:C.gold,Promo:C.red,Premium:"#9b59b6"}[p.badge]||C.gold,color:p.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:5}}>{p.badge}</span>}
+          <button type="button" onClick={()=>setModal(null)} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,fontSize:18}}>×</button>
+        </div>
+        <div style={{padding:"20px 24px"}}>
+          {cat&&<p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:5}}>{cat.label}</p>}
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{p.name}</h2>
+          {(p.desc||p.description)&&<p style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:12}}>{p.desc||p.description}</p>}
+          <GL/>
+          {storages.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Capacité</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{storages.map(s=>{const minP=Math.min(...variants.filter(v=>v.storage===s).map(v=>v.price));return<button key={s} type="button" onClick={()=>{setSelS(selS===s?null:s);setSelC(null);}} style={{padding:"7px 14px",borderRadius:10,border:`2px solid ${selS===s?C.gold:C.border}`,background:selS===s?`${C.gold}18`:C.card2,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all .15s"}}><span style={{fontWeight:700,fontSize:13,color:selS===s?C.gold:C.white}}>{s}</span><span style={{fontSize:10,color:C.muted}}>{fmt(minP)}</span></button>;})}}</div></div>}
+          {colors.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Couleur{selC?<span style={{color:C.white,fontWeight:400}}> — {selC}</span>:""}</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{colors.map(col=><button key={col.name} type="button" onClick={()=>setSelC(selC===col.name?null:col.name)} style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",borderRadius:999,border:`2px solid ${selC===col.name?C.gold:"transparent"}`,background:C.card2,cursor:"pointer",transition:"all .15s",fontFamily:"'DM Sans',sans-serif"}}><div style={{width:16,height:16,borderRadius:"50%",background:col.hex,border:"1px solid rgba(255,255,255,.2)",flexShrink:0}}/><span style={{fontSize:12,color:selC===col.name?C.gold:C.muted,fontWeight:600}}>{col.name}</span></button>)}</div></div>}
+          {sizes.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Taille</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{sizes.map(s=><button key={s} type="button" onClick={()=>setSelZ(selZ===s?null:s)} style={{width:44,height:44,borderRadius:10,border:`2px solid ${selZ===s?C.gold:C.border}`,background:selZ===s?`${C.gold}18`:C.card2,color:selZ===s?C.gold:C.white,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>{s}</button>)}</div></div>}
+          <div style={{background:C.card2,border:`1px solid ${matched||!hasV?C.gold:C.border}`,borderRadius:12,padding:"12px 16px",marginBottom:12,transition:"border-color .2s"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:isB?8:0}}>
+              <span style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.gold}}>{fmt(price)}</span>
+              {p.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:13}}>{fmt(p.orig_price)}</span>}
+              {matched&&<span style={{fontSize:11,color:C.green,fontWeight:700,background:`${C.green}15`,padding:"2px 9px",borderRadius:999}}>✓</span>}
+            </div>
+            {isB&&<div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 10px",background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:8}}><Percent2/><span style={{fontSize:12,color:C.orange,fontWeight:700,marginLeft:4}}>Acompte 10% : {fmt(acompte)}</span></div>}
+          </div>
+          {hasV&&!matched&&<p style={{fontSize:12,color:C.orange,fontWeight:600,background:`${C.orange}10`,padding:"8px 12px",borderRadius:8,textAlign:"center",marginBottom:12}}>Veuillez sélectionner vos options</p>}
+          {isB
+            ?<button type="button" onClick={()=>canAdd&&openBook(p,price,acompte)} disabled={!canAdd} style={{width:"100%",background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📅 {canAdd?`Réserver — acompte ${fmt(acompte)}`:"Sélectionner les options"}</button>
+            :<button type="button" onClick={()=>canAdd&&addCart(p,matched)} disabled={!canAdd} style={{width:"100%",background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>🛒 {canAdd?"Ajouter au panier":"Sélectionner les options"}</button>
+          }
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BOOKING MODAL ─────────────────────────────────────────────────────────────
+function BookingModal({bookModal, setBookModal, doBook, C, fmt}) {
+  const [bf,setBf]=useState({name:"",email:"",tel:"",date:"",qty:1});
+  const [err,setErr]=useState("");
+  const [calOpen,setCalOpen]=useState(false);
+  const today=new Date();
+  const [view,setView]=useState({y:today.getFullYear(),m:today.getMonth()});
+  if(!bookModal)return null;
+  const {product,price,acompte}=bookModal;
+  const days=new Date(view.y,view.m+1,0).getDate();
+  const first=new Date(view.y,view.m,1).getDay();
+  const MONTHS=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
+  const pickDate=d=>{const dt=new Date(view.y,view.m,d);if(dt<new Date(today.getFullYear(),today.getMonth(),today.getDate()))return;setBf(f=>({...f,date:`${String(d).padStart(2,"0")}/${String(view.m+1).padStart(2,"0")}/${view.y}`}));setCalOpen(false);};
+  const confirm=()=>{if(!bf.name.trim()||!bf.tel.trim()||!bf.date){setErr("Remplissez tous les champs");return;}setErr("");doBook({...bf,product,acompte,price});};
+  const GL2=()=><div style={{height:1,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`,margin:"0 0 20px"}}/>;
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.92)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setBookModal(null)}>
+      <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,padding:28,width:"100%",maxWidth:440}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
+          <div><h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:18,color:C.gold}}>{product.name}</h3><p style={{fontSize:12,color:C.muted,marginTop:3}}>Réservation avec acompte 10%</p></div>
+          <button type="button" onClick={()=>setBookModal(null)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:8,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>×</button>
+        </div>
+        <GL2/>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {[["name","Votre nom *","text"],["email","Email","email"],["tel","Téléphone / WhatsApp *","tel"]].map(([f,l,t])=>(
+            <div key={f}><label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label><input type={t} value={bf[f]} onChange={e=>setBf(x=>({...x,[f]:e.target.value}))} placeholder={l.replace(" *","")} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 13px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/></div>
+          ))}
+          <div style={{position:"relative"}}>
+            <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>Date souhaitée *</label>
+            <button type="button" onClick={()=>setCalOpen(o=>!o)} style={{width:"100%",background:C.card2,border:`1.5px solid ${bf.date?C.gold:C.border}`,borderRadius:10,padding:"10px 13px",color:bf.date?C.gold:C.muted,fontSize:14,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>{bf.date||"Choisir une date"}</span><span style={{fontSize:14}}>📅</span></button>
+            {calOpen&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:600,background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:14,width:240,boxShadow:"0 20px 50px rgba(0,0,0,.9)"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <button type="button" onClick={()=>setView(v=>v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{background:"none",border:`1px solid ${C.border}`,color:C.gold,borderRadius:7,padding:"3px 10px",cursor:"pointer"}}>‹</button>
+                <span style={{fontWeight:700,fontSize:13,color:C.white}}>{MONTHS[view.m]} {view.y}</span>
+                <button type="button" onClick={()=>setView(v=>v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{background:"none",border:`1px solid ${C.border}`,color:C.gold,borderRadius:7,padding:"3px 10px",cursor:"pointer"}}>›</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>{["Di","Lu","Ma","Me","Je","Ve","Sa"].map(d=><div key={d} style={{textAlign:"center",fontSize:9,color:C.muted,fontWeight:700}}>{d}</div>)}</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
+                {Array(first).fill(null).map((_,i)=><div key={"e"+i}/>)}
+                {Array(days).fill(null).map((_,i)=>{const d=i+1,dt=new Date(view.y,view.m,d),past=dt<new Date(today.getFullYear(),today.getMonth(),today.getDate());return<button key={d} type="button" onClick={()=>pickDate(d)} style={{textAlign:"center",fontSize:12,padding:"5px 0",borderRadius:7,border:"none",background:past?"transparent":C.card2,color:past?C.border:C.white,cursor:past?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif"}}>{d}</button>;})}
+              </div>
+            </div>}
+          </div>
+          <div><label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:6}}>Nombre de personnes</label><div style={{display:"flex",alignItems:"center",gap:12}}><button type="button" onClick={()=>setBf(f=>({...f,qty:Math.max(1,f.qty-1)}))} style={{width:34,height:34,borderRadius:9,border:`1.5px solid ${C.border}`,background:C.card2,color:C.gold,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>−</button><span style={{fontWeight:800,fontSize:18,minWidth:20,textAlign:"center"}}>{bf.qty}</span><button type="button" onClick={()=>setBf(f=>({...f,qty:f.qty+1}))} style={{width:34,height:34,borderRadius:9,border:`1.5px solid ${C.border}`,background:C.card2,color:C.gold,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>+</button></div></div>
+          {err&&<p style={{color:C.red,fontSize:12,fontWeight:600}}>⚠ {err}</p>}
+          <div style={{background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:12,padding:"12px 16px"}}>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}><span style={{color:C.muted}}>Montant total</span><span style={{fontWeight:700}}>{fmt(price*bf.qty)}</span></div>
+            <div style={{display:"flex",justifyContent:"space-between",fontSize:15}}><span style={{color:C.orange,fontWeight:700}}>% Acompte (10%)</span><span style={{fontWeight:900,color:C.orange}}>{fmt(acompte*bf.qty)}</span></div>
+          </div>
+          <button type="button" onClick={confirm} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:13,padding:"13px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>📅 Confirmer — {fmt(acompte*bf.qty)}</button>
+          <p style={{fontSize:11,color:C.muted,textAlign:"center"}}>Solde restant ({fmt((price-acompte)*bf.qty)}) finalisé via WhatsApp/Email</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 import { useState, useEffect } from 'react';
 import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Percent, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home, Tag } from 'lucide-react';
 import { sb } from './supabase';
@@ -48,7 +169,8 @@ export default function App() {
   const [page,setPage]=useState("home");
   const [cat,setCat]=useState("all");
   const [search,setSearch]=useState("");
-  const [cart,setCart]=useState([]);
+  const [cart,setCart]=useState(()=>{try{const s=localStorage.getItem("small_cart");return s?JSON.parse(s):[];}catch{return [];}});
+  useEffect(()=>{try{localStorage.setItem("small_cart",JSON.stringify(cart));}catch{}},[cart]);
   const [zone,setZone]=useState(null);
   const [pay,setPay]=useState("fedapay");
   const [modal,setModal]=useState(null); // product object or null
@@ -161,23 +283,33 @@ export default function App() {
     if(!validate())return;
     if(needsShip&&!zone){notify("Choisissez une zone de livraison",C.red);return;}
     setProc(true);
+    const cartSnapshot=cart;
+    const subSnap=subtotal;
+    const shipSnap=shipCost;
+    const totalSnap=total;
+    const zoneSnap=zone;
     try{
-      const oid=uid();
-      await sb.from("orders").insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal,shipping:shipCost,total,pay_method:pay,status:"En cours",country:zone?.name||"N/A"});
-      try{const dlItems=cart.filter(i=>i.download_url);const dlSection=dlItems.map(i=>`<div style="background:#0a1a0a;border:1px solid #4caf7d44;border-radius:8px;padding:12px;margin:8px 0;"><p style="color:#4caf7d;font-weight:bold;">${i.name}</p><a href="${i.download_url}" style="color:#c9a84c;">${i.download_url}</a></div>`).join("");await fetch(EDGE,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:form.email.trim(),subject:`✦ Confirmation S-Mall — ${oid}`,html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:18px;margin:16px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${oid}</b></p></div><p>Bonjour <b>${form.name}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${fmt(total)}</b>.</p>${dlSection}<p style="color:#555;font-size:12px;text-align:center;margin-top:16px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`})});}catch(e){}
       if(window.FedaPay){
-        // FedaPay handles both Mobile Money and Card payments
+        const oid=uid();
         window.FedaPay.init({
           public_key:"pk_live_EzI5k531w-Iu-LUAu4I2sluv",
-          transaction:{amount:total,description:`Commande S-Mall ${oid}`},
+          transaction:{amount:totalSnap,description:`Commande S-Mall ${oid}`},
           customer:{firstname:form.name.split(" ")[0],lastname:form.name.split(" ").slice(1).join(" ")||".",email:form.email,phone_number:{number:form.tel,country:"bj"}},
           onComplete:async(r)=>{
             if(r.reason==="DIALOG DISMISSED"){setProc(false);notify("Annulé",C.red);return;}
-            await sb.from("orders").update({status:"Confirmé"}).eq("id",oid);
+            // Create order only after payment confirmed
+            await sb.from("orders").insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:cartSnapshot.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal:subSnap,shipping:shipSnap,total:totalSnap,pay_method:pay,status:"Confirmé",country:zoneSnap?.name||"N/A"});
+            // Send confirmation email
+            try{await fetch(EDGE,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({to:form.email.trim(),subject:`✦ Confirmation S-Mall — ${oid}`,html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:18px;margin:16px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${oid}</b></p></div><p>Bonjour <b>${form.name}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${fmt(totalSnap)}</b>.</p><p style="color:#555;font-size:12px;text-align:center;margin-top:16px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`})});}catch(e){}
             setProc(false);setCart([]);setZone(null);setPage("ok");
           }
         }).open();
-      } else {setProc(false);setCart([]);setZone(null);setPage("ok");}
+      } else {
+        // Dev mode fallback
+        const oid=uid();
+        await sb.from("orders").insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:cartSnapshot.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal:subSnap,shipping:shipSnap,total:totalSnap,pay_method:pay,status:"En cours",country:zoneSnap?.name||"N/A"});
+        setProc(false);setCart([]);setZone(null);setPage("ok");
+      }
     }catch(e){setProc(false);notify("Erreur. Réessayez.",C.red);}
   };
 
@@ -221,123 +353,6 @@ export default function App() {
     );
   };
 
-  // ── MODAL (uses pre-loaded data — NO async) ──
-  const Modal=()=>{
-    if(!modal)return null;
-    const p=modal;
-    const variants=allVariants[p.id]||[];
-    const imgs=allImages[p.id]||[];
-    const allImgs=imgs.length>0?imgs:(p.image_url?[p.image_url]:[]);
-    const isB=BOOKING.includes(p.cat);
-    const [cur,setCur]=useState(0);
-    const [selS,setSelS]=useState(null);
-    const [selC,setSelC]=useState(null);
-    const [selZ,setSelZ]=useState(null);
-    const storages=[...new Set(variants.filter(v=>v.storage).map(v=>v.storage))];
-    const sizes=[...new Set(variants.filter(v=>v.size).map(v=>v.size))];
-    const colors=storages.length>0?(selS?[...new Map(variants.filter(v=>v.storage===selS&&v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()]:[]):[...new Map(variants.filter(v=>v.color).map(v=>[v.color,{name:v.color,hex:v.color_hex||"#888"}])).values()];
-    const hasV=variants.length>0;
-    const matched=hasV?variants.find(v=>(storages.length===0||v.storage===selS)&&(colors.length===0||v.color===selC)&&(sizes.length===0||v.size===selZ)):null;
-    const price=matched?matched.price:(hasV?Math.min(...variants.map(v=>v.price)):p.price);
-    const acompte=Math.round(price*.10);
-    const canAdd=!hasV||!!matched;
-    const cat=cats.find(c=>c.id===p.cat);
-    return(
-      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:1000,display:"flex",alignItems:"flex-start",justifyContent:"center",padding:16,overflowY:"auto"}} onClick={()=>setModal(null)}>
-        <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,width:"100%",maxWidth:640,margin:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.95)"}}>
-          <div style={{position:"relative",borderRadius:"22px 22px 0 0",overflow:"hidden",height:260,background:"#000"}}>
-            {allImgs.length>0?<img src={allImgs[cur]} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:<div style={{height:260,display:"flex",alignItems:"center",justifyContent:"center",fontSize:80,background:"linear-gradient(135deg,#161200,#201a00)"}}>{p.emoji}</div>}
-            {allImgs.length>1&&<>
-              <button type="button" onClick={()=>setCur(c=>c===0?allImgs.length-1:c-1)} style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",color:"#fff",borderRadius:"50%",width:34,height:34,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-              <button type="button" onClick={()=>setCur(c=>c===allImgs.length-1?0:c+1)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"rgba(0,0,0,.6)",border:"none",color:"#fff",borderRadius:"50%",width:34,height:34,cursor:"pointer",fontSize:20,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
-              <div style={{position:"absolute",bottom:10,left:"50%",transform:"translateX(-50%)",display:"flex",gap:5}}>{allImgs.map((_,i)=><button key={i} type="button" onClick={()=>setCur(i)} style={{width:i===cur?18:6,height:6,borderRadius:999,background:i===cur?C.gold:"rgba(255,255,255,.4)",border:"none",cursor:"pointer",padding:0,transition:"all .2s"}}/>)}</div>
-            </>}
-            {p.orig_price&&<span style={{position:"absolute",top:10,left:10,background:C.red,color:"#fff",fontSize:11,fontWeight:800,padding:"3px 10px",borderRadius:999,zIndex:5}}>-{pct(p.orig_price,p.price)}%</span>}
-            {p.badge&&<span style={{position:"absolute",top:10,right:44,background:BADGE_C[p.badge]||C.gold,color:p.badge==="Bestseller"?C.bg:"#fff",fontSize:10,fontWeight:800,padding:"3px 9px",borderRadius:999,zIndex:5}}>{p.badge}</span>}
-            <button type="button" onClick={()=>setModal(null)} style={{position:"absolute",top:10,right:10,background:"rgba(0,0,0,.7)",border:"none",color:"#fff",borderRadius:8,width:32,height:32,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",zIndex:5,fontSize:18}}>×</button>
-          </div>
-          <div style={{padding:"20px 24px"}}>
-            {cat&&<p style={{fontSize:10,color:C.gold,fontWeight:700,letterSpacing:3,textTransform:"uppercase",marginBottom:5}}>{cat.label}</p>}
-            <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:21,fontWeight:900,color:C.white,marginBottom:8,lineHeight:1.3}}>{p.name}</h2>
-            {(p.desc||p.description)&&<p style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:12}}>{p.desc||p.description}</p>}
-            <GL/>
-            {storages.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Capacité</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{storages.map(s=>{const minP=Math.min(...variants.filter(v=>v.storage===s).map(v=>v.price));return<button key={s} type="button" onClick={()=>{setSelS(selS===s?null:s);setSelC(null);}} style={{padding:"7px 14px",borderRadius:10,border:`2px solid ${selS===s?C.gold:C.border}`,background:selS===s?`${C.gold}18`:C.card2,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",flexDirection:"column",alignItems:"center",gap:2,transition:"all .15s"}}><span style={{fontWeight:700,fontSize:13,color:selS===s?C.gold:C.white}}>{s}</span><span style={{fontSize:10,color:C.muted}}>{fmt(minP)}</span></button>;})}}</div></div>}
-            {colors.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Couleur{selC?<span style={{color:C.white,fontWeight:400}}> — {selC}</span>:""}</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{colors.map(col=><button key={col.name} type="button" onClick={()=>setSelC(selC===col.name?null:col.name)} style={{display:"flex",alignItems:"center",gap:7,padding:"6px 12px",borderRadius:999,border:`2px solid ${selC===col.name?C.gold:"transparent"}`,background:C.card2,cursor:"pointer",transition:"all .15s",fontFamily:"'DM Sans',sans-serif"}}><div style={{width:16,height:16,borderRadius:"50%",background:col.hex,border:"1px solid rgba(255,255,255,.2)",flexShrink:0}}/><span style={{fontSize:12,color:selC===col.name?C.gold:C.muted,fontWeight:600}}>{col.name}</span></button>)}</div></div>}
-            {sizes.length>0&&<div style={{marginBottom:14}}><p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:8}}>Taille</p><div style={{display:"flex",gap:8,flexWrap:"wrap"}}>{sizes.map(s=><button key={s} type="button" onClick={()=>setSelZ(selZ===s?null:s)} style={{width:44,height:44,borderRadius:10,border:`2px solid ${selZ===s?C.gold:C.border}`,background:selZ===s?`${C.gold}18`:C.card2,color:selZ===s?C.gold:C.white,fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .15s"}}>{s}</button>)}</div></div>}
-            <div style={{background:C.card2,border:`1px solid ${matched||!hasV?C.gold:C.border}`,borderRadius:12,padding:"12px 16px",marginBottom:12,transition:"border-color .2s"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:isB?8:0}}>
-                <span style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:900,color:C.gold}}>{fmt(price)}</span>
-                {p.orig_price&&<span style={{textDecoration:"line-through",color:C.muted,fontSize:13}}>{fmt(p.orig_price)}</span>}
-                {matched&&<span style={{fontSize:11,color:C.green,fontWeight:700,background:`${C.green}15`,padding:"2px 9px",borderRadius:999}}>✓</span>}
-              </div>
-              {isB&&<div style={{display:"flex",alignItems:"center",gap:7,padding:"7px 10px",background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:8}}><Percent size={12} color={C.orange}/><span style={{fontSize:12,color:C.orange,fontWeight:700}}>Acompte 10% : {fmt(acompte)}</span></div>}
-            </div>
-            {hasV&&!matched&&<p style={{fontSize:12,color:C.orange,fontWeight:600,background:`${C.orange}10`,padding:"8px 12px",borderRadius:8,textAlign:"center",marginBottom:12}}>Veuillez sélectionner vos options</p>}
-            {isB
-              ?<button type="button" className="bt" onClick={()=>canAdd&&openBook(p,price,acompte)} disabled={!canAdd} style={{width:"100%",background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Calendar size={15}/>{canAdd?`Réserver — acompte ${fmt(acompte)}`:"Sélectionner les options"}</button>
-              :<button type="button" className="bt" onClick={()=>canAdd&&addCart(p,matched)} disabled={!canAdd} style={{width:"100%",background:canAdd?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:canAdd?C.bg:C.muted,border:"none",borderRadius:14,padding:"13px",fontWeight:700,fontSize:14,cursor:canAdd?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><ShoppingCart size={15}/>{canAdd?"Ajouter au panier":"Sélectionner les options"}</button>
-            }
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const BookModal=()=>{
-    if(!bookModal)return null;
-    const {product,price,acompte}=bookModal;
-    const [bf,setBf]=useState({name:"",email:"",tel:"",date:"",qty:1});
-    const [err,setErr]=useState("");
-    const [calOpen,setCalOpen]=useState(false);
-    const today=new Date();
-    const [view,setView]=useState({y:today.getFullYear(),m:today.getMonth()});
-    const days=new Date(view.y,view.m+1,0).getDate();
-    const first=new Date(view.y,view.m,1).getDay();
-    const MONTHS=["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
-    const pickDate=d=>{const dt=new Date(view.y,view.m,d);if(dt<new Date(today.getFullYear(),today.getMonth(),today.getDate()))return;setBf(f=>({...f,date:`${String(d).padStart(2,"0")}/${String(view.m+1).padStart(2,"0")}/${view.y}`}));setCalOpen(false);};
-    const confirm=()=>{if(!bf.name.trim()||!bf.tel.trim()||!bf.date){setErr("Remplissez tous les champs");return;}setErr("");doBook({...bf,product,acompte,price});};
-    return(
-      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,.92)",zIndex:1001,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setBookModal(null)}>
-        <div onClick={e=>e.stopPropagation()} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:22,padding:28,width:"100%",maxWidth:440}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-            <div><h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:18,color:C.gold}}>{product.name}</h3><p style={{fontSize:12,color:C.muted,marginTop:3}}>Réservation avec acompte 10%</p></div>
-            <button type="button" onClick={()=>setBookModal(null)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:8,width:30,height:30,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><X size={13}/></button>
-          </div>
-          <GL/>
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            {[["name","Votre nom *","text"],["email","Email","email"],["tel","Téléphone / WhatsApp *","tel"]].map(([f,l,t])=>(
-              <div key={f}><label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label><input type={t} value={bf[f]} onChange={e=>setBf(x=>({...x,[f]:e.target.value}))} placeholder={l.replace(" *","")} style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 13px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/></div>
-            ))}
-            <div style={{position:"relative"}}>
-              <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>Date souhaitée *</label>
-              <button type="button" onClick={()=>setCalOpen(o=>!o)} style={{width:"100%",background:C.card2,border:`1.5px solid ${bf.date?C.gold:C.border}`,borderRadius:10,padding:"10px 13px",color:bf.date?C.gold:C.muted,fontSize:14,fontFamily:"'DM Sans',sans-serif",cursor:"pointer",textAlign:"left",display:"flex",justifyContent:"space-between",alignItems:"center"}}><span>{bf.date||"Choisir une date"}</span><Calendar size={14} color={bf.date?C.gold:C.muted}/></button>
-              {calOpen&&<div style={{position:"absolute",top:"calc(100% + 6px)",left:0,zIndex:600,background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:14,width:240,boxShadow:"0 20px 50px rgba(0,0,0,.9)"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                  <button type="button" onClick={()=>setView(v=>v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{background:"none",border:`1px solid ${C.border}`,color:C.gold,borderRadius:7,padding:"3px 10px",cursor:"pointer"}}>‹</button>
-                  <span style={{fontWeight:700,fontSize:13,color:C.white}}>{MONTHS[view.m]} {view.y}</span>
-                  <button type="button" onClick={()=>setView(v=>v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{background:"none",border:`1px solid ${C.border}`,color:C.gold,borderRadius:7,padding:"3px 10px",cursor:"pointer"}}>›</button>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2,marginBottom:4}}>{["Di","Lu","Ma","Me","Je","Ve","Sa"].map(d=><div key={d} style={{textAlign:"center",fontSize:9,color:C.muted,fontWeight:700}}>{d}</div>)}</div>
-                <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}}>
-                  {Array(first).fill(null).map((_,i)=><div key={"e"+i}/>)}
-                  {Array(days).fill(null).map((_,i)=>{const d=i+1,dt=new Date(view.y,view.m,d),past=dt<new Date(today.getFullYear(),today.getMonth(),today.getDate());return<button key={d} type="button" onClick={()=>pickDate(d)} style={{textAlign:"center",fontSize:12,padding:"5px 0",borderRadius:7,border:"none",background:past?"transparent":C.card2,color:past?C.border:C.white,cursor:past?"not-allowed":"pointer",fontFamily:"'DM Sans',sans-serif"}}>{d}</button>;})}
-                </div>
-              </div>}
-            </div>
-            <div><label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:6}}>Nombre de personnes</label><div style={{display:"flex",alignItems:"center",gap:12}}><button type="button" onClick={()=>setBf(f=>({...f,qty:Math.max(1,f.qty-1)}))} style={{width:34,height:34,borderRadius:9,border:`1.5px solid ${C.border}`,background:C.card2,color:C.gold,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Minus size={13}/></button><span style={{fontWeight:800,fontSize:18,minWidth:20,textAlign:"center"}}>{bf.qty}</span><button type="button" onClick={()=>setBf(f=>({...f,qty:f.qty+1}))} style={{width:34,height:34,borderRadius:9,border:`1.5px solid ${C.border}`,background:C.card2,color:C.gold,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}><Plus size={13}/></button></div></div>
-            {err&&<p style={{color:C.red,fontSize:12,fontWeight:600}}>⚠ {err}</p>}
-            <div style={{background:`${C.orange}12`,border:`1px solid ${C.orange}33`,borderRadius:12,padding:"12px 16px"}}>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:6}}><span style={{color:C.muted}}>Montant total</span><span style={{fontWeight:700}}>{fmt(price*bf.qty)}</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",fontSize:15}}><span style={{color:C.orange,fontWeight:700,display:"flex",alignItems:"center",gap:5}}><Percent size={13}/>Acompte (10%)</span><span style={{fontWeight:900,color:C.orange}}>{fmt(acompte*bf.qty)}</span></div>
-            </div>
-            <button type="button" className="bt" onClick={confirm} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:13,padding:"13px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}><Calendar size={15}/>Confirmer — {fmt(acompte*bf.qty)}</button>
-            <p style={{fontSize:11,color:C.muted,textAlign:"center"}}>Le solde ({fmt((price-acompte)*bf.qty)}) sera finalisé via WhatsApp/Email</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const InpF=({f,pl,t="text"})=><div><input type={t} value={form[f]} onChange={e=>setForm(x=>({...x,[f]:e.target.value}))} placeholder={pl} style={{width:"100%",background:C.card2,border:`1.5px solid ${errs[f]?C.red:C.border}`,borderRadius:10,padding:"11px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>{errs[f]&&<p style={{color:C.red,fontSize:11,marginTop:3}}>{errs[f]}</p>}</div>;
 
   // ── RENDER ──
@@ -345,8 +360,8 @@ export default function App() {
     <div style={{background:C.bg,minHeight:"100vh",color:C.white,fontFamily:"'DM Sans',sans-serif"}}>
       <style>{CSS}</style>
       {notif&&<div style={{position:"fixed",top:16,right:16,zIndex:9999,background:C.card,border:`1px solid ${notif.color}`,color:notif.color,padding:"11px 18px",borderRadius:12,fontWeight:700,fontSize:13,boxShadow:"0 8px 28px rgba(0,0,0,.6)",animation:"fadeUp .3s ease",maxWidth:280,pointerEvents:"none"}}>{notif.msg}</div>}
-      <Modal/>
-      <BookModal/>
+      <ProductModal modal={modal} cats={cats} allVariants={allVariants} allImages={allImages} BOOKING={BOOKING} C={C} fmt={fmt} pct={pct} setModal={setModal} addCart={addCart} openBook={openBook}/>
+      <BookingModal bookModal={bookModal} setBookModal={setBookModal} doBook={doBook} C={C} fmt={fmt}/>
 
       {/* NAV */}
       <nav style={{background:"rgba(10,10,10,.97)",backdropFilter:"blur(12px)",padding:"0 28px",height:64,display:"flex",alignItems:"center",justifyContent:"space-between",borderBottom:`1px solid ${C.border}`,position:"sticky",top:0,zIndex:100}}>

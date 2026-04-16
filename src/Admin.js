@@ -321,7 +321,7 @@ function ProductsSection() {
                   <select value={form.book_type} onChange={e=>setForm(f=>({...f,book_type:e.target.value}))}
                     style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
                     <option value="">— Choisir —</option>
-                    {["vol","circuit","voiture","appart"].map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
+                    {["circuit","voiture","appart"].map(t=><option key={t} value={t}>{t.charAt(0).toUpperCase()+t.slice(1)}</option>)}
                   </select>
                 </div>
               )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Plane, Map, Car, Home } from 'lucide-react';
+import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Map, Car, Home } from 'lucide-react';
 import { sb } from './supabase';
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
@@ -16,8 +16,8 @@ const RID  = () => 'RES-' + Date.now().toString(36).toUpperCase();
 const WA   = 'https://wa.me/2250150512408';
 const EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email';
 const FEDA_KEY = 'pk_live_EzI5k531w-Iu-LUAu4I2sluv';
-const BOOKING_CATS = ['avion','circuit','voiture','appart'];
-const NO_SHIP_CATS = ['avion','circuit','voiture','appart','formation'];
+const BOOKING_CATS = ['circuit','voiture','appart'];
+const NO_SHIP_CATS = ['circuit','voiture','appart','formation'];
 const BADGE_COLOR  = { Nouveau:C.green, Bestseller:C.gold, Promo:C.red, Premium:'#9b59b6' };
 const DEFAULT_ZONES = [
   {id:1,name:'Cotonou',price:1500,free_above:50000,delay:'24-48h'},
@@ -60,7 +60,6 @@ const CatIcon = ({ id, size=26 }) => {
   if (id==='mode')      return <ShoppingBag {...p}/>;
   if (id==='tech')      return <Cpu {...p}/>;
   if (id==='formation') return <GraduationCap {...p}/>;
-  if (id==='avion')     return <Plane {...p}/>;
   if (id==='circuit')   return <Map {...p}/>;
   if (id==='voiture')   return <Car {...p}/>;
   if (id==='appart')    return <Home {...p}/>;
@@ -493,7 +492,7 @@ export default function SMall() {
       ]);
       if (pd.data) setProducts(pd.data);
       if (cd.data && cd.data.length > 0) setCats([{id:'all',label:'Tout'}, ...cd.data]);
-      else setCats([{id:'all',label:'Tout'},{id:'mode',label:'Mode'},{id:'tech',label:'Électronique'},{id:'formation',label:'Formations'},{id:'avion',label:'Vols'},{id:'circuit',label:'Circuits'},{id:'voiture',label:'Voitures'},{id:'appart',label:'Appartements'}]);
+      else setCats([{id:'all',label:'Tout'},{id:'mode',label:'Mode'},{id:'tech',label:'Électronique'},{id:'formation',label:'Formations'},{id:'circuit',label:'Circuits'},{id:'voiture',label:'Voitures'},{id:'appart',label:'Appartements'}]);
       if (zd.data && zd.data.length > 0) setZones(zd.data);
       if (bd.data) setBanners(bd.data);
       if (rd.data) setReviews(rd.data);
@@ -537,7 +536,6 @@ export default function SMall() {
     setBooking(null);
     if (k==='home') setPage('home');
     else if (k==='shop') { setCat('all'); setPage('shop'); }
-    else if (k==='voyages') { setCat('avion'); setPage('shop'); }
     else if (k==='formations') { setCat('formation'); setPage('shop'); }
     else setPage(k);
   };
@@ -691,7 +689,7 @@ export default function SMall() {
           </div>
         </div>
         <div className="hide-mob" style={{ display:'flex', gap:20, alignItems:'center' }}>
-          {[['Accueil','home'],['Boutique','shop'],['Voyages','voyages'],['Formations','formations'],['Contact','contact']].map(([l,k]) => (
+          {[['Accueil','home'],['Boutique','shop'],['Formations','formations'],['Contact','contact']].map(([l,k]) => (
             <span key={k} className="lnk" style={{ fontWeight:600, fontSize:13, color:page===k?C.gold:C.muted }} onClick={() => go(k)}>{l}</span>
           ))}
         </div>
@@ -726,7 +724,7 @@ export default function SMall() {
               <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                 <button type="button" className="btn" onClick={() => go('shop')} style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px 26px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', gap:8 }}>Explorer<ArrowRight size={14}/></button>
                 <button type="button" onClick={() => { setCat('circuit'); setPage('shop'); }} style={{ background:'transparent', color:C.gold, border:`1.5px solid ${C.gold}`, borderRadius:13, padding:'13px 20px', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>Circuits</button>
-                <button type="button" onClick={() => { setCat('avion'); setPage('shop'); }} style={{ background:'transparent', color:C.muted, border:`1.5px solid ${C.border}`, borderRadius:13, padding:'13px 20px', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>Vols</button>
+
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Map, Car, Home } from 'lucide-react';
 import { sb } from './supabase';
 
@@ -26,6 +26,15 @@ const DEFAULT_ZONES = [
   {id:4,name:"Côte d'Ivoire",price:7500,free_above:200000,delay:'4-6 jours'},
   {id:5,name:'International',price:25000,free_above:500000,delay:'7-14 jours'},
 ];
+
+// ─── Pays FedaPay par zone ────────────────────────────────────────────────────
+const ZONE_COUNTRY = {
+  'Cotonou': 'bj',
+  'Bénin (hors Cotonou)': 'bj',
+  'Togo': 'tg',
+  "Côte d'Ivoire": 'ci',
+  'International': 'bj',
+};
 
 // ─── CSS GLOBAL ───────────────────────────────────────────────────────────────
 const CSS = `
@@ -145,14 +154,12 @@ function ProductCard({ p, cats, i, allImages, onOpen }) {
 }
 
 // ─── PRODUCT MODAL ────────────────────────────────────────────────────────────
-// Règle respectée : défini au niveau module, jamais à l'intérieur d'un autre composant
 function ProductModal({ product, cats, allVariants, allImages, onClose, onAddToCart, onBook }) {
   const [cur, setCur]   = useState(0);
   const [selS, setSelS] = useState(null);
   const [selC, setSelC] = useState(null);
   const [selZ, setSelZ] = useState(null);
 
-  // Reset selections when product changes
   useEffect(() => {
     setCur(0); setSelS(null); setSelC(null); setSelZ(null);
   }, [product?.id]);
@@ -314,7 +321,6 @@ function ProductModal({ product, cats, allVariants, allImages, onClose, onAddToC
 }
 
 // ─── BOOKING MODAL ────────────────────────────────────────────────────────────
-// IMPORTANT: useState AVANT tout return conditionnel — règle React respectée
 function BookingModal({ data, onClose, onConfirm }) {
   const today = new Date();
   const [bf, setBf]         = useState({ name:'', email:'', tel:'', date:'', qty:1 });
@@ -322,12 +328,11 @@ function BookingModal({ data, onClose, onConfirm }) {
   const [calOpen, setCalOpen] = useState(false);
   const [view, setView]     = useState({ y:today.getFullYear(), m:today.getMonth() });
 
-  // Reset when data changes
+  // IMPORTANT: tous les hooks AVANT le return conditionnel
   useEffect(() => {
     if (data) { setBf({ name:'', email:'', tel:'', date:'', qty:1 }); setErr(''); setCalOpen(false); }
   }, [data?.product?.id]);
 
-  // Toujours après les hooks
   if (!data) return null;
 
   const { product, price, acompte } = data;
@@ -444,6 +449,18 @@ function BookingModal({ data, onClose, onConfirm }) {
   );
 }
 
+// ─── HELPER : lire le panier depuis localStorage de façon sûre ────────────────
+function readCart() {
+  try {
+    const raw = localStorage.getItem('smcart');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── APPLICATION PRINCIPALE ───────────────────────────────────────────────────
 export default function SMall() {
   // ── Data
@@ -458,13 +475,15 @@ export default function SMall() {
 
   // ── UI
   const [page,    setPage]    = useState('home');
+  // FIX: on utilise une ref pour la catégorie cible lors de la navigation
+  const pendingCatRef = useRef(null);
   const [cat,     setCat]     = useState('all');
   const [search,  setSearch]  = useState('');
   const [zone,    setZone]    = useState(null);
   const [pay,     setPay]     = useState('fedapay');
-  const [modal,   setModal]   = useState(null);   // product | null
-  const [booking, setBooking] = useState(null);   // {product,price,acompte} | null
-  const [cart,    setCart]    = useState(() => { try { return JSON.parse(localStorage.getItem('smcart')||'[]'); } catch { return []; } });
+  const [modal,   setModal]   = useState(null);
+  const [booking, setBooking] = useState(null);
+  const [cart,    setCart]    = useState(readCart);
   const [form,    setForm]    = useState({ name:'', email:'', tel:'' });
   const [errs,    setErrs]    = useState({});
   const [proc,    setProc]    = useState(false);
@@ -476,7 +495,9 @@ export default function SMall() {
   const [lastRes, setLastRes] = useState(null);
 
   // Persist cart
-  useEffect(() => { try { localStorage.setItem('smcart', JSON.stringify(cart)); } catch {} }, [cart]);
+  useEffect(() => {
+    try { localStorage.setItem('smcart', JSON.stringify(cart)); } catch {}
+  }, [cart]);
 
   // ── Load all data once
   const loadAll = useCallback(async () => {
@@ -530,14 +551,30 @@ export default function SMall() {
 
   const notify = (msg, color=C.gold) => { setNotif({msg,color}); setTimeout(()=>setNotif(null),3500); };
 
+  // FIX : navigation robuste — la catégorie est appliquée de façon synchrone
   const go = k => {
     setSearch('');
     setModal(null);
     setBooking(null);
-    if (k==='home') setPage('home');
-    else if (k==='shop') { setCat('all'); setPage('shop'); }
-    else if (k==='formations') { setCat('formation'); setPage('shop'); }
-    else setPage(k);
+    if (k==='home') {
+      setPage('home');
+    } else if (k==='shop') {
+      setCat('all');
+      setPage('shop');
+    } else if (k==='formations') {
+      setCat('formation');
+      setPage('shop');
+    } else {
+      setPage(k);
+    }
+  };
+
+  const goToCat = targetCat => {
+    setSearch('');
+    setModal(null);
+    setBooking(null);
+    setCat(targetCat);
+    setPage('shop');
   };
 
   const addToCart = (p, variant) => {
@@ -558,6 +595,12 @@ export default function SMall() {
     setBooking({ product, price, acompte });
   };
 
+  // FIX : pays FedaPay dynamique selon la zone choisie
+  const getFedaCountry = () => {
+    if (!zone) return 'bj';
+    return ZONE_COUNTRY[zone.name] || 'bj';
+  };
+
   const doBook = async info => {
     const resId = RID();
     const amt   = info.acompte * info.qty;
@@ -573,7 +616,7 @@ export default function SMall() {
         subject:`🔔 Réservation — ${info.product.name}`,
         html:`<div style="font-family:sans-serif;background:#0a0a0a;color:#f5f0e8;padding:24px;border-radius:12px;"><h2 style="color:#c9a84c;">🔔 Réservation S-Mall</h2><p><b>Produit:</b> ${info.product.name}</p><p><b>Client:</b> ${info.name} / ${info.tel}</p><p><b>Date:</b> ${info.date} · ${info.qty} pers.</p><p><b>Acompte:</b> ${FCFA(amt)}</p><p><b>Réf:</b> ${resId}</p></div>`
       })});
-    } catch(e) {}
+    } catch(e) { console.warn('Email notification failed:', e); }
     setProc(true);
     if (window.FedaPay) {
       window.FedaPay.init({
@@ -609,13 +652,14 @@ export default function SMall() {
     if (needsShip && !zone) { notify('Choisissez une zone de livraison', C.red); return; }
     setProc(true);
     const snap = { cart:[...cart], subtotal, shipCost, total, zone };
+    const country = getFedaCountry();
     try {
       if (window.FedaPay) {
         const oid = UID();
         window.FedaPay.init({
           public_key: FEDA_KEY,
           transaction: { amount:snap.total, description:`Commande S-Mall ${oid}` },
-          customer: { firstname:form.name.split(' ')[0], lastname:form.name.split(' ').slice(1).join(' ')||'.', email:form.email, phone_number:{number:form.tel,country:'bj'} },
+          customer: { firstname:form.name.split(' ')[0], lastname:form.name.split(' ').slice(1).join(' ')||'.', email:form.email, phone_number:{number:form.tel,country} },
           onComplete: async r => {
             if (r.reason==='DIALOG DISMISSED') { setProc(false); notify('Paiement annulé',C.red); return; }
             await sb.from('orders').insert({
@@ -630,7 +674,7 @@ export default function SMall() {
                 subject:`✦ Confirmation S-Mall — ${oid}`,
                 html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:18px;margin:16px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${oid}</b></p></div><p>Bonjour <b>${form.name}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${FCFA(snap.total)}</b>.</p><p style="color:#555;font-size:12px;text-align:center;margin-top:16px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`
               })});
-            } catch(e) {}
+            } catch(e) { console.warn('Email confirmation failed:', e); }
             setProc(false); setCart([]); setZone(null); setPage('ok');
           }
         }).open();
@@ -690,7 +734,7 @@ export default function SMall() {
         </div>
         <div className="hide-mob" style={{ display:'flex', gap:20, alignItems:'center' }}>
           {[['Accueil','home'],['Boutique','shop'],['Formations','formations'],['Contact','contact']].map(([l,k]) => (
-            <span key={k} className="lnk" style={{ fontWeight:600, fontSize:13, color:page===k?C.gold:C.muted }} onClick={() => go(k)}>{l}</span>
+            <span key={k} className="lnk" style={{ fontWeight:600, fontSize:13, color:page===k||(k==='formations'&&page==='shop'&&cat==='formation')?C.gold:C.muted }} onClick={() => go(k)}>{l}</span>
           ))}
         </div>
         <button type="button" className="btn" onClick={() => setPage('cart')}
@@ -723,8 +767,7 @@ export default function SMall() {
               <p style={{ color:C.muted, fontSize:15, lineHeight:1.7, maxWidth:460, marginBottom:28 }}>Vêtements, électronique, formations, vols, circuits Bénin · Togo · CIV, voitures & appartements.</p>
               <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
                 <button type="button" className="btn" onClick={() => go('shop')} style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px 26px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', gap:8 }}>Explorer<ArrowRight size={14}/></button>
-                <button type="button" onClick={() => { setCat('circuit'); setPage('shop'); }} style={{ background:'transparent', color:C.gold, border:`1.5px solid ${C.gold}`, borderRadius:13, padding:'13px 20px', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>Circuits</button>
-
+                <button type="button" onClick={() => goToCat('circuit')} style={{ background:'transparent', color:C.gold, border:`1.5px solid ${C.gold}`, borderRadius:13, padding:'13px 20px', fontWeight:600, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>Circuits</button>
               </div>
             </div>
           </div>
@@ -738,7 +781,7 @@ export default function SMall() {
             <GL/>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:12 }}>
               {cats.filter(c => c.id!=='all').map((c,i) => (
-                <div key={c.id} className="hov" onClick={() => { setCat(c.id); setPage('shop'); }}
+                <div key={c.id} className="hov" onClick={() => goToCat(c.id)}
                   style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:16, padding:'18px 12px', textAlign:'center', cursor:'pointer', animation:`fadeUp .35s ease ${i*.04}s both` }}>
                   <div style={{ display:'flex', justifyContent:'center', marginBottom:8 }}><CatIcon id={c.id}/></div>
                   <p style={{ fontWeight:700, fontSize:12, color:C.white }}>{c.label}</p>
@@ -819,7 +862,7 @@ export default function SMall() {
                 <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, marginBottom:5 }}>Formations & Ebooks</h3>
                 <p style={{ color:C.muted, fontSize:13, maxWidth:380, lineHeight:1.6 }}>Lien d'accès envoyé automatiquement par email dès le paiement.</p>
               </div>
-              <button type="button" className="btn" onClick={() => { setCat('formation'); setPage('shop'); }}
+              <button type="button" className="btn" onClick={() => goToCat('formation')}
                 style={{ background:'linear-gradient(135deg,#c0392b,#e8533f)', color:'#fff', border:'none', borderRadius:13, padding:'11px 22px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", flexShrink:0 }}>
                 Voir les formations →
               </button>
@@ -873,7 +916,7 @@ export default function SMall() {
                 {/* ITEMS */}
                 <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
                   {cart.map((item,idx) => (
-                    <div key={idx} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:14 }}>
+                    <div key={item._key||idx} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:'14px 16px', display:'flex', alignItems:'center', gap:14 }}>
                       <div style={{ width:50, height:50, borderRadius:11, background:C.card2, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0, overflow:'hidden', border:`1px solid ${C.border}` }}>
                         {item.image_url ? <img src={item.image_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} alt=""/> : <span>{item.emoji}</span>}
                       </div>
@@ -992,7 +1035,7 @@ export default function SMall() {
               <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:16, marginBottom:13 }}>Votre commande</h3>
               <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:13, maxHeight:160, overflowY:'auto' }}>
                 {cart.map((item,idx) => (
-                  <div key={idx} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+                  <div key={item._key||idx} style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
                     <div style={{ width:28, height:28, borderRadius:7, background:C.card2, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>{item.emoji}</div>
                     <div style={{ flex:1 }}>
                       <p style={{ fontWeight:600, fontSize:12, color:C.white }}>{item.name}</p>
@@ -1086,8 +1129,10 @@ export default function SMall() {
                     </div>
                     <button type="button" className="btn" onClick={async () => {
                       if (!ctForm.name.trim()||!ctForm.message.trim()) { notify('Remplissez nom et message', C.red); return; }
-                      await sb.from('messages').insert({ from_name:ctForm.name, from_email:ctForm.email||'N/A', subject:`Contact S-Mall — ${ctForm.name}`, message:ctForm.tel?`Tél: ${ctForm.tel}\n\n${ctForm.message}`:ctForm.message });
-                      setCtSent(true); setCtForm({name:'',email:'',tel:'',message:''}); notify('✦ Message envoyé !');
+                      try {
+                        await sb.from('messages').insert({ from_name:ctForm.name, from_email:ctForm.email||'N/A', subject:`Contact S-Mall — ${ctForm.name}`, message:ctForm.tel?`Tél: ${ctForm.tel}\n\n${ctForm.message}`:ctForm.message });
+                        setCtSent(true); setCtForm({name:'',email:'',tel:'',message:''}); notify('✦ Message envoyé !');
+                      } catch(e) { notify('Erreur lors de l\'envoi. Réessayez.', C.red); }
                     }} style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:11, padding:'11px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
                       <Send size={13}/>Envoyer
                     </button>
@@ -1128,8 +1173,10 @@ export default function SMall() {
                         style={{ width:'100%', background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:9, padding:'9px 13px', color:C.white, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:'none', resize:'none', boxSizing:'border-box' }}/>
                       <button type="button" className="btn" onClick={async () => {
                         if (!rvForm.name.trim()||!rvForm.comment.trim()) { notify('Remplissez tous les champs', C.red); return; }
-                        await sb.from('reviews').insert({ client_name:rvForm.name, rating:rvForm.rating, comment:rvForm.comment, approved:false });
-                        setRvSent(true); notify('✦ Avis envoyé !');
+                        try {
+                          await sb.from('reviews').insert({ client_name:rvForm.name, rating:rvForm.rating, comment:rvForm.comment, approved:false });
+                          setRvSent(true); notify('✦ Avis envoyé !');
+                        } catch(e) { notify('Erreur lors de l\'envoi', C.red); }
                       }} style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:10, padding:'10px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
                         <Star size={12}/>Publier
                       </button>

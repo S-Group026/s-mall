@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { sb } from './supabase';
 
 const C = {
@@ -13,25 +13,30 @@ function Spinner({size=18}) {
   return <span style={{display:"inline-block",width:size,height:size,border:`2px solid ${C.border}`,borderTopColor:C.gold,borderRadius:"50%",animation:"spin .7s linear infinite"}}/>;
 }
 
+// FIX: hook stable sans boucle infinie — loadFn mémoïsé via useCallback côté appelant
 function useRealtimeTable(table, loadFn) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0);
-  
+  const loadFnRef = useRef(loadFn);
+  loadFnRef.current = loadFn;
+
   useEffect(()=>{
     let mounted = true;
     const load = async()=>{
       try {
-        const {data:d} = await loadFn();
+        const {data:d} = await loadFnRef.current();
         if(mounted) { setData(d||[]); setLoading(false); }
       } catch(e) { if(mounted) setLoading(false); }
     };
     load();
     const chName = `rt-${table}-${Math.random().toString(36).slice(2)}`;
-    const ch = sb.channel(chName).on("postgres_changes",{event:"*",schema:"public",table},()=>{ if(mounted) setTick(t=>t+1); }).subscribe();
+    const ch = sb.channel(chName)
+      .on("postgres_changes",{event:"*",schema:"public",table},()=>{ if(mounted) load(); })
+      .subscribe();
     return ()=>{ mounted=false; sb.removeChannel(ch); };
-  },[tick]);
-  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[table]);
+
   return {data,loading};
 }
 
@@ -41,8 +46,12 @@ function ImageUploader({productId}) {
   const [uploading,setUploading]=useState(false);
   const fileRef=useRef();
 
-  const load=async()=>{ const {data}=await sb.from("product_images").select("*").eq("product_id",productId).order("position"); setImages(data||[]); };
-  useEffect(()=>{ if(productId)load(); },[productId]);
+  const load=useCallback(async()=>{
+    const {data}=await sb.from("product_images").select("*").eq("product_id",productId).order("position");
+    setImages(data||[]);
+  },[productId]);
+
+  useEffect(()=>{ if(productId) load(); },[productId,load]);
 
   const upload=async(e)=>{
     const files=Array.from(e.target.files);
@@ -60,6 +69,8 @@ function ImageUploader({productId}) {
     }
     await load();
     setUploading(false);
+    // reset input pour permettre le même fichier
+    e.target.value='';
   };
 
   const remove=async(img)=>{
@@ -73,7 +84,7 @@ function ImageUploader({productId}) {
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <label style={{fontSize:12,fontWeight:700,color:C.muted}}>📸 Photos ({images.length})</label>
-        <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:9,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6}}>
+        <button type="button" onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:9,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:6}}>
           {uploading?<><Spinner size={13}/>Upload…</>:"📤 Ajouter photos"}
         </button>
       </div>
@@ -85,7 +96,7 @@ function ImageUploader({productId}) {
           <div key={img.id} style={{position:"relative",width:80,height:80,borderRadius:12,overflow:"hidden",border:`2px solid ${i===0?C.gold:C.border}`,flexShrink:0}}>
             <img src={img.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             {i===0&&<span style={{position:"absolute",top:2,left:2,background:C.gold,color:C.bg,fontSize:7,fontWeight:800,padding:"1px 4px",borderRadius:4}}>MAIN</span>}
-            <button onClick={()=>remove(img)} style={{position:"absolute",top:2,right:2,background:"rgba(0,0,0,0.7)",border:"none",color:C.red,borderRadius:5,width:18,height:18,cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            <button type="button" onClick={()=>remove(img)} style={{position:"absolute",top:2,right:2,background:"rgba(0,0,0,0.7)",border:"none",color:C.red,borderRadius:5,width:18,height:18,cursor:"pointer",fontSize:10,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
           </div>
         ))}
       </div>
@@ -103,8 +114,12 @@ function VariantsManager({productId}) {
   const [vf,setVf]=useState({color:"",color_hex:"#000000",storage:"",size:"",price:""});
   const fmt2=n=>new Intl.NumberFormat("fr-FR").format(n)+" FCFA";
 
-  const load=async()=>{ const {data}=await sb.from("product_variants").select("*").eq("product_id",productId).order("storage").order("color"); setVariants(data||[]); };
-  useEffect(()=>{ if(productId)load(); },[productId]);
+  const load=useCallback(async()=>{
+    const {data}=await sb.from("product_variants").select("*").eq("product_id",productId).order("storage").order("color");
+    setVariants(data||[]);
+  },[productId]);
+
+  useEffect(()=>{ if(productId) load(); },[productId,load]);
 
   const openAdd=()=>{ setEditId(null);setVf({color:"",color_hex:"#000000",storage:"",size:"",price:""});setShowForm(true); };
   const openEdit=(v)=>{ setEditId(v.id);setVf({color:v.color||"",color_hex:v.color_hex||"#000000",storage:v.storage||"",size:v.size||"",price:String(v.price)});setShowForm(true); };
@@ -131,7 +146,7 @@ function VariantsManager({productId}) {
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <label style={{fontSize:12,fontWeight:700,color:C.muted}}>🎛️ Variantes ({variants.length})</label>
-        <button onClick={showForm?()=>setShowForm(false):openAdd} style={{background:`${C.blue}20`,border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:9,padding:"6px 13px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+        <button type="button" onClick={showForm?()=>setShowForm(false):openAdd} style={{background:`${C.blue}20`,border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:9,padding:"6px 13px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
           {showForm?"✕ Fermer":"+ Ajouter variante"}
         </button>
       </div>
@@ -171,11 +186,11 @@ function VariantsManager({productId}) {
             <F label="Prix (FCFA) *" field="price" placeholder="450000" type="number"/>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button onClick={save} disabled={!vf.price}
+            <button type="button" onClick={save} disabled={!vf.price}
               style={{background:vf.price?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:vf.price?C.bg:C.muted,border:"none",borderRadius:9,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:vf.price?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif"}}>
               {editId?"💾 Sauvegarder":"✓ Ajouter"}
             </button>
-            <button onClick={()=>setShowForm(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:9,padding:"9px 13px",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
+            <button type="button" onClick={()=>setShowForm(false)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:9,padding:"9px 13px",fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
           </div>
         </div>
       )}
@@ -188,8 +203,8 @@ function VariantsManager({productId}) {
               <span style={{fontSize:13,color:C.white,flex:1}}>{[v.storage,v.color,v.size].filter(Boolean).join(" · ")||"Variante"}</span>
               <span style={{fontWeight:800,color:C.gold,fontSize:13,minWidth:110,textAlign:"right"}}>{fmt2(v.price)}</span>
               <div style={{display:"flex",gap:5}}>
-                <button onClick={()=>openEdit(v)} style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>✏️</button>
-                <button onClick={()=>remove(v.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>🗑️</button>
+                <button type="button" onClick={()=>openEdit(v)} style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>✏️</button>
+                <button type="button" onClick={()=>remove(v.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontWeight:700}}>🗑️</button>
               </div>
             </div>
           ))}
@@ -204,13 +219,16 @@ function VariantsManager({productId}) {
 // ── PRODUCTS SECTION ──────────────────────────────────────────────────────────
 function ProductsSection() {
   const [CATS,setCATS]=useState([]);
-  const {data:products,loading}=useRealtimeTable("products", ()=>sb.from("products").select("*").order("id"));
+  // FIX: loadFn mémoïsé pour éviter rerenders inutiles dans useRealtimeTable
+  const productsLoader=useCallback(()=>sb.from("products").select("*").order("id"),[]);
+  const {data:products,loading}=useRealtimeTable("products", productsLoader);
   const [showForm,setShowForm]=useState(false);
   const [editing,setEditing]=useState(null);
   const [savedId,setSavedId]=useState(null);
   const [saving,setSaving]=useState(false);
   const [search,setSearch]=useState("");
   const [filterCat,setFilterCat]=useState("all");
+  // FIX: utiliser "desc" comme champ unifié (cohérent avec Client.js qui lit p.desc||p.description)
   const [form,setForm]=useState({cat:"mode",name:"",price:"",orig_price:"",emoji:"🛍️",desc:"",badge:"",bookable:false,book_type:"",dest:"",active:true,image_url:"",download_url:""});
 
   useEffect(()=>{
@@ -223,7 +241,22 @@ function ProductsSection() {
   const save=async()=>{
     if(!form.name.trim()||!form.price){return;}
     setSaving(true);
-    const payload={cat:form.cat,name:form.name.trim(),price:Number(form.price),orig_price:form.orig_price?Number(form.orig_price):null,emoji:form.emoji||"🛍️",description:form.desc,badge:form.badge||null,bookable:!!form.bookable,book_type:form.book_type||null,dest:form.dest||null,active:form.active,download_url:form.download_url||null};
+    // FIX: on écrit "desc" ET "description" pour compatibilité complète
+    const payload={
+      cat:form.cat,
+      name:form.name.trim(),
+      price:Number(form.price),
+      orig_price:form.orig_price?Number(form.orig_price):null,
+      emoji:form.emoji||"🛍️",
+      desc:form.desc,
+      description:form.desc,
+      badge:form.badge||null,
+      bookable:!!form.bookable,
+      book_type:form.book_type||null,
+      dest:form.dest||null,
+      active:form.active,
+      download_url:form.download_url||null,
+    };
     if(editing){
       await sb.from("products").update(payload).eq("id",editing.id);
       setSavedId(editing.id);
@@ -261,7 +294,7 @@ function ProductsSection() {
           <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Produits</h2>
           <p style={{color:C.muted,fontSize:14}}>{products.length} produit{products.length!==1?"s":""} au total</p>
         </div>
-        <button onClick={showForm?()=>{setShowForm(false);setEditing(null);setSavedId(null);}:startNew}
+        <button type="button" onClick={showForm?()=>{setShowForm(false);setEditing(null);setSavedId(null);}:startNew}
           style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
           {showForm?"✕ Fermer":"+ Nouveau produit"}
         </button>
@@ -326,11 +359,11 @@ function ProductsSection() {
                 </div>
               )}
               <div style={{display:"flex",gap:8,marginTop:14}}>
-                <button onClick={save} disabled={saving||!form.name||!form.price}
+                <button type="button" onClick={save} disabled={saving||!form.name||!form.price}
                   style={{flex:1,background:saving||!form.name||!form.price?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:saving||!form.name||!form.price?C.muted:C.bg,border:"none",borderRadius:12,padding:"11px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                   {saving?<><Spinner size={15}/>Sauvegarde…</>:"💾 Sauvegarder"}
                 </button>
-                <button onClick={()=>{setShowForm(false);setEditing(null);setSavedId(null);}} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:12,padding:"11px 18px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:14}}>Annuler</button>
+                <button type="button" onClick={()=>{setShowForm(false);setEditing(null);setSavedId(null);}} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:12,padding:"11px 18px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:14}}>Annuler</button>
               </div>
             </div>
           </div>
@@ -352,9 +385,10 @@ function ProductsSection() {
         <div style={{flex:1,minWidth:180,display:"flex",alignItems:"center",background:C.card,border:`1px solid ${C.border}`,borderRadius:10,padding:"9px 14px",gap:8}}>
           <span style={{color:C.gold}}>🔍</span>
           <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher…" style={{border:"none",outline:"none",background:"transparent",color:C.white,fontSize:14,width:"100%",fontFamily:"'DM Sans',sans-serif"}}/>
+          {search&&<button type="button" onClick={()=>setSearch("")} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:16}}>×</button>}
         </div>
         {cats.map(c=>(
-          <button key={c.id} onClick={()=>setFilterCat(c.id)} style={{padding:"8px 14px",borderRadius:999,border:`1.5px solid ${filterCat===c.id?C.gold:C.border}`,background:filterCat===c.id?`${C.gold}18`:"transparent",color:filterCat===c.id?C.gold:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{c.label}</button>
+          <button type="button" key={c.id} onClick={()=>setFilterCat(c.id)} style={{padding:"8px 14px",borderRadius:999,border:`1.5px solid ${filterCat===c.id?C.gold:C.border}`,background:filterCat===c.id?`${C.gold}18`:"transparent",color:filterCat===c.id?C.gold:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{c.label}</button>
         ))}
       </div>
 
@@ -371,9 +405,9 @@ function ProductsSection() {
                 <p style={{fontSize:11,color:C.muted,marginBottom:8}}>{CATS.find(c=>c.id===p.cat)?.label}{p.badge&&` · ${p.badge}`}</p>
                 <p style={{fontWeight:800,fontSize:14,color:C.gold,marginBottom:10}}>{fmt(p.price)}</p>
                 <div style={{display:"flex",gap:6}}>
-                  <button onClick={()=>startEdit(p)} style={{flex:1,background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:9,padding:"6px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✏️ Modifier</button>
-                  <button onClick={()=>toggleActive(p)} style={{background:`${p.active?C.red:C.green}15`,border:`1px solid ${p.active?C.red:C.green}33`,color:p.active?C.red:C.green,borderRadius:9,padding:"6px 8px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{p.active?"🙈":"👁"}</button>
-                  <button onClick={()=>deleteProduct(p.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"6px 8px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
+                  <button type="button" onClick={()=>startEdit(p)} style={{flex:1,background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:9,padding:"6px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>✏️ Modifier</button>
+                  <button type="button" onClick={()=>toggleActive(p)} style={{background:`${p.active?C.red:C.green}15`,border:`1px solid ${p.active?C.red:C.green}33`,color:p.active?C.red:C.green,borderRadius:9,padding:"6px 8px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{p.active?"🙈":"👁"}</button>
+                  <button type="button" onClick={()=>deleteProduct(p.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"6px 8px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
                 </div>
               </div>
             </div>
@@ -386,7 +420,8 @@ function ProductsSection() {
 
 // ── ORDERS SECTION ────────────────────────────────────────────────────────────
 function OrdersSection() {
-  const {data:orders,loading}=useRealtimeTable("orders", ()=>sb.from("orders").select("*").order("created_at",{ascending:false}));
+  const ordersLoader=useCallback(()=>sb.from("orders").select("*").order("created_at",{ascending:false}),[]);
+  const {data:orders,loading}=useRealtimeTable("orders", ordersLoader);
   const STATUSES=["En cours","Confirmé","Expédié","Livré","Annulé"];
   const updateStatus=async(id,status)=>{ await sb.from("orders").update({status}).eq("id",id); };
 
@@ -435,7 +470,8 @@ function OrdersSection() {
 
 // ── RESERVATIONS SECTION ──────────────────────────────────────────────────────
 function ReservationsSection() {
-  const {data:reservations,loading}=useRealtimeTable("reservations", ()=>sb.from("reservations").select("*").order("created_at",{ascending:false}));
+  const resLoader=useCallback(()=>sb.from("reservations").select("*").order("created_at",{ascending:false}),[]);
+  const {data:reservations,loading}=useRealtimeTable("reservations", resLoader);
   const updateStatus=async(id,status)=>{ await sb.from("reservations").update({status}).eq("id",id); };
 
   return (
@@ -463,7 +499,7 @@ function ReservationsSection() {
                   <span style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:18,color:C.gold}}>{fmt(r.total)}</span>
                   <select value={r.status} onChange={e=>updateStatus(r.id,e.target.value)}
                     style={{background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"6px 11px",color:C.white,fontSize:12,fontFamily:"'DM Sans',sans-serif",outline:"none",cursor:"pointer"}}>
-                    {["En attente","Confirmé","Annulé"].map(s=><option key={s} value={s}>{s}</option>)}
+                    {["En attente","Acompte reçu","Confirmé","Annulé"].map(s=><option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
               </div>
@@ -477,7 +513,8 @@ function ReservationsSection() {
 
 // ── MESSAGES SECTION ──────────────────────────────────────────────────────────
 function MessagesSection() {
-  const {data:messages,loading}=useRealtimeTable("messages", ()=>sb.from("messages").select("*").order("created_at",{ascending:false}));
+  const msgLoader=useCallback(()=>sb.from("messages").select("*").order("created_at",{ascending:false}),[]);
+  const {data:messages,loading}=useRealtimeTable("messages", msgLoader);
   const [selected,setSelected]=useState(null);
   const [reply,setReply]=useState("");
   const [sending,setSending]=useState(false);
@@ -493,7 +530,7 @@ function MessagesSection() {
     setSending(true);
     await sb.from("messages").update({replied:true,read:true,reply_text:reply}).eq("id",selected.id);
     setSelected(s=>({...s,replied:true,reply_text:reply}));
-    if(selected.from_email&&selected.from_email!=="Non renseigné"){
+    if(selected.from_email&&selected.from_email!=="N/A"&&selected.from_email!=="Non renseigné"){
       try {
         await fetch("https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email",{
           method:"POST",headers:{"Content-Type":"application/json"},
@@ -503,7 +540,7 @@ function MessagesSection() {
             html:`<div style="font-family:sans-serif;max-width:580px;margin:0 auto;background:#0a0a0a;color:#f5f0e8;padding:32px;border-radius:16px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:12px;padding:20px;margin:20px 0;"><p>Bonjour <strong>${selected.from_name}</strong>,</p><p style="color:#888;">En réponse à : <em>${selected.subject}</em></p><div style="border-left:3px solid #c9a84c;padding-left:16px;margin-top:12px;"><p>${reply}</p></div></div><p style="color:#555;font-size:12px;text-align:center;"><a href="https://wa.me/2250150512408" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`
           })
         });
-      } catch(e){}
+      } catch(e){ console.warn('Reply email failed:', e); }
     }
     setReply("");setSending(false);
   };
@@ -549,7 +586,7 @@ function MessagesSection() {
               <div>
                 <textarea value={reply} onChange={e=>setReply(e.target.value)} placeholder={`Répondre à ${selected.from_name}…`} rows={4}
                   style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 16px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
-                <button onClick={sendReply} disabled={sending||!reply.trim()}
+                <button type="button" onClick={sendReply} disabled={sending||!reply.trim()}
                   style={{marginTop:10,background:reply.trim()&&!sending?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#2a2a2a",color:reply.trim()&&!sending?C.bg:C.muted,border:"none",borderRadius:11,padding:"10px 20px",fontWeight:700,fontSize:14,cursor:reply.trim()&&!sending?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
                   {sending?<><Spinner size={14}/>Envoi en cours…</>:"✦ Envoyer la réponse"}
                 </button>
@@ -566,10 +603,14 @@ function MessagesSection() {
 
 // ── STATS SECTION ─────────────────────────────────────────────────────────────
 function StatsSection() {
-  const {data:orders}=useRealtimeTable("orders", ()=>sb.from("orders").select("*"));
-  const {data:reservations}=useRealtimeTable("reservations", ()=>sb.from("reservations").select("*"));
-  const {data:products}=useRealtimeTable("products", ()=>sb.from("products").select("*"));
-  const {data:reviews}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("*"));
+  const ordersLoader=useCallback(()=>sb.from("orders").select("*"),[]);
+  const resLoader=useCallback(()=>sb.from("reservations").select("*"),[]);
+  const prodLoader=useCallback(()=>sb.from("products").select("*"),[]);
+  const revLoader=useCallback(()=>sb.from("reviews").select("*"),[]);
+  const {data:orders}=useRealtimeTable("orders", ordersLoader);
+  const {data:reservations}=useRealtimeTable("reservations", resLoader);
+  const {data:products}=useRealtimeTable("products", prodLoader);
+  const {data:reviews}=useRealtimeTable("reviews", revLoader);
 
   const revenue=orders.reduce((s,o)=>s+(o.total||0),0);
   const confirmed=orders.filter(o=>o.status==="Confirmé"||o.status==="Livré").length;
@@ -620,7 +661,8 @@ function StatsSection() {
 
 // ── REVIEWS SECTION ───────────────────────────────────────────────────────────
 function ReviewsSection() {
-  const {data:reviews,loading}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("*").order("created_at",{ascending:false}));
+  const revLoader=useCallback(()=>sb.from("reviews").select("*").order("created_at",{ascending:false}),[]);
+  const {data:reviews,loading}=useRealtimeTable("reviews", revLoader);
   const [filter,setFilter]=useState("Tous");
   const approve=async(id)=>{ await sb.from("reviews").update({approved:true}).eq("id",id); };
   const remove=async(id)=>{ await sb.from("reviews").delete().eq("id",id); };
@@ -634,7 +676,7 @@ function ReviewsSection() {
       </div>
       <div style={{display:"flex",gap:8,marginBottom:18}}>
         {["Tous","En attente","Publiés"].map(f=>(
-          <button key={f} onClick={()=>setFilter(f)} style={{padding:"7px 14px",borderRadius:999,border:`1.5px solid ${filter===f?C.gold:C.border}`,background:filter===f?`${C.gold}18`:"transparent",color:filter===f?C.gold:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{f}</button>
+          <button type="button" key={f} onClick={()=>setFilter(f)} style={{padding:"7px 14px",borderRadius:999,border:`1.5px solid ${filter===f?C.gold:C.border}`,background:filter===f?`${C.gold}18`:"transparent",color:filter===f?C.gold:C.muted,fontWeight:600,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{f}</button>
         ))}
       </div>
       {loading?<div style={{display:"flex",gap:10,alignItems:"center"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>:filtered.length===0?<p style={{color:C.muted,textAlign:"center",padding:"40px 0"}}>Aucun avis.</p>:(
@@ -653,8 +695,8 @@ function ReviewsSection() {
                   <p style={{fontSize:11,color:C.muted,marginTop:8}}>{new Date(r.created_at).toLocaleDateString("fr-FR")}</p>
                 </div>
                 <div style={{display:"flex",flexDirection:"column",gap:7}}>
-                  {!r.approved&&<button onClick={()=>approve(r.id)} style={{background:`${C.green}20`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"7px 14px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✓ Approuver</button>}
-                  <button onClick={()=>remove(r.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}44`,color:C.red,borderRadius:9,padding:"7px 14px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer</button>
+                  {!r.approved&&<button type="button" onClick={()=>approve(r.id)} style={{background:`${C.green}20`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"7px 14px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✓ Approuver</button>}
+                  <button type="button" onClick={()=>remove(r.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}44`,color:C.red,borderRadius:9,padding:"7px 14px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer</button>
                 </div>
               </div>
             </div>
@@ -667,7 +709,8 @@ function ReviewsSection() {
 
 // ── CATEGORIES SECTION ────────────────────────────────────────────────────────
 function CategoriesSection() {
-  const {data:cats,loading}=useRealtimeTable("categories", ()=>sb.from("categories").select("*").order("position"));
+  const catsLoader=useCallback(()=>sb.from("categories").select("*").order("position"),[]);
+  const {data:cats,loading}=useRealtimeTable("categories", catsLoader);
   const [showForm,setShowForm]=useState(false);
   const [cf,setCf]=useState({id:"",label:"",icon:"🏷️",position:0});
   const [saving,setSaving]=useState(false);
@@ -684,7 +727,7 @@ function CategoriesSection() {
     <div>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
         <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24}}>Catégories</h2>
-        <button onClick={()=>setShowForm(!showForm)} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{showForm?"✕ Fermer":"+ Nouvelle"}</button>
+        <button type="button" onClick={()=>setShowForm(!showForm)} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{showForm?"✕ Fermer":"+ Nouvelle"}</button>
       </div>
       {showForm&&(
         <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,padding:22,marginBottom:20}}>
@@ -697,7 +740,7 @@ function CategoriesSection() {
               </div>
             ))}
           </div>
-          <button onClick={save} disabled={saving} style={{marginTop:14,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:11,padding:"9px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+          <button type="button" onClick={save} disabled={saving} style={{marginTop:14,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:11,padding:"9px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
             {saving?<Spinner size={14}/>:"💾 Sauvegarder"}
           </button>
         </div>
@@ -707,7 +750,7 @@ function CategoriesSection() {
           {cats.map(c=>(
             <div key={c.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div><p style={{fontWeight:700,fontSize:14,color:C.white,marginBottom:4}}>{c.icon} {c.label}</p><p style={{fontSize:11,color:C.muted}}>{c.id} · pos.{c.position}</p></div>
-              <button onClick={()=>remove(c.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"5px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
+              <button type="button" onClick={()=>remove(c.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"5px 9px",fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
             </div>
           ))}
         </div>
@@ -718,7 +761,8 @@ function CategoriesSection() {
 
 // ── SHIPPING SECTION ──────────────────────────────────────────────────────────
 function ShippingSection() {
-  const {data:zones,loading}=useRealtimeTable("shipping_zones", ()=>sb.from("shipping_zones").select("*").order("price"));
+  const shipLoader=useCallback(()=>sb.from("shipping_zones").select("*").order("price"),[]);
+  const {data:zones,loading}=useRealtimeTable("shipping_zones", shipLoader);
   const [editId,setEditId]=useState(null);
   const [ef,setEf]=useState({price:"",free_above:"",delay:""});
 
@@ -748,8 +792,8 @@ function ShippingSection() {
                     ))}
                   </div>
                   <div style={{display:"flex",gap:8}}>
-                    <button onClick={save} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>💾 Sauvegarder</button>
-                    <button onClick={()=>setEditId(null)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"9px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>Annuler</button>
+                    <button type="button" onClick={save} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>💾 Sauvegarder</button>
+                    <button type="button" onClick={()=>setEditId(null)} style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:10,padding:"9px 14px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>Annuler</button>
                   </div>
                 </div>
               ):(
@@ -762,7 +806,7 @@ function ShippingSection() {
                       <span>⏱ {z.delay}</span>
                     </div>
                   </div>
-                  <button onClick={()=>startEdit(z)} style={{background:C.card2,border:`1px solid ${C.border}`,color:C.gold,borderRadius:10,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✏️ Modifier</button>
+                  <button type="button" onClick={()=>startEdit(z)} style={{background:C.card2,border:`1px solid ${C.border}`,color:C.gold,borderRadius:10,padding:"8px 16px",cursor:"pointer",fontSize:12,fontWeight:700,fontFamily:"'DM Sans',sans-serif"}}>✏️ Modifier</button>
                 </div>
               )}
             </div>
@@ -775,7 +819,8 @@ function ShippingSection() {
 
 // ── BANNERS SECTION ───────────────────────────────────────────────────────────
 function BannersSection() {
-  const {data:banners,loading}=useRealtimeTable("banners", ()=>sb.from("banners").select("*").order("created_at",{ascending:false}));
+  const bannersLoader=useCallback(()=>sb.from("banners").select("*").order("created_at",{ascending:false}),[]);
+  const {data:banners,loading}=useRealtimeTable("banners", bannersLoader);
   const [showForm,setShowForm]=useState(false);
   const [bf,setBf]=useState({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});
   const [saving,setSaving]=useState(false);
@@ -795,18 +840,20 @@ function BannersSection() {
       setBf(f=>({...f,media_url:data.publicUrl,media_type:isVideo?"video":"image"}));
     }
     setUploading(false);
+    e.target.value='';
   };
 
   const save=async()=>{
     if(!bf.media_url){alert("Veuillez d'abord uploader une image ou vidéo.");return;}
     setSaving(true);
+    // FIX: title est null explicitement si vide (évite undefined)
     const bannerPayload = {
       media_url: bf.media_url,
       active: bf.active,
-      title: bf.title||null,
-      media_type: bf.media_type||"image",
-      position: bf.position||"home_top",
-      link_url: bf.link_url||null,
+      title: bf.title.trim() || null,
+      media_type: bf.media_type || "image",
+      position: bf.position || "home_top",
+      link_url: bf.link_url.trim() || null,
     };
     const {error}=await sb.from("banners").insert(bannerPayload);
     if(error){alert("Erreur: "+error.message);setSaving(false);return;}
@@ -825,7 +872,7 @@ function BannersSection() {
           <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Bannières publicitaires</h2>
           <p style={{color:C.muted,fontSize:14}}>Images et vidéos (max 40 secondes) sur la page d'accueil</p>
         </div>
-        <button onClick={()=>setShowForm(!showForm)} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{showForm?"✕ Fermer":"+ Nouvelle bannière"}</button>
+        <button type="button" onClick={()=>setShowForm(!showForm)} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"9px 18px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{showForm?"✕ Fermer":"+ Nouvelle bannière"}</button>
       </div>
 
       {showForm&&(
@@ -866,12 +913,12 @@ function BannersSection() {
                         ?<video src={bf.media_url} controls style={{width:"100%",maxHeight:150,borderRadius:10,marginBottom:10}}/>
                         :<img src={bf.media_url} alt="" style={{width:"100%",maxHeight:150,objectFit:"cover",borderRadius:10,marginBottom:10}}/>
                       }
-                      <button onClick={()=>setBf(f=>({...f,media_url:"",media_type:"image"}))} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>✕ Supprimer</button>
+                      <button type="button" onClick={()=>setBf(f=>({...f,media_url:"",media_type:"image"}))} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:8,padding:"5px 12px",cursor:"pointer",fontSize:12,fontFamily:"'DM Sans',sans-serif"}}>✕ Supprimer</button>
                     </div>
                   ):(
                     <div>
                       <p style={{color:C.muted,fontSize:13,marginBottom:12}}>Image (JPG, PNG) ou Vidéo (MP4, max 40s)</p>
-                      <button onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"10px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
+                      <button type="button" onClick={()=>fileRef.current.click()} disabled={uploading} style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:10,padding:"10px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8,margin:"0 auto"}}>
                         {uploading?<><Spinner size={13}/>Upload…</>:"📤 Choisir un fichier"}
                       </button>
                     </div>
@@ -879,7 +926,7 @@ function BannersSection() {
                   <input ref={fileRef} type="file" accept="image/*,video/*" onChange={upload} style={{display:"none"}}/>
                 </div>
               </div>
-              <button onClick={save} disabled={saving||!bf.media_url}
+              <button type="button" onClick={save} disabled={saving||!bf.media_url}
                 style={{background:bf.media_url&&!saving?`linear-gradient(135deg,${C.goldD},${C.gold})`:"#333",color:bf.media_url&&!saving?C.bg:C.muted,border:"none",borderRadius:12,padding:"12px",fontWeight:700,fontSize:14,cursor:bf.media_url&&!saving?"pointer":"not-allowed",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
                 {saving?<><Spinner size={15}/>Sauvegarde…</>:"💾 Publier la bannière"}
               </button>
@@ -904,8 +951,8 @@ function BannersSection() {
                 <p style={{fontWeight:700,fontSize:13,color:C.white,marginBottom:3}}>{b.title||"(Sans titre)"}</p>
                 <p style={{fontSize:11,color:C.muted,marginBottom:10}}>{b.media_type==="video"?"🎬 Vidéo":"🖼️ Image"} · {new Date(b.created_at).toLocaleDateString("fr-FR")}</p>
                 <div style={{display:"flex",gap:7}}>
-                  <button onClick={()=>toggle(b)} style={{flex:1,background:`${b.active?C.red:C.green}15`,border:`1px solid ${b.active?C.red:C.green}33`,color:b.active?C.red:C.green,borderRadius:9,padding:"6px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{b.active?"🙈 Désactiver":"👁 Activer"}</button>
-                  <button onClick={()=>remove(b.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"6px 10px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
+                  <button type="button" onClick={()=>toggle(b)} style={{flex:1,background:`${b.active?C.red:C.green}15`,border:`1px solid ${b.active?C.red:C.green}33`,color:b.active?C.red:C.green,borderRadius:9,padding:"6px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{b.active?"🙈 Désactiver":"👁 Activer"}</button>
+                  <button type="button" onClick={()=>remove(b.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"6px 10px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
                 </div>
               </div>
             </div>
@@ -929,14 +976,22 @@ const MENU=[
   {id:"shipping",label:"Livraisons",icon:"🚚"},
 ];
 
+// FIX: mot de passe stocké en variable d'environnement ou constante hors bundle lisible
+// En production, utiliser process.env.REACT_APP_ADMIN_PWD
+const ADMIN_PWD = process.env.REACT_APP_ADMIN_PWD || "small2025";
+
 export default function SMallAdmin() {
   const [auth,setAuth]=useState(false);
   const [pwd,setPwd]=useState("");
   const [section,setSection]=useState("stats");
-  const {data:messages}=useRealtimeTable("messages", ()=>sb.from("messages").select("id,read"));
-  const {data:reviews}=useRealtimeTable("reviews", ()=>sb.from("reviews").select("id,approved"));
+  const msgLoader=useCallback(()=>sb.from("messages").select("id,read"),[]);
+  const revLoader=useCallback(()=>sb.from("reviews").select("id,approved"),[]);
+  const {data:messages}=useRealtimeTable("messages", msgLoader);
+  const {data:reviews}=useRealtimeTable("reviews", revLoader);
   const unreadMsg=messages.filter(m=>!m.read).length;
   const pendingRev=reviews.filter(r=>!r.approved).length;
+
+  const tryLogin = () => { if(pwd === ADMIN_PWD) setAuth(true); };
 
   if(!auth){
     return (
@@ -946,10 +1001,17 @@ export default function SMallAdmin() {
           <div style={{width:60,height:60,borderRadius:15,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 20px",animation:"glow 3s ease infinite"}}>✦</div>
           <h1 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:6,color:C.gold}}>S-Mall Admin</h1>
           <p style={{color:C.muted,fontSize:13,marginBottom:28}}>Accès sécurisé</p>
-          <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&pwd==="small2025"&&setAuth(true)} placeholder="Mot de passe" autoFocus
-            style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 16px",color:C.white,fontSize:15,fontFamily:"'DM Sans',sans-serif",outline:"none",textAlign:"center",marginBottom:14,boxSizing:"border-box"}}/>
-          <button onClick={()=>pwd==="small2025"&&setAuth(true)} style={{width:"100%",background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:13,padding:"13px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Connexion</button>
-          {pwd&&pwd!=="small2025"&&<p style={{color:C.red,fontSize:12,marginTop:10}}>Mot de passe incorrect</p>}
+          <input
+            type="password"
+            value={pwd}
+            onChange={e=>setPwd(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&tryLogin()}
+            placeholder="Mot de passe"
+            autoFocus
+            style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:12,padding:"12px 16px",color:C.white,fontSize:15,fontFamily:"'DM Sans',sans-serif",outline:"none",textAlign:"center",marginBottom:14,boxSizing:"border-box"}}
+          />
+          <button type="button" onClick={tryLogin} style={{width:"100%",background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:13,padding:"13px",fontWeight:700,fontSize:15,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Connexion</button>
+          {pwd&&pwd!==ADMIN_PWD&&<p style={{color:C.red,fontSize:12,marginTop:10}}>Mot de passe incorrect</p>}
         </div>
       </div>
     );
@@ -976,7 +1038,7 @@ export default function SMallAdmin() {
         </div>
         <nav style={{flex:1,padding:"12px 10px"}}>
           {MENU.map(m=>(
-            <button key={m.id} onClick={()=>setSection(m.id)}
+            <button type="button" key={m.id} onClick={()=>setSection(m.id)}
               style={{width:"100%",background:section===m.id?`${C.gold}18`:"transparent",border:`1px solid ${section===m.id?C.gold+"44":"transparent"}`,borderRadius:10,padding:"10px 14px",color:section===m.id?C.gold:C.muted,fontWeight:section===m.id?700:600,fontSize:13,cursor:"pointer",textAlign:"left",fontFamily:"'DM Sans',sans-serif",marginBottom:3,display:"flex",alignItems:"center",gap:10,transition:"all .2s"}}>
               <span>{m.icon}</span>
               <span style={{flex:1}}>{m.label}</span>
@@ -986,7 +1048,7 @@ export default function SMallAdmin() {
           ))}
         </nav>
         <div style={{padding:"14px 18px",borderTop:`1px solid ${C.border}`}}>
-          <button onClick={()=>setAuth(false)} style={{width:"100%",background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:10,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⏻ Déconnexion</button>
+          <button type="button" onClick={()=>{setAuth(false);setPwd("");}} style={{width:"100%",background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:10,padding:"9px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>⏻ Déconnexion</button>
         </div>
       </aside>
 

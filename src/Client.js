@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Map, Car, Home } from 'lucide-react';
 import { sb } from './supabase';
 
@@ -174,9 +174,16 @@ function ProductModal({ product, cats, allVariants, allImages, onClose, onAddToC
 
   const storages = [...new Set(variants.filter(v => v.storage).map(v => v.storage))];
   const sizes    = [...new Set(variants.filter(v => v.size).map(v => v.size))];
-  const colors   = storages.length > 0
-    ? (selS ? [...new Map(variants.filter(v => v.storage===selS && v.color).map(v => [v.color, { name:v.color, hex:v.color_hex||'#888' }])).values()] : [])
-    : [...new Map(variants.filter(v => v.color).map(v => [v.color, { name:v.color, hex:v.color_hex||'#888' }])).values()];
+  const getColors = (list) => {
+    const seen = {};
+    return list.filter(v => v.color).reduce((acc, v) => {
+      if (!seen[v.color]) { seen[v.color] = true; acc.push({ name:v.color, hex:v.color_hex||'#888' }); }
+      return acc;
+    }, []);
+  };
+  const colors = storages.length > 0
+    ? (selS ? getColors(variants.filter(v => v.storage===selS)) : [])
+    : getColors(variants);
 
   const hasVariants = variants.length > 0;
   const matched = hasVariants
@@ -476,7 +483,6 @@ export default function SMall() {
   // ── UI
   const [page,    setPage]    = useState('home');
   // FIX: on utilise une ref pour la catégorie cible lors de la navigation
-  const pendingCatRef = useRef(null);
   const [cat,     setCat]     = useState('all');
   const [search,  setSearch]  = useState('');
   const [zone,    setZone]    = useState(null);

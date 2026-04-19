@@ -34,8 +34,7 @@ function useRealtimeTable(table, loadFn) {
       .on("postgres_changes",{event:"*",schema:"public",table},()=>{ if(mounted) load(); })
       .subscribe();
     return ()=>{ mounted=false; sb.removeChannel(ch); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[table]);
+  },[table]); // table est une string stable — pas de dépendance circulaire
 
   return {data,loading};
 }

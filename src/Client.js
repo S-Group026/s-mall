@@ -480,15 +480,18 @@ const DEFAULT_CIRCUIT = {
     { type:"haute", label:"Haute Saison", dates:"Novembre 2026 → Janvier 2027", desc:"Fêtes de fin d’année, Noël & Nouvel An au Bénin. Ambiance festive, événements culturels exceptionnels.", tarif:"Prix de base + 10 %" },
   ],
   packs: [
-    { id:"benin", flags:"\ud83c\udde7\ud83c\uddef", name:"Pack Bénin", countries:"Bénin uniquement", color:"#0D2B45",
-      prices:[{label:"Couple / personne",eur:"1 100 €",fcfa:"721 000 FCFA"},{label:"Solo",eur:"1 400 €",fcfa:"918 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
-      note:"+ 110 € / jour supplémentaire", base:1100 },
-    { id:"benin-togo", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec", name:"Pack Bénin + Togo", countries:"2 pays", color:"#1A4560",
-      prices:[{label:"Couple / personne",eur:"1 300 €",fcfa:"853 000 FCFA"},{label:"Solo",eur:"1 600 €",fcfa:"1 049 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
-      note:"+ 130 € / jour supplémentaire", base:1300 },
-    { id:"sous-region", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec \ud83c\udde8\ud83c\uddee", name:"Pack Sous-Région", countries:"3 pays — immersion totale", color:"#0F3520",
-      prices:[{label:"Couple / personne",eur:"1 900 €",fcfa:"1 246 000 FCFA"},{label:"Solo",eur:"2 200 €",fcfa:"1 443 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
-      note:"+ 190 € / jour supplémentaire", base:1900 },
+    { id:"benin", name:"Pack Bénin", countries:"Bénin uniquement", color:"#0D2B45",
+      couple_fcfa:721000, couple_eur:1100, solo_fcfa:918000, solo_eur:1400,
+      billet_fcfa:721500, billet_eur:1100, extra_day_fcfa:72100, extra_day_eur:110,
+      dates_proposees:["15 Août 2026","01 Sept. 2026","15 Oct. 2026","20 Nov. 2026","20 Déc. 2026"] },
+    { id:"benin-togo", name:"Pack Bénin + Togo", countries:"2 pays", color:"#1A4560",
+      couple_fcfa:853000, couple_eur:1300, solo_fcfa:1049000, solo_eur:1600,
+      billet_fcfa:721500, billet_eur:1100, extra_day_fcfa:85300, extra_day_eur:130,
+      dates_proposees:["01 Sept. 2026","20 Oct. 2026","01 Déc. 2026","05 Jan. 2027"] },
+    { id:"sous-region", name:"Pack Sous-Région", countries:"3 pays — immersion totale", color:"#0F3520",
+      couple_fcfa:1246000, couple_eur:1900, solo_fcfa:1443000, solo_eur:2200,
+      billet_fcfa:721500, billet_eur:1100, extra_day_fcfa:124600, extra_day_eur:190,
+      dates_proposees:["15 Sept. 2026","01 Nov. 2026","15 Déc. 2026","10 Jan. 2027"] },
   ],
   inclus: [
     "Transfert aéroport — arrivée & départ",
@@ -642,23 +645,39 @@ function CircuitsPage({ data, circuits, allImages, onBook, onOpenProduct }) {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:22 }}>
           {packs.map(p => (
             <div key={p.id} className="hov" style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-              <div style={{ padding:'28px 24px', background:p.color||C.bg, position:'relative', overflow:'hidden' }}>
+              <div style={{ padding:'24px', background:p.color||C.bg, position:'relative', overflow:'hidden' }}>
                 <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
                 <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:8 }}>{p.countries}</p>
                 <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white }}>{p.name}</h3>
               </div>
-              <div style={{ padding:'22px 24px', flex:1, display:'flex', flexDirection:'column' }}>
+              <div style={{ padding:'20px 24px', flex:1, display:'flex', flexDirection:'column' }}>
                 <div style={{ flex:1 }}>
-                  {(p.prices||[]).map((pr,i) => (
-                    <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:i<(p.prices.length-1)?`1px solid ${C.border}`:'none' }}>
-                      <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{pr.label}</span>
-                      <div style={{ textAlign:'right' }}>
-                        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:900, color:C.gold }}>{pr.eur}</div>
-                        <div style={{ fontSize:10, color:C.muted, marginTop:1 }}>{pr.fcfa}</div>
-                      </div>
+                  <div style={{ padding:'12px 0', borderBottom:`1px solid ${C.border}` }}>
+                    <p style={{ fontSize:11, color:C.muted, fontWeight:600, marginBottom:5 }}>Couple / personne</p>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                      <span style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:C.gold }}>{FCFA(p.couple_fcfa||721000)}</span>
+                      <span style={{ fontSize:11, color:C.muted }}>≈ {p.couple_eur||1100} €</span>
                     </div>
-                  ))}
-                  {p.note && <p style={{ fontSize:11, color:C.muted, textAlign:'center', marginTop:14, fontStyle:'italic', borderTop:`1px solid ${C.border}`, paddingTop:12 }}>{p.note}</p>}
+                  </div>
+                  <div style={{ padding:'12px 0', borderBottom:`1px solid ${C.border}` }}>
+                    <p style={{ fontSize:11, color:C.muted, fontWeight:600, marginBottom:5 }}>Solo</p>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                      <span style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:C.gold }}>{FCFA(p.solo_fcfa||918000)}</span>
+                      <span style={{ fontSize:11, color:C.muted }}>≈ {p.solo_eur||1400} €</span>
+                    </div>
+                  </div>
+                  <div style={{ padding:'10px 0' }}>
+                    <p style={{ fontSize:11, color:C.muted, fontWeight:600, marginBottom:3 }}>Billet d'avion (option)</p>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:C.white }}>+ {FCFA(p.billet_fcfa||721500)}</span>
+                      <span style={{ fontSize:10, color:C.muted }}>≈ +{p.billet_eur||1100} €</span>
+                    </div>
+                  </div>
+                  {p.extra_day_fcfa && (
+                    <p style={{ fontSize:11, color:C.muted, fontStyle:'italic', borderTop:`1px solid ${C.border}`, paddingTop:10, marginTop:4 }}>
+                      + {FCFA(p.extra_day_fcfa)} / jour supplémentaire
+                    </p>
+                  )}
                 </div>
                 <button type="button" className="btn" onClick={() => onBook(p)}
                   style={{ width:'100%', marginTop:18, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'13px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
@@ -760,120 +779,361 @@ function CircuitsPage({ data, circuits, allImages, onBook, onOpenProduct }) {
 }
 
 // ─── MODAL RÉSERVATION CIRCUIT ────────────────────────────────────────────────
+// Dates proposées par défaut si le pack n'en a pas
+const DEFAULT_DATES = ["15 Août 2026","01 Sept. 2026","15 Oct. 2026","20 Nov. 2026","20 Déc. 2026"];
+const EUR_RATE = 655.957; // 1 EUR ≈ 656 FCFA (taux fixe CFA)
+
 function CircuitBookModal({ pack, onClose, onConfirm }) {
   const today = new Date();
-  const [bf, setBf] = useState({ name:'', email:'', tel:'', date:'', qty:1 });
-  const [err, setErr] = useState('');
-  const [calOpen, setCalOpen] = useState(false);
-  const [view, setView] = useState({ y:today.getFullYear(), m:today.getMonth() });
+  // ── États ──
+  const [step,       setStep]       = useState(1); // 1=options, 2=dates, 3=infos
+  const [option,     setOption]     = useState(null);    // 'couple' | 'solo'
+  const [billet,     setBillet]     = useState(false);   // option billet avion
+  const [dateMode,   setDateMode]   = useState(null);    // 'proposee' | 'libre'
+  const [dateSel,    setDateSel]    = useState('');      // date choisie (proposée ou calendrier)
+  const [calOpen,    setCalOpen]    = useState(false);
+  const [calView,    setCalView]    = useState({ y:today.getFullYear(), m:today.getMonth() });
+  const [qty,        setQty]        = useState(1);
+  const [bf,         setBf]         = useState({ name:'', email:'', tel:'' });
+  const [err,        setErr]        = useState('');
 
+  // Reset à chaque ouverture
   useEffect(() => {
-    if (pack) { setBf({ name:'', email:'', tel:'', date:'', qty:1 }); setErr(''); setCalOpen(false); }
+    if (pack) {
+      setStep(1); setOption(null); setBillet(false);
+      setDateMode(null); setDateSel(''); setCalOpen(false);
+      setQty(1); setBf({ name:'', email:'', tel:'' }); setErr('');
+    }
   }, [pack?.id]);
 
   if (!pack) return null;
 
-  const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  const days  = new Date(view.y, view.m+1, 0).getDate();
-  const first = new Date(view.y, view.m, 1).getDay();
-  const basePrice = Number(pack.base) || Number(pack.price) || 1100;
-  const total = basePrice * bf.qty;
-  const acompte30 = Math.round(total * 0.30);
+  // ── Calculs prix ──
+  const prixUnitaire = option === 'solo'
+    ? (pack.solo_fcfa || pack.price || 918000)
+    : (pack.couple_fcfa || pack.price || 721000);
 
-  const pickDate = d => {
-    const dt = new Date(view.y, view.m, d);
+  const prixBillet   = billet ? (pack.billet_fcfa || 721500) : 0;
+  const prixBase     = (prixUnitaire + prixBillet) * qty;
+  const acompte      = Math.round(prixBase * 0.30);
+  const solde        = prixBase - acompte;
+
+  const prixEur = option === 'solo'
+    ? (pack.solo_eur || 1400)
+    : (pack.couple_eur || 1100);
+
+  // ── Calendrier ──
+  const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const calDays  = new Date(calView.y, calView.m+1, 0).getDate();
+  const calFirst = new Date(calView.y, calView.m, 1).getDay();
+
+  const pickCalDate = d => {
+    const dt = new Date(calView.y, calView.m, d);
     const now = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     if (dt < now) return;
-    setBf(f => ({ ...f, date:`${String(d).padStart(2,'0')}/${String(view.m+1).padStart(2,'0')}/${view.y}` }));
+    setDateSel(`${String(d).padStart(2,'0')}/${String(calView.m+1).padStart(2,'0')}/${calView.y}`);
     setCalOpen(false);
   };
 
+  // ── Validation et confirmation ──
   const confirm = () => {
-    if (!bf.name.trim()||!bf.tel.trim()||!bf.date) { setErr('Veuillez remplir tous les champs obligatoires'); return; }
+    if (!bf.name.trim() || !bf.tel.trim()) { setErr('Veuillez remplir votre nom et téléphone'); return; }
     setErr('');
-    onConfirm({ ...bf, packName:pack.name, total, acompte:acompte30 });
+    onConfirm({
+      name: bf.name, email: bf.email, tel: bf.tel,
+      date: dateSel, qty,
+      option, billet,
+      packName: pack.name,
+      total: prixBase,
+      acompte,
+    });
+  };
+
+  // ── Styles communs ──
+  const S = {
+    label: { fontSize:11, fontWeight:700, color:C.muted, display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:1.5 },
+    input: { width:'100%', background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'11px 14px', color:C.white, fontSize:14, fontFamily:"'DM Sans',sans-serif", outline:'none', boxSizing:'border-box' },
+    optBtn: (active, col=C.gold) => ({
+      flex:1, border:`2px solid ${active ? col : C.border}`, borderRadius:12, padding:'14px 10px',
+      background: active ? `${col}18` : C.card2, cursor:'pointer', textAlign:'center',
+      fontFamily:"'DM Sans',sans-serif", transition:'all .15s',
+    }),
+    stepDot: (n) => ({
+      width:28, height:28, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:12, fontWeight:800,
+      background: step >= n ? `linear-gradient(135deg,${C.goldD},${C.gold})` : C.card2,
+      color: step >= n ? C.bg : C.muted,
+      flexShrink:0,
+    }),
   };
 
   return (
-    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.93)', zIndex:1002, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:30, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
-          <div>
-            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>Réservation Circuit</p>
-            <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.white }}>{pack.name}</h3>
-            {pack.countries && <p style={{ fontSize:12, color:C.muted, marginTop:3 }}>{pack.countries}</p>}
-          </div>
-          <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
-        </div>
-        <GL/>
-        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-          {[['name','Nom complet *','text'],['email','Adresse email','email'],['tel','Téléphone / WhatsApp *','tel']].map(([f,l,t]) => (
-            <div key={f}>
-              <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>{l}</label>
-              <input type={t} value={bf[f]} onChange={e => setBf(x => ({...x,[f]:e.target.value}))} placeholder={l.replace(' *','')}
-                style={{ width:'100%', background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'11px 14px', color:C.white, fontSize:14, fontFamily:"'DM Sans',sans-serif", outline:'none', boxSizing:'border-box' }}/>
+    <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.93)', zIndex:1002, display:'flex', alignItems:'center', justifyContent:'center', padding:16, overflowY:'auto' }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, width:'100%', maxWidth:500, margin:'auto', boxShadow:'0 24px 80px rgba(0,0,0,.95)' }}>
+
+        {/* ── EN-TÊTE ── */}
+        <div style={{ padding:'22px 26px', borderBottom:`1px solid ${C.border}` }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
+            <div>
+              <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>Réservation</p>
+              <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.white, marginBottom:2 }}>{pack.name}</h3>
+              {pack.countries && <p style={{ fontSize:12, color:C.muted }}>{pack.countries}</p>}
             </div>
-          ))}
-          <div style={{ position:'relative' }}>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>Date de départ souhaitée *</label>
-            <button type="button" onClick={() => setCalOpen(o => !o)}
-              style={{ width:'100%', background:C.card2, border:`1.5px solid ${bf.date?C.gold:C.border}`, borderRadius:10, padding:'11px 14px', color:bf.date?C.gold:C.muted, fontSize:14, fontFamily:"'DM Sans',sans-serif", cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span>{bf.date || 'Sélectionner une date'}</span>
-              <Calendar size={15} color={bf.date?C.gold:C.muted}/>
-            </button>
-            {calOpen && (
-              <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:16, width:260, boxShadow:'0 20px 50px rgba(0,0,0,.9)' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                  <button type="button" onClick={() => setView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>‹</button>
-                  <span style={{ fontWeight:700, fontSize:13, color:C.white }}>{MONTHS[view.m]} {view.y}</span>
-                  <button type="button" onClick={() => setView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>›</button>
+            <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>×</button>
+          </div>
+          {/* Indicateur d'étapes */}
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {[['1','Options'],['2','Date'],['3','Vos infos']].map(([n,l],i) => (
+              <div key={n} style={{ display:'flex', alignItems:'center', gap:8, flex:i<2?1:'auto' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={S.stepDot(Number(n))}>{Number(n) < step ? '✓' : n}</div>
+                  <span style={{ fontSize:11, fontWeight:700, color:step>=Number(n)?C.gold:C.muted }}>{l}</span>
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
-                  {['Di','Lu','Ma','Me','Je','Ve','Sa'].map(d => <div key={d} style={{ textAlign:'center', fontSize:9, color:C.muted, fontWeight:700, padding:'4px 0' }}>{d}</div>)}
-                </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
-                  {Array(first).fill(null).map((_,i) => <div key={'e'+i}/>)}
-                  {Array(days).fill(null).map((_,i) => {
-                    const d=i+1;
-                    const dt=new Date(view.y,view.m,d);
-                    const past=dt<new Date(today.getFullYear(),today.getMonth(),today.getDate());
-                    const sel=bf.date===`${String(d).padStart(2,'0')}/${String(view.m+1).padStart(2,'0')}/${view.y}`;
-                    return (
-                      <button key={d} type="button" onClick={() => pickDate(d)}
-                        style={{ textAlign:'center', fontSize:12, padding:'6px 0', borderRadius:7, border:'none', background:sel?C.gold:past?'transparent':C.card2, color:sel?C.bg:past?C.border:C.white, cursor:past?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", fontWeight:sel?800:400 }}>
-                        {d}
-                      </button>
-                    );
-                  })}
+                {i < 2 && <div style={{ flex:1, height:1, background:step>Number(n)?C.gold:C.border }}/>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── CONTENU ÉTAPES ── */}
+        <div style={{ padding:'22px 26px', display:'flex', flexDirection:'column', gap:18, maxHeight:'70vh', overflowY:'auto' }}>
+
+          {/* ═ ÉTAPE 1 : OPTIONS ═ */}
+          {step === 1 && (
+            <>
+              {/* Solo / Couple */}
+              <div>
+                <label style={S.label}>Votre situation *</label>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                  {[
+                    { val:'couple', titre:'Couple', desc:'Par personne', prix: pack.couple_fcfa||721000, eur: pack.couple_eur||1100 },
+                    { val:'solo',   titre:'Solo',   desc:'Par personne', prix: pack.solo_fcfa||918000,   eur: pack.solo_eur||1400 },
+                  ].map(o => (
+                    <button key={o.val} type="button" onClick={() => setOption(o.val)} style={S.optBtn(option===o.val)}>
+                      <p style={{ fontWeight:800, fontSize:14, color:option===o.val?C.gold:C.white, marginBottom:6 }}>{o.titre}</p>
+                      <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.gold, marginBottom:2 }}>{FCFA(o.prix)}</p>
+                      <p style={{ fontSize:10, color:C.muted }}>≈ {o.eur} € / pers.</p>
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
-          <div>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:8 }}>Nombre de personnes</label>
-            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-              <button type="button" onClick={() => setBf(f => ({...f,qty:Math.max(1,f.qty-1)}))} style={{ width:36, height:36, borderRadius:10, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={14}/></button>
-              <span style={{ fontWeight:800, fontSize:20, minWidth:24, textAlign:'center', color:C.white }}>{bf.qty}</span>
-              <button type="button" onClick={() => setBf(f => ({...f,qty:f.qty+1}))} style={{ width:36, height:36, borderRadius:10, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Plus size={14}/></button>
-            </div>
-          </div>
-          {err && <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'10px 14px', borderRadius:9 }}>{err}</p>}
-          <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}2a`, borderRadius:14, padding:'16px 18px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:8 }}>
-              <span style={{ color:C.muted }}>Prix base × {bf.qty} personne{bf.qty>1?'s':''}</span>
-              <span style={{ fontWeight:700, color:C.white }}>{FCFA(total)}</span>
-            </div>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30 %</span>
-              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{FCFA(acompte30)}</span>
-            </div>
-            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({FCFA(Math.round(total*0.70))}) à régler 30 jours avant le départ.</p>
-          </div>
-          <button type="button" className="btn" onClick={confirm}
-            style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:14, padding:'14px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
-            Confirmer la réservation — {FCFA(acompte30)}
-          </button>
-          <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre équipe vous contactera sous 24h pour valider votre séjour.</p>
+
+              {/* Nombre de personnes */}
+              {option && (
+                <div>
+                  <label style={S.label}>Nombre de personnes</label>
+                  <div style={{ display:'flex', alignItems:'center', gap:14, background:C.card2, border:`1px solid ${C.border}`, borderRadius:12, padding:'12px 16px' }}>
+                    <button type="button" onClick={() => setQty(q => Math.max(1,q-1))} style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${C.border}`, background:C.bg, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={14}/></button>
+                    <span style={{ fontWeight:900, fontSize:22, flex:1, textAlign:'center', color:C.white }}>{qty}</span>
+                    <button type="button" onClick={() => setQty(q => q+1)} style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${C.border}`, background:C.bg, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Plus size={14}/></button>
+                  </div>
+                </div>
+              )}
+
+              {/* Option billet */}
+              {option && (
+                <div>
+                  <label style={S.label}>Billet d'avion</label>
+                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                    {[
+                      { val:false, titre:'Sans billet', desc:'Je gère mon vol' },
+                      { val:true,  titre:'Avec billet', desc:`+ ${FCFA(pack.billet_fcfa||721500)}` },
+                    ].map(o => (
+                      <button key={String(o.val)} type="button" onClick={() => setBillet(o.val)} style={S.optBtn(billet===o.val, billet===o.val&&o.val?C.orange:C.gold)}>
+                        <p style={{ fontWeight:700, fontSize:13, color:billet===o.val?C.gold:C.white, marginBottom:3 }}>{o.titre}</p>
+                        <p style={{ fontSize:11, color:C.muted }}>{o.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Récap rapide */}
+              {option && (
+                <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}22`, borderRadius:12, padding:'14px 16px' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                    <span style={{ color:C.muted }}>{option==='couple'?'Couple':'Solo'} × {qty} pers.</span>
+                    <span style={{ fontWeight:700, color:C.white }}>{FCFA(prixUnitaire * qty)}</span>
+                  </div>
+                  {billet && (
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                      <span style={{ color:C.muted }}>Billet × {qty} pers.</span>
+                      <span style={{ fontWeight:700, color:C.white }}>{FCFA(prixBillet * qty)}</span>
+                    </div>
+                  )}
+                  <div style={{ height:1, background:C.border, margin:'8px 0' }}/>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span style={{ fontWeight:700, color:C.gold }}>Total estimé</span>
+                    <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:18, color:C.gold }}>{FCFA(prixBase)}</span>
+                  </div>
+                </div>
+              )}
+
+              <button type="button" onClick={() => { if(!option){ setErr('Choisissez Solo ou Couple'); return; } setErr(''); setStep(2); }}
+                disabled={!option}
+                style={{ background:option?`linear-gradient(135deg,${C.goldD},${C.gold})`:'#2a2a2a', color:option?C.bg:C.muted, border:'none', borderRadius:13, padding:'13px', fontWeight:700, fontSize:14, cursor:option?'pointer':'not-allowed', fontFamily:"'DM Sans',sans-serif" }}>
+                Suivant — Choisir la date
+              </button>
+            </>
+          )}
+
+          {/* ═ ÉTAPE 2 : DATE ═ */}
+          {step === 2 && (
+            <>
+              <div>
+                <label style={S.label}>Mode de réservation *</label>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:16 }}>
+                  {[
+                    { val:'proposee', titre:'Date S-Group', desc:'Choisir parmi nos départs' },
+                    { val:'libre',    titre:'Date libre',   desc:'Je choisis mes propres dates' },
+                  ].map(o => (
+                    <button key={o.val} type="button" onClick={() => { setDateMode(o.val); setDateSel(''); setCalOpen(false); }} style={S.optBtn(dateMode===o.val)}>
+                      <p style={{ fontWeight:700, fontSize:13, color:dateMode===o.val?C.gold:C.white, marginBottom:3 }}>{o.titre}</p>
+                      <p style={{ fontSize:11, color:C.muted }}>{o.desc}</p>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Dates proposées */}
+                {dateMode === 'proposee' && (
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    <p style={{ fontSize:11, color:C.muted, marginBottom:4 }}>Sélectionnez un départ :</p>
+                    {(pack.dates_proposees || DEFAULT_DATES).map(d => (
+                      <button key={d} type="button" onClick={() => setDateSel(d)}
+                        style={{ background:dateSel===d?`${C.gold}18`:C.card2, border:`2px solid ${dateSel===d?C.gold:C.border}`, borderRadius:11, padding:'12px 16px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center', transition:'all .15s' }}>
+                        <span style={{ fontWeight:700, fontSize:14, color:dateSel===d?C.gold:C.white }}>{d}</span>
+                        {dateSel===d && <span style={{ fontSize:12, color:C.gold }}>✓ Sélectionné</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Calendrier libre */}
+                {dateMode === 'libre' && (
+                  <div style={{ position:'relative' }}>
+                    <button type="button" onClick={() => setCalOpen(o => !o)}
+                      style={{ width:'100%', background:C.card2, border:`1.5px solid ${dateSel?C.gold:C.border}`, borderRadius:10, padding:'11px 14px', color:dateSel?C.gold:C.muted, fontSize:14, fontFamily:"'DM Sans',sans-serif", cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <span>{dateSel || 'Sélectionner votre date de départ'}</span>
+                      <Calendar size={15} color={dateSel?C.gold:C.muted}/>
+                    </button>
+                    {calOpen && (
+                      <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:16, width:'100%', boxShadow:'0 20px 50px rgba(0,0,0,.9)' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                          <button type="button" onClick={() => setCalView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>‹</button>
+                          <span style={{ fontWeight:700, fontSize:13, color:C.white }}>{MONTHS[calView.m]} {calView.y}</span>
+                          <button type="button" onClick={() => setCalView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>›</button>
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
+                          {['Di','Lu','Ma','Me','Je','Ve','Sa'].map(d => <div key={d} style={{ textAlign:'center', fontSize:9, color:C.muted, fontWeight:700, padding:'4px 0' }}>{d}</div>)}
+                        </div>
+                        <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
+                          {Array(calFirst).fill(null).map((_,i) => <div key={'e'+i}/>)}
+                          {Array(calDays).fill(null).map((_,i) => {
+                            const d=i+1;
+                            const dt=new Date(calView.y,calView.m,d);
+                            const past=dt<new Date(today.getFullYear(),today.getMonth(),today.getDate());
+                            const dStr=`${String(d).padStart(2,'0')}/${String(calView.m+1).padStart(2,'0')}/${calView.y}`;
+                            const sel=dateSel===dStr;
+                            return (
+                              <button key={d} type="button" onClick={() => pickCalDate(d)}
+                                style={{ textAlign:'center', fontSize:12, padding:'6px 0', borderRadius:7, border:'none', background:sel?C.gold:past?'transparent':C.card2, color:sel?C.bg:past?C.border:C.white, cursor:past?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", fontWeight:sel?800:400 }}>
+                                {d}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                    <p style={{ fontSize:11, color:C.muted, marginTop:8 }}>Notre équipe confirmera la disponibilité de votre date sous 24h.</p>
+                  </div>
+                )}
+              </div>
+
+              {err && <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'10px 14px', borderRadius:9 }}>{err}</p>}
+
+              <div style={{ display:'flex', gap:10 }}>
+                <button type="button" onClick={() => { setStep(1); setErr(''); }}
+                  style={{ background:C.card2, border:`1px solid ${C.border}`, color:C.muted, borderRadius:13, padding:'13px 18px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+                  Retour
+                </button>
+                <button type="button" onClick={() => { if(!dateMode||!dateSel){ setErr('Veuillez sélectionner une date'); return; } setErr(''); setStep(3); }}
+                  style={{ flex:1, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+                  Suivant — Mes coordonnées
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ═ ÉTAPE 3 : INFOS CLIENT ═ */}
+          {step === 3 && (
+            <>
+              <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {[['name','Nom complet *','text'],['email','Adresse email','email'],['tel','Téléphone / WhatsApp *','tel']].map(([f,l,t]) => (
+                  <div key={f}>
+                    <label style={S.label}>{l}</label>
+                    <input type={t} value={bf[f]} onChange={e => setBf(x => ({...x,[f]:e.target.value}))} placeholder={l.replace(' *','')}
+                      style={{ ...S.input, border:`1.5px solid ${C.border}` }}/>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── RÉCAPITULATIF COMPLET ── */}
+              <div style={{ background:`${C.gold}0a`, border:`1px solid ${C.gold}33`, borderRadius:16, padding:'18px 20px' }}>
+                <p style={{ fontSize:11, fontWeight:700, color:C.gold, letterSpacing:2, textTransform:'uppercase', marginBottom:14 }}>Récapitulatif de votre réservation</p>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                    <span style={{ color:C.muted }}>Formule</span>
+                    <span style={{ fontWeight:700, color:C.white }}>{pack.name}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                    <span style={{ color:C.muted }}>Option</span>
+                    <span style={{ fontWeight:700, color:C.white }}>{option==='solo'?'Solo':'Couple'} × {qty} pers.</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                    <span style={{ color:C.muted }}>Billet</span>
+                    <span style={{ fontWeight:700, color:C.white }}>{billet?'Inclus':'Non inclus'}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                    <span style={{ color:C.muted }}>Date de départ</span>
+                    <span style={{ fontWeight:700, color:C.white }}>{dateSel}</span>
+                  </div>
+                  <div style={{ height:1, background:C.border, margin:'4px 0' }}/>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+                    <span style={{ color:C.muted }}>Montant total</span>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontWeight:800, fontSize:15, color:C.white }}>{FCFA(prixBase)}</div>
+                      <div style={{ fontSize:10, color:C.muted }}>≈ {Math.round(prixBase/EUR_RATE)} €</div>
+                    </div>
+                  </div>
+                  <div style={{ background:`${C.gold}15`, border:`1px solid ${C.gold}33`, borderRadius:10, padding:'12px 14px', marginTop:4 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                      <span style={{ fontWeight:700, color:C.gold, fontSize:14 }}>Acompte 30 % à payer</span>
+                      <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:22, color:C.gold }}>{FCFA(acompte)}</span>
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:12 }}>
+                      <span style={{ color:C.muted }}>Solde restant (à 30 jours)</span>
+                      <span style={{ fontWeight:700, color:C.muted }}>{FCFA(solde)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {err && <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'10px 14px', borderRadius:9 }}>{err}</p>}
+
+              <div style={{ display:'flex', gap:10 }}>
+                <button type="button" onClick={() => { setStep(2); setErr(''); }}
+                  style={{ background:C.card2, border:`1px solid ${C.border}`, color:C.muted, borderRadius:13, padding:'13px 18px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+                  Retour
+                </button>
+                <button type="button" className="btn" onClick={confirm}
+                  style={{ flex:1, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.3 }}>
+                  Confirmer — {FCFA(acompte)}
+                </button>
+              </div>
+              <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre équipe vous contacte sous 24h. Le solde est dû 30 jours avant votre départ.</p>
+            </>
+          )}
+
         </div>
       </div>
     </div>

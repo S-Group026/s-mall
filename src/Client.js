@@ -472,54 +472,54 @@ function readCart() {
 // ─── DONNÉES PAR DÉFAUT CIRCUITS ─────────────────────────────────────────────
 const DEFAULT_CIRCUIT = {
   hero_title: "Circuits Vacances",
-  hero_subtitle: "Afrique de l\u2019Ouest \u2014 Cl\u00e9 en main",
-  hero_desc: "Du transfert a\u00e9roport jusqu\u2019\u00e0 votre d\u00e9part, S-Group organise chaque d\u00e9tail de votre s\u00e9jour. H\u00e9bergement, transport, excursions, repas, guide d\u00e9di\u00e9 \u2014 tout est inclus. Vous arrivez\u2026 et tout est d\u00e9j\u00e0 g\u00e9r\u00e9.",
-  saison: "Saison 2026 \u2014 2027",
+  hero_subtitle: "Afrique de l’Ouest — Clé en main",
+  hero_desc: "Du transfert aéroport jusqu’à votre départ, S-Group organise chaque détail de votre séjour. Hébergement, transport, excursions, repas, guide dédié — tout est inclus. Vous arrivez… et tout est déjà géré.",
+  saison: "Saison 2026 — 2027",
   periodes: [
-    { type:"basse", label:"Basse Saison", dates:"Ao\u00fbt \u2192 Octobre 2026", desc:"Conditions id\u00e9ales, moins de touristes, atmosph\u00e8re authentique et tranquille. Id\u00e9al pour une immersion sereine.", tarif:"Prix de base" },
-    { type:"haute", label:"Haute Saison", dates:"Novembre 2026 \u2192 Janvier 2027", desc:"F\u00eates de fin d\u2019ann\u00e9e, No\u00ebl & Nouvel An au B\u00e9nin. Ambiance festive, \u00e9v\u00e9nements culturels exceptionnels.", tarif:"Prix de base + 10\u00a0%" },
+    { type:"basse", label:"Basse Saison", dates:"Août → Octobre 2026", desc:"Conditions idéales, moins de touristes, atmosphère authentique et tranquille. Idéal pour une immersion sereine.", tarif:"Prix de base" },
+    { type:"haute", label:"Haute Saison", dates:"Novembre 2026 → Janvier 2027", desc:"Fêtes de fin d’année, Noël & Nouvel An au Bénin. Ambiance festive, événements culturels exceptionnels.", tarif:"Prix de base + 10 %" },
   ],
   packs: [
-    { id:"benin", flags:"\ud83c\udde7\ud83c\uddef", name:"Pack B\u00e9nin", countries:"B\u00e9nin uniquement", color:"#0D2B45",
-      prices:[{label:"Couple / personne",eur:"1\u00a0100\u00a0\u20ac",fcfa:"721\u00a0000 FCFA"},{label:"Solo",eur:"1\u00a0400\u00a0\u20ac",fcfa:"918\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
-      note:"+ 110 \u20ac / jour suppl\u00e9mentaire", base:1100 },
-    { id:"benin-togo", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec", name:"Pack B\u00e9nin + Togo", countries:"2 pays", color:"#1A4560",
-      prices:[{label:"Couple / personne",eur:"1\u00a0300\u00a0\u20ac",fcfa:"853\u00a0000 FCFA"},{label:"Solo",eur:"1\u00a0600\u00a0\u20ac",fcfa:"1\u00a0049\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
-      note:"+ 130 \u20ac / jour suppl\u00e9mentaire", base:1300 },
-    { id:"sous-region", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec \ud83c\udde8\ud83c\uddee", name:"Pack Sous-R\u00e9gion", countries:"3 pays \u2014 immersion totale", color:"#0F3520",
-      prices:[{label:"Couple / personne",eur:"1\u00a0900\u00a0\u20ac",fcfa:"1\u00a0246\u00a0000 FCFA"},{label:"Solo",eur:"2\u00a0200\u00a0\u20ac",fcfa:"1\u00a0443\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
-      note:"+ 190 \u20ac / jour suppl\u00e9mentaire", base:1900 },
+    { id:"benin", flags:"\ud83c\udde7\ud83c\uddef", name:"Pack Bénin", countries:"Bénin uniquement", color:"#0D2B45",
+      prices:[{label:"Couple / personne",eur:"1 100 €",fcfa:"721 000 FCFA"},{label:"Solo",eur:"1 400 €",fcfa:"918 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+      note:"+ 110 € / jour supplémentaire", base:1100 },
+    { id:"benin-togo", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec", name:"Pack Bénin + Togo", countries:"2 pays", color:"#1A4560",
+      prices:[{label:"Couple / personne",eur:"1 300 €",fcfa:"853 000 FCFA"},{label:"Solo",eur:"1 600 €",fcfa:"1 049 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+      note:"+ 130 € / jour supplémentaire", base:1300 },
+    { id:"sous-region", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec \ud83c\udde8\ud83c\uddee", name:"Pack Sous-Région", countries:"3 pays — immersion totale", color:"#0F3520",
+      prices:[{label:"Couple / personne",eur:"1 900 €",fcfa:"1 246 000 FCFA"},{label:"Solo",eur:"2 200 €",fcfa:"1 443 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+      note:"+ 190 € / jour supplémentaire", base:1900 },
   ],
   inclus: [
-    "Transfert a\u00e9roport \u2014 arriv\u00e9e & d\u00e9part",
-    "H\u00e9bergement h\u00f4tel 3 \u00e9toiles",
+    "Transfert aéroport — arrivée & départ",
+    "Hébergement hôtel 3 étoiles",
     "3 repas complets par jour",
-    "Guide local S-Group d\u00e9di\u00e9",
-    "V\u00e9hicule avec chauffeur priv\u00e9",
-    "Toutes excursions & visites guid\u00e9es",
-    "Eau min\u00e9rale \u00e0 volont\u00e9",
+    "Guide local S-Group dédié",
+    "Véhicule avec chauffeur privé",
+    "Toutes excursions & visites guidées",
+    "Eau minérale à volonté",
     "Carte SIM locale + Internet",
     "Cadeau souvenir S-Group",
   ],
   non_inclus: [
-    "Visa (assist\u00e9 par S-Group)",
+    "Visa (assisté par S-Group)",
     "Billet international (optionnel)",
-    "D\u00e9penses personnelles",
+    "Dépenses personnelles",
     "Assurance voyage",
     "Pourboires",
-    "Activit\u00e9s hors programme",
-    "Boissons alcolis\u00e9es",
+    "Activités hors programme",
+    "Boissons alcolisées",
   ],
   programme: [
-    { day:"01", location:"Cotonou \u2014 Arriv\u00e9e", desc:"Accueil VIP \u00e0 l\u2019a\u00e9roport, transfert h\u00f4tel, d\u00e9jeuner de bienvenue, d\u00e9couverte de Cotonou & briefing du s\u00e9jour." },
-    { day:"02", location:"Cotonou \u2014 March\u00e9 Dantokpa", desc:"Visite du plus grand march\u00e9 d\u2019Afrique de l\u2019Ouest, Centre Artistique, rencontre avec artistes locaux." },
-    { day:"03", location:"Ouidah \u2014 Histoire & Spiritualit\u00e9", desc:"Temple des Pythons, Mus\u00e9e d\u2019Histoire, Route des Esclaves & Porte du Non-Retour face \u00e0 l\u2019Atlantique." },
-    { day:"04", location:"Ganvi\u00e9 \u2014 La Venise de l\u2019Afrique", desc:"Travers\u00e9e en pirogue vers le village lacustre sur pilotis du lac Nokou\u00e9, rencontre avec les habitants." },
-    { day:"05", location:"Porto-Novo \u2014 La Capitale", desc:"Mus\u00e9e Ethnographique, Grande Mosqu\u00e9e Brasileira, march\u00e9 central, Palais Royal de Porto-Novo." },
-    { day:"06\u201409", location:"Exp\u00e9riences & Immersion", desc:"Journ\u00e9es culturelles, artisanat, cuisine locale, excursions optionnelles (Abomey, Penjari\u2026), journ\u00e9es libres & soir\u00e9es." },
-    { day:"10", location:"Cotonou \u2014 D\u00e9part", desc:"Petit-d\u00e9jeuner, d\u00eaner de cl\u00f4ture, remise du cadeau souvenir S-Group & transfert a\u00e9roport." },
+    { day:"01", location:"Cotonou — Arrivée", desc:"Accueil VIP à l’aéroport, transfert hôtel, déjeuner de bienvenue, découverte de Cotonou & briefing du séjour." },
+    { day:"02", location:"Cotonou — Marché Dantokpa", desc:"Visite du plus grand marché d’Afrique de l’Ouest, Centre Artistique, rencontre avec artistes locaux." },
+    { day:"03", location:"Ouidah — Histoire & Spiritualité", desc:"Temple des Pythons, Musée d’Histoire, Route des Esclaves & Porte du Non-Retour face à l’Atlantique." },
+    { day:"04", location:"Ganvié — La Venise de l’Afrique", desc:"Traversée en pirogue vers le village lacustre sur pilotis du lac Nokoué, rencontre avec les habitants." },
+    { day:"05", location:"Porto-Novo — La Capitale", desc:"Musée Ethnographique, Grande Mosquée Brasileira, marché central, Palais Royal de Porto-Novo." },
+    { day:"06—09", location:"Expériences & Immersion", desc:"Journées culturelles, artisanat, cuisine locale, excursions optionnelles (Abomey, Penjari…), journées libres & soirées." },
+    { day:"10", location:"Cotonou — Départ", desc:"Petit-déjeuner, dêner de clôture, remise du cadeau souvenir S-Group & transfert aéroport." },
   ],
-  conditions: "Acompte de 30\u00a0% \u00e0 la confirmation \u2014 Solde 30 jours avant le d\u00e9part. Paiement \u00e9chelonn\u00e9 possible sur demande. Assistance visa disponible.",
+  conditions: "Acompte de 30 % à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande. Assistance visa disponible.",
 };
 
 // ─── PAGE CIRCUITS ────────────────────────────────────────────────────────────
@@ -578,7 +578,7 @@ function CircuitsPage({ data, onBook }) {
       <div style={{ background:C.card, padding:'56px 0' }}>
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
           <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Tarification</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Nos formules \u2014 \u00e0 partir de 10 jours</h2>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Nos formules — à partir de 10 jours</h2>
           <GL/>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:22 }}>
             {packs.map(p => (
@@ -603,7 +603,7 @@ function CircuitsPage({ data, onBook }) {
                   </div>
                   <button type="button" className="btn" onClick={() => onBook(p)}
                     style={{ width:'100%', marginTop:18, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'13px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
-                    R\u00e9server ce circuit
+                    Réserver ce circuit
                   </button>
                 </div>
               </div>
@@ -643,7 +643,7 @@ function CircuitsPage({ data, onBook }) {
       <div style={{ background:C.card, padding:'56px 0' }}>
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
           <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Programme indicatif</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>S\u00e9jour jour par jour \u2014 Pack B\u00e9nin</h2>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Séjour jour par jour — Pack Bénin</h2>
           <GL/>
           <div>
             {programme.map((item,i) => (
@@ -661,13 +661,13 @@ function CircuitsPage({ data, onBook }) {
 
       {/* ── PAIEMENT & CTA ── */}
       <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>R\u00e9servation</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Modalit\u00e9s de paiement</h2>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Réservation</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Modalités de paiement</h2>
         <GL/>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:24 }}>
           <div>
             <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:18 }}>
-              {['Mobile Money','Virement bancaire','Carte bancaire','PayPal','Esp\u00e8ces'].map(m => (
+              {['Mobile Money','Virement bancaire','Carte bancaire','PayPal','Espèces'].map(m => (
                 <div key={m} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 18px', fontSize:12, fontWeight:600, color:C.white }}>{m}</div>
               ))}
             </div>
@@ -676,14 +676,14 @@ function CircuitsPage({ data, onBook }) {
             </div>
           </div>
           <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:18, padding:'28px 26px' }}>
-            <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:6 }}>Vous souhaitez r\u00e9server ?</p>
-            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:20 }}>Choisissez votre formule et r\u00e9servez en ligne avec un acompte de 30\u00a0%. Notre \u00e9quipe vous contacte sous 24h pour finaliser les d\u00e9tails.</p>
+            <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:6 }}>Vous souhaitez réserver ?</p>
+            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:20 }}>Choisissez votre formule et réservez en ligne avec un acompte de 30 %. Notre équipe vous contacte sous 24h pour finaliser les détails.</p>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {packs.map(p => (
                 <button key={p.id} type="button" className="btn" onClick={() => onBook(p)}
                   style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px 20px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <span>{p.name}</span>
-                  <span style={{ fontSize:11, opacity:0.8 }}>R\u00e9server \u2192</span>
+                  <span style={{ fontSize:11, opacity:0.8 }}>Réserver →</span>
                 </button>
               ))}
               <a href={WA + "?text=Bonjour%20S-Group%2C%20je%20souhaite%20des%20informations%20sur%20les%20circuits"} target="_blank" rel="noreferrer"
@@ -713,7 +713,7 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
 
   if (!pack) return null;
 
-  const MONTHS = ['Janvier','F\u00e9vrier','Mars','Avril','Mai','Juin','Juillet','Ao\u00fbt','Septembre','Octobre','Novembre','D\u00e9cembre'];
+  const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const days  = new Date(view.y, view.m+1, 0).getDate();
   const first = new Date(view.y, view.m, 1).getDay();
   const basePrice = Number(pack.base) || 1100;
@@ -739,15 +739,15 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
       <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:30, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
           <div>
-            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>R\u00e9servation</p>
+            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>Réservation</p>
             <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.white }}>{pack.name}</h3>
             <p style={{ fontSize:12, color:C.muted, marginTop:3 }}>{pack.countries}</p>
           </div>
-          <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>\u00d7</button>
+          <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
         </div>
         <GL/>
         <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-          {[['name','Nom complet *','text'],['email','Adresse email','email'],['tel','T\u00e9l\u00e9phone / WhatsApp *','tel']].map(([f,l,t]) => (
+          {[['name','Nom complet *','text'],['email','Adresse email','email'],['tel','Téléphone / WhatsApp *','tel']].map(([f,l,t]) => (
             <div key={f}>
               <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>{l}</label>
               <input type={t} value={bf[f]} onChange={e => setBf(x => ({...x,[f]:e.target.value}))} placeholder={l.replace(' *','')}
@@ -755,18 +755,18 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
             </div>
           ))}
           <div style={{ position:'relative' }}>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>Date de d\u00e9part souhait\u00e9e *</label>
+            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>Date de départ souhaitée *</label>
             <button type="button" onClick={() => setCalOpen(o => !o)}
               style={{ width:'100%', background:C.card2, border:`1.5px solid ${bf.date?C.gold:C.border}`, borderRadius:10, padding:'11px 14px', color:bf.date?C.gold:C.muted, fontSize:14, fontFamily:"'DM Sans',sans-serif", cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span>{bf.date || 'S\u00e9lectionner une date'}</span>
+              <span>{bf.date || 'Sélectionner une date'}</span>
               <Calendar size={15} color={bf.date?C.gold:C.muted}/>
             </button>
             {calOpen && (
               <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:16, width:260, boxShadow:'0 20px 50px rgba(0,0,0,.9)' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                  <button type="button" onClick={() => setView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>\u2039</button>
+                  <button type="button" onClick={() => setView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>‹</button>
                   <span style={{ fontWeight:700, fontSize:13, color:C.white }}>{MONTHS[view.m]} {view.y}</span>
-                  <button type="button" onClick={() => setView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>\u203a</button>
+                  <button type="button" onClick={() => setView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>›</button>
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
                   {['Di','Lu','Ma','Me','Je','Ve','Sa'].map(d => <div key={d} style={{ textAlign:'center', fontSize:9, color:C.muted, fontWeight:700, padding:'4px 0' }}>{d}</div>)}
@@ -800,20 +800,20 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
           {err && <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'10px 14px', borderRadius:9 }}>{err}</p>}
           <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}2a`, borderRadius:14, padding:'16px 18px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:8 }}>
-              <span style={{ color:C.muted }}>Prix base \u00d7 {bf.qty} personne{bf.qty>1?'s':''}</span>
-              <span style={{ fontWeight:700, color:C.white }}>{total}\u00a0\u20ac</span>
+              <span style={{ color:C.muted }}>Prix base × {bf.qty} personne{bf.qty>1?'s':''}</span>
+              <span style={{ fontWeight:700, color:C.white }}>{total} €</span>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30\u00a0%</span>
-              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{acompte30}\u00a0\u20ac</span>
+              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30 %</span>
+              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{acompte30} €</span>
             </div>
-            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({Math.round(total*0.70)}\u00a0\u20ac) \u00e0 r\u00e9gler 30 jours avant le d\u00e9part.</p>
+            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({Math.round(total*0.70)} €) à régler 30 jours avant le départ.</p>
           </div>
           <button type="button" className="btn" onClick={confirm}
             style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:14, padding:'14px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
-            Confirmer la r\u00e9servation \u2014 {acompte30}\u00a0\u20ac
+            Confirmer la réservation — {acompte30} €
           </button>
-          <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre \u00e9quipe vous contactera sous 24h pour valider votre s\u00e9jour.</p>
+          <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre équipe vous contactera sous 24h pour valider votre séjour.</p>
         </div>
       </div>
     </div>
@@ -1575,7 +1575,7 @@ export default function SMall() {
             setBookCircuit(null);
             await sb.from('reservations').insert({
               id:resId, client_name:info.name, client_email:info.email||'N/A', client_tel:info.tel,
-              product_id:0, product_name:info.packName, product_emoji:'✈️',
+              product_id:null, product_name:info.packName, product_emoji:'✈️',
               book_type:'circuit', date_from:info.date, persons:info.qty, total:amt, status:'En attente',
             });
             try { await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:'agencesgroup23@gmail.com',subject:`🔔 Circuit — ${info.packName}`,html:`<div style="font-family:sans-serif;background:#0a0a0a;color:#f5f0e8;padding:24px;border-radius:12px;"><h2 style="color:#c9a84c;">🔔 Réservation Circuit S-Mall</h2><p><b>Pack:</b> ${info.packName}</p><p><b>Client:</b> ${info.name} / ${info.tel}</p><p><b>Date:</b> ${info.date} · ${info.qty} pers.</p><p><b>Acompte 30%:</b> ${FCFA(amt)}</p><p><b>Réf:</b> ${resId}</p></div>`})}); } catch(e) {}

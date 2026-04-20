@@ -963,6 +963,297 @@ function BannersSection() {
 }
 
 // ── MAIN ADMIN ────────────────────────────────────────────────────────────────
+
+// ── CIRCUITS SECTION ──────────────────────────────────────────────────────────
+const DEFAULT_CIRCUIT_CONFIG = {
+  hero_title:"Circuits Vacances",
+  hero_subtitle:"Afrique de l'Ouest — Clé en main",
+  hero_desc:"Du transfert aéroport jusqu'à votre départ, S-Group organise chaque détail de votre séjour.",
+  saison:"Saison 2026 — 2027",
+  conditions:"Acompte de 30% à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande.",
+  packs:[
+    {id:"benin",flags:"🇧🇯",name:"Pack Bénin",countries:"Bénin uniquement",color:"#0D2B45",base:1100,
+     prices:[{label:"👫 Couple / pers.",eur:"1 100€",fcfa:"721 000 FCFA"},{label:"🧍 Solo",eur:"1 400€",fcfa:"918 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
+     note:"+110€ / jour supplémentaire"},
+    {id:"benin-togo",flags:"🇧🇯 🇹🇬",name:"Pack Bénin + Togo",countries:"2 pays",color:"#1A4560",base:1300,
+     prices:[{label:"👫 Couple / pers.",eur:"1 300€",fcfa:"853 000 FCFA"},{label:"🧍 Solo",eur:"1 600€",fcfa:"1 049 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
+     note:"+130€ / jour supplémentaire"},
+    {id:"sous-region",flags:"🇧🇯 🇹🇬 🇨🇮",name:"Pack Sous-Région",countries:"3 pays",color:"#0F3520",base:1900,
+     prices:[{label:"👫 Couple / pers.",eur:"1 900€",fcfa:"1 246 000 FCFA"},{label:"🧍 Solo",eur:"2 200€",fcfa:"1 443 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
+     note:"+190€ / jour supplémentaire"},
+  ],
+  periodes:[
+    {type:"basse",icon:"🌴",label:"Basse Saison",dates:"Août → Octobre 2026",desc:"Conditions idéales, moins de touristes.",tarif:"→ Prix de base"},
+    {type:"haute",icon:"🎉",label:"Haute Saison",dates:"Nov. 2026 → Jan. 2027",desc:"Fêtes de fin d'année, ambiance festive.",tarif:"→ Prix de base + 10%"},
+  ],
+  inclus:["Transfert aéroport","Hébergement hôtel 3 étoiles","3 repas complets par jour","Guide local S-Group dédié","Véhicule avec chauffeur","Toutes excursions & visites guidées","Eau minérale à volonté","Carte SIM locale + Internet","Cadeau souvenir S-Group"],
+  non_inclus:["Visa (à la charge du client)","Billet international (optionnel)","Dépenses personnelles","Assurance voyage","Pourboires","Activités hors programme","Boissons alcoolisées"],
+  programme:[
+    {day:"1",location:"Cotonou — Arrivée",desc:"Accueil VIP à l'aéroport, transfert hôtel, déjeuner de bienvenue."},
+    {day:"2",location:"Cotonou — Marché Dantokpa",desc:"Visite du plus grand marché d'Afrique de l'Ouest."},
+    {day:"3",location:"Ouidah — Histoire & Spiritualité",desc:"Temple des Pythons, Musée d'Histoire, Route des Esclaves."},
+    {day:"4",location:"Ganvié — La Venise de l'Afrique",desc:"Traversée en pirogue vers le village lacustre du lac Nokoué."},
+    {day:"5",location:"Porto-Novo — La Capitale",desc:"Musée Ethnographique, Grande Mosquée Brasileira, Palais Royal."},
+    {day:"6-9",location:"Expériences & Immersion",desc:"Journées culturelles, artisanat, cuisine locale, excursions optionnelles."},
+    {day:"10",location:"Cotonou — Départ",desc:"Petit-déjeuner, dîner de clôture, remise du cadeau souvenir & transfert aéroport."},
+  ],
+};
+
+function CircuitsSection() {
+  const [config, setConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState("general");
+  const [cf, setCf] = useState(DEFAULT_CIRCUIT_CONFIG);
+  const [editPack, setEditPack] = useState(null);
+  const [editDay, setEditDay] = useState(null);
+  const [newInclus, setNewInclus] = useState("");
+  const [newNonInclus, setNewNonInclus] = useState("");
+
+  useEffect(() => {
+    sb.from("circuit_config").select("*").single().then(({data}) => {
+      if (data) { setConfig(data); setCf({...DEFAULT_CIRCUIT_CONFIG,...data}); }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    if (config) {
+      await sb.from("circuit_config").update(cf).eq("id", config.id);
+    } else {
+      const {data} = await sb.from("circuit_config").insert(cf).select().single();
+      if (data) setConfig(data);
+    }
+    setSaving(false);
+    alert("✅ Circuits mis à jour !");
+  };
+
+  const TA = ({label, field, rows=2}) => (
+    <div style={{marginBottom:12}}>
+      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{label}</label>
+      <textarea value={cf[field]||""} onChange={e=>setCf(x=>({...x,[field]:e.target.value}))} rows={rows}
+        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
+    </div>
+  );
+
+  const INP = ({label, field, placeholder=""}) => (
+    <div style={{marginBottom:12}}>
+      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{label}</label>
+      <input value={cf[field]||""} onChange={e=>setCf(x=>({...x,[field]:e.target.value}))} placeholder={placeholder}
+        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+    </div>
+  );
+
+  const TABS = [
+    {id:"general",label:"🌐 Général"},
+    {id:"packs",label:"📦 Packs & Tarifs"},
+    {id:"periodes",label:"📅 Périodes"},
+    {id:"programme",label:"🗓️ Programme"},
+    {id:"inclus",label:"✅ Inclus"},
+  ];
+
+  if (loading) return <div style={{display:"flex",gap:10,alignItems:"center",padding:"40px 0"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>;
+
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+        <div>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Page Circuits</h2>
+          <p style={{color:C.muted,fontSize:14}}>Gérez tout le contenu de la page Circuits Vacances</p>
+        </div>
+        <button type="button" onClick={save} disabled={saving}
+          style={{background:saving?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:saving?C.muted:C.bg,border:"none",borderRadius:12,padding:"10px 22px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
+          {saving?<><Spinner size={14}/>Sauvegarde…</>:"💾 Tout sauvegarder"}
+        </button>
+      </div>
+
+      {/* TABS */}
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {TABS.map(t => (
+          <button type="button" key={t.id} onClick={()=>setTab(t.id)}
+            style={{padding:"9px 16px",borderRadius:999,border:`1.5px solid ${tab===t.id?C.gold:C.border}`,background:tab===t.id?`${C.gold}18`:"transparent",color:tab===t.id?C.gold:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* TAB: GÉNÉRAL */}
+      {tab==="general" && (
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:24}}>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:17,color:C.gold,marginBottom:18}}>🌐 Informations générales</h3>
+          <INP label="Titre principal" field="hero_title" placeholder="Circuits Vacances"/>
+          <INP label="Sous-titre" field="hero_subtitle" placeholder="Afrique de l'Ouest — Clé en main"/>
+          <TA label="Description hero" field="hero_desc" rows={3}/>
+          <INP label="Badge saison" field="saison" placeholder="Saison 2026 — 2027"/>
+          <TA label="Conditions de paiement" field="conditions" rows={3}/>
+        </div>
+      )}
+
+      {/* TAB: PACKS */}
+      {tab==="packs" && (
+        <div style={{display:"flex",flexDirection:"column",gap:16}}>
+          {(cf.packs||[]).map((pack,pi) => (
+            <div key={pack.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden"}}>
+              <div style={{background:pack.color||C.bg,padding:"16px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <span style={{fontSize:22}}>{pack.flags}</span>
+                  <div>
+                    <p style={{fontWeight:800,fontSize:15,color:C.white}}>{pack.name}</p>
+                    <p style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{pack.countries}</p>
+                  </div>
+                </div>
+                <button type="button" onClick={()=>setEditPack(editPack===pi?null:pi)}
+                  style={{background:`${C.gold}20`,border:`1px solid ${C.gold}44`,color:C.gold,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                  {editPack===pi?"✕ Fermer":"✏️ Modifier"}
+                </button>
+              </div>
+              {editPack===pi && (
+                <div style={{padding:22}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
+                    {[["name","Nom du pack"],["flags","Emoji drapeaux"],["countries","Pays / description"],["color","Couleur header (hex)"],["base","Prix de base (€)"],["note","Note tarifaire"]].map(([f,l]) => (
+                      <div key={f}>
+                        <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{l}</label>
+                        <input value={pack[f]||""} onChange={e=>{
+                          const newPacks=[...cf.packs];
+                          newPacks[pi]={...newPacks[pi],[f]:e.target.value};
+                          setCf(x=>({...x,packs:newPacks}));
+                        }} style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:10}}>Lignes de prix</p>
+                  {(pack.prices||[]).map((pr,pri) => (
+                    <div key={pri} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:8,background:C.card2,borderRadius:10,padding:"10px 14px"}}>
+                      {[["label","Libellé"],["eur","Prix €"],["fcfa","Prix FCFA"]].map(([f,l]) => (
+                        <div key={f}>
+                          <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>{l}</label>
+                          <input value={pr[f]||""} onChange={e=>{
+                            const newPacks=[...cf.packs];
+                            const newPrices=[...(newPacks[pi].prices||[])];
+                            newPrices[pri]={...newPrices[pri],[f]:e.target.value};
+                            newPacks[pi]={...newPacks[pi],prices:newPrices};
+                            setCf(x=>({...x,packs:newPacks}));
+                          }} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.white,fontSize:12,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TAB: PÉRIODES */}
+      {tab==="periodes" && (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          {(cf.periodes||[]).map((p,pi) => (
+            <div key={pi} style={{background:C.card,border:`1px solid ${pi===1?C.gold:C.border}44`,borderRadius:18,padding:22}}>
+              <p style={{fontWeight:800,fontSize:15,color:pi===1?C.gold:C.blue,marginBottom:16}}>{p.icon} {p.label}</p>
+              {[["icon","Icône"],["label","Type"],["dates","Dates"],["desc","Description"],["tarif","Tarif affiché"]].map(([f,l]) => (
+                <div key={f} style={{marginBottom:10}}>
+                  <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label>
+                  <input value={p[f]||""} onChange={e=>{
+                    const newP=[...cf.periodes];
+                    newP[pi]={...newP[pi],[f]:e.target.value};
+                    setCf(x=>({...x,periodes:newP}));
+                  }} style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TAB: PROGRAMME */}
+      {tab==="programme" && (
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {(cf.programme||[]).map((item,di) => (
+            <div key={di} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",gap:14,padding:"12px 18px",cursor:"pointer"}} onClick={()=>setEditDay(editDay===di?null:di)}>
+                <div style={{width:40,height:40,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:9,flexShrink:0}}>{item.day}</div>
+                <div style={{flex:1}}>
+                  <p style={{fontWeight:700,fontSize:13,color:C.gold}}>{item.location}</p>
+                  <p style={{fontSize:11,color:C.muted}}>{(item.desc||"").slice(0,60)}…</p>
+                </div>
+                <span style={{color:C.muted,fontSize:18}}>{editDay===di?"▲":"▼"}</span>
+              </div>
+              {editDay===di && (
+                <div style={{padding:"0 18px 18px",display:"flex",flexDirection:"column",gap:10}}>
+                  {[["day","Jour(s)"],["location","Lieu / titre"],["desc","Description"]].map(([f,l]) => (
+                    <div key={f}>
+                      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label>
+                      {f==="desc"
+                        ? <textarea value={item[f]||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],[f]:e.target.value};setCf(x=>({...x,programme:np}));}} rows={3}
+                            style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
+                        : <input value={item[f]||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],[f]:e.target.value};setCf(x=>({...x,programme:np}));}}
+                            style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                      }
+                    </div>
+                  ))}
+                  <div style={{display:"flex",gap:8"}}>
+                    <button type="button" onClick={()=>{const np=[...cf.programme];np.splice(di,1);setCf(x=>({...x,programme:np}));setEditDay(null);}}
+                      style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer ce jour</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={()=>setCf(x=>({...x,programme:[...(x.programme||[]),{day:String((x.programme||[]).length+1),location:"Nouveau lieu",desc:"Description..."}]}))}
+            style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:12,padding:"11px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+            + Ajouter un jour
+          </button>
+        </div>
+      )}
+
+      {/* TAB: INCLUS */}
+      {tab==="inclus" && (
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+          {/* INCLUS */}
+          <div style={{background:C.card,border:`1px solid ${C.green}33`,borderRadius:18,padding:22}}>
+            <p style={{fontWeight:800,fontSize:15,color:C.green,marginBottom:16}}>✅ Inclus dans tous les packs</p>
+            {(cf.inclus||[]).map((item,i) => (
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:C.card2,borderRadius:9,padding:"9px 12px",marginBottom:8}}>
+                <input value={item} onChange={e=>{const ni=[...cf.inclus];ni[i]=e.target.value;setCf(x=>({...x,inclus:ni}));}}
+                  style={{flex:1,background:"transparent",border:"none",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <button type="button" onClick={()=>setCf(x=>({...x,inclus:x.inclus.filter((_,j)=>j!==i)}))}
+                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14}}>✕</button>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <input value={newInclus} onChange={e=>setNewInclus(e.target.value)} placeholder="Ajouter un élément inclus…"
+                style={{flex:1,background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+              <button type="button" onClick={()=>{if(newInclus.trim()){setCf(x=>({...x,inclus:[...(x.inclus||[]),newInclus.trim()]}));setNewInclus("");}}}
+                style={{background:`${C.green}20`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+            </div>
+          </div>
+          {/* NON INCLUS */}
+          <div style={{background:C.card,border:`1px solid ${C.red}33`,borderRadius:18,padding:22}}>
+            <p style={{fontWeight:800,fontSize:15,color:C.red,marginBottom:16}}>❌ Non inclus</p>
+            {(cf.non_inclus||[]).map((item,i) => (
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:C.card2,borderRadius:9,padding:"9px 12px",marginBottom:8}}>
+                <input value={item} onChange={e=>{const ni=[...cf.non_inclus];ni[i]=e.target.value;setCf(x=>({...x,non_inclus:ni}));}}
+                  style={{flex:1,background:"transparent",border:"none",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+                <button type="button" onClick={()=>setCf(x=>({...x,non_inclus:x.non_inclus.filter((_,j)=>j!==i)}))}
+                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14}}>✕</button>
+              </div>
+            ))}
+            <div style={{display:"flex",gap:8,marginTop:10}}>
+              <input value={newNonInclus} onChange={e=>setNewNonInclus(e.target.value)} placeholder="Ajouter un élément non inclus…"
+                style={{flex:1,background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
+              <button type="button" onClick={()=>{if(newNonInclus.trim()){setCf(x=>({...x,non_inclus:[...(x.non_inclus||[]),newNonInclus.trim()]}));setNewNonInclus("");}}}
+                style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 const MENU=[
   {id:"stats",label:"Tableau de bord",icon:"📊"},
   {id:"products",label:"Produits",icon:"🛍️"},
@@ -973,6 +1264,7 @@ const MENU=[
   {id:"banners",label:"Bannières",icon:"🖼️"},
   {id:"categories",label:"Catégories",icon:"🏷️"},
   {id:"shipping",label:"Livraisons",icon:"🚚"},
+  {id:"circuits",label:"Circuits",icon:"✈️"},
 ];
 
 // FIX: mot de passe stocké en variable d'environnement ou constante hors bundle lisible
@@ -1062,6 +1354,7 @@ export default function SMallAdmin() {
         {section==="banners"     && <BannersSection/>}
         {section==="categories"  && <CategoriesSection/>}
         {section==="shipping"    && <ShippingSection/>}
+        {section==="circuits"    && <CircuitsSection/>}
       </main>
     </div>
   );

@@ -472,139 +472,138 @@ function readCart() {
 // ─── DONNÉES PAR DÉFAUT CIRCUITS ─────────────────────────────────────────────
 const DEFAULT_CIRCUIT = {
   hero_title: "Circuits Vacances",
-  hero_subtitle: "Afrique de l'Ouest — Clé en main",
-  hero_desc: "Du transfert aéroport jusqu'à votre départ, S-Group organise chaque détail de votre séjour. Hébergement, transport, excursions, repas, guide dédié — tout est inclus.",
-  saison: "Saison 2026 — 2027",
+  hero_subtitle: "Afrique de l\u2019Ouest \u2014 Cl\u00e9 en main",
+  hero_desc: "Du transfert a\u00e9roport jusqu\u2019\u00e0 votre d\u00e9part, S-Group organise chaque d\u00e9tail de votre s\u00e9jour. H\u00e9bergement, transport, excursions, repas, guide d\u00e9di\u00e9 \u2014 tout est inclus. Vous arrivez\u2026 et tout est d\u00e9j\u00e0 g\u00e9r\u00e9.",
+  saison: "Saison 2026 \u2014 2027",
   periodes: [
-    { type:"basse", icon:"🌴", label:"Basse Saison", dates:"Août → Octobre 2026", desc:"Conditions idéales, moins de touristes, atmosphère authentique et tranquille.", tarif:"→ Prix de base" },
-    { type:"haute", icon:"🎉", label:"Haute Saison", dates:"Nov. 2026 → Jan. 2027", desc:"Fêtes de fin d'année, Noël & Nouvel An au Bénin. Ambiance festive, événements culturels.", tarif:"→ Prix de base + 10%" },
+    { type:"basse", label:"Basse Saison", dates:"Ao\u00fbt \u2192 Octobre 2026", desc:"Conditions id\u00e9ales, moins de touristes, atmosph\u00e8re authentique et tranquille. Id\u00e9al pour une immersion sereine.", tarif:"Prix de base" },
+    { type:"haute", label:"Haute Saison", dates:"Novembre 2026 \u2192 Janvier 2027", desc:"F\u00eates de fin d\u2019ann\u00e9e, No\u00ebl & Nouvel An au B\u00e9nin. Ambiance festive, \u00e9v\u00e9nements culturels exceptionnels.", tarif:"Prix de base + 10\u00a0%" },
   ],
   packs: [
-    { id:"benin", flags:"🇧🇯", name:"Pack Bénin", countries:"Bénin uniquement", color:"#0D2B45",
-      prices:[{label:"👫 Couple / pers.",eur:"1 100€",fcfa:"721 000 FCFA"},{label:"🧍 Solo",eur:"1 400€",fcfa:"918 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-      note:"+110€ / jour supplémentaire", base:1100 },
-    { id:"benin-togo", flags:"🇧🇯 🇹🇬", name:"Pack Bénin + Togo", countries:"2 pays", color:"#1A4560",
-      prices:[{label:"👫 Couple / pers.",eur:"1 300€",fcfa:"853 000 FCFA"},{label:"🧍 Solo",eur:"1 600€",fcfa:"1 049 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-      note:"+130€ / jour supplémentaire", base:1300 },
-    { id:"sous-region", flags:"🇧🇯 🇹🇬 🇨🇮", name:"Pack Sous-Région", countries:"3 pays — immersion totale", color:"#0F3520",
-      prices:[{label:"👫 Couple / pers.",eur:"1 900€",fcfa:"1 246 000 FCFA"},{label:"🧍 Solo",eur:"2 200€",fcfa:"1 443 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-      note:"+190€ / jour supplémentaire", base:1900 },
+    { id:"benin", flags:"\ud83c\udde7\ud83c\uddef", name:"Pack B\u00e9nin", countries:"B\u00e9nin uniquement", color:"#0D2B45",
+      prices:[{label:"Couple / personne",eur:"1\u00a0100\u00a0\u20ac",fcfa:"721\u00a0000 FCFA"},{label:"Solo",eur:"1\u00a0400\u00a0\u20ac",fcfa:"918\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
+      note:"+ 110 \u20ac / jour suppl\u00e9mentaire", base:1100 },
+    { id:"benin-togo", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec", name:"Pack B\u00e9nin + Togo", countries:"2 pays", color:"#1A4560",
+      prices:[{label:"Couple / personne",eur:"1\u00a0300\u00a0\u20ac",fcfa:"853\u00a0000 FCFA"},{label:"Solo",eur:"1\u00a0600\u00a0\u20ac",fcfa:"1\u00a0049\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
+      note:"+ 130 \u20ac / jour suppl\u00e9mentaire", base:1300 },
+    { id:"sous-region", flags:"\ud83c\udde7\ud83c\uddef \ud83c\uddf9\ud83c\uddec \ud83c\udde8\ud83c\uddee", name:"Pack Sous-R\u00e9gion", countries:"3 pays \u2014 immersion totale", color:"#0F3520",
+      prices:[{label:"Couple / personne",eur:"1\u00a0900\u00a0\u20ac",fcfa:"1\u00a0246\u00a0000 FCFA"},{label:"Solo",eur:"2\u00a0200\u00a0\u20ac",fcfa:"1\u00a0443\u00a0000 FCFA"},{label:"Avec billet inclus",eur:"+1\u00a0100\u00a0\u20ac",fcfa:"en option"}],
+      note:"+ 190 \u20ac / jour suppl\u00e9mentaire", base:1900 },
   ],
   inclus: [
-    "Transfert aéroport — arrivée & départ",
-    "Hébergement hôtel 3 étoiles",
+    "Transfert a\u00e9roport \u2014 arriv\u00e9e & d\u00e9part",
+    "H\u00e9bergement h\u00f4tel 3 \u00e9toiles",
     "3 repas complets par jour",
-    "Guide local S-Group dédié",
-    "Véhicule avec chauffeur",
-    "Toutes excursions & visites guidées",
-    "Eau minérale à volonté",
+    "Guide local S-Group d\u00e9di\u00e9",
+    "V\u00e9hicule avec chauffeur priv\u00e9",
+    "Toutes excursions & visites guid\u00e9es",
+    "Eau min\u00e9rale \u00e0 volont\u00e9",
     "Carte SIM locale + Internet",
     "Cadeau souvenir S-Group",
   ],
   non_inclus: [
-    "Visa (à la charge du client)",
+    "Visa (assist\u00e9 par S-Group)",
     "Billet international (optionnel)",
-    "Dépenses personnelles",
+    "D\u00e9penses personnelles",
     "Assurance voyage",
     "Pourboires",
-    "Activités hors programme",
-    "Boissons alcoolisées",
+    "Activit\u00e9s hors programme",
+    "Boissons alcolis\u00e9es",
   ],
   programme: [
-    { day:"1", location:"Cotonou — Arrivée", desc:"Accueil VIP à l'aéroport, transfert hôtel, déjeuner de bienvenue, découverte de Cotonou & briefing du séjour." },
-    { day:"2", location:"Cotonou — Marché Dantokpa", desc:"Visite du plus grand marché d'Afrique de l'Ouest, Centre Artistique, rencontre avec artistes locaux." },
-    { day:"3", location:"Ouidah — Histoire & Spiritualité", desc:"Temple des Pythons, Musée d'Histoire, Route des Esclaves & Porte du Non-Retour face à l'Atlantique." },
-    { day:"4", location:"Ganvié — La Venise de l'Afrique", desc:"Traversée en pirogue vers le village lacustre sur pilotis du lac Nokoué, rencontre avec les habitants." },
-    { day:"5", location:"Porto-Novo — La Capitale", desc:"Musée Ethnographique, Grande Mosquée Brasileira, marché central, Palais Royal de Porto-Novo." },
-    { day:"6-9", location:"Expériences & Immersion", desc:"Journées culturelles, artisanat, cuisine locale, excursions optionnelles (Abomey, Penjari...), journées libres & soirées." },
-    { day:"10", location:"Cotonou — Départ", desc:"Petit-déjeuner, dîner de clôture, remise du cadeau souvenir S-Group & transfert aéroport." },
+    { day:"01", location:"Cotonou \u2014 Arriv\u00e9e", desc:"Accueil VIP \u00e0 l\u2019a\u00e9roport, transfert h\u00f4tel, d\u00e9jeuner de bienvenue, d\u00e9couverte de Cotonou & briefing du s\u00e9jour." },
+    { day:"02", location:"Cotonou \u2014 March\u00e9 Dantokpa", desc:"Visite du plus grand march\u00e9 d\u2019Afrique de l\u2019Ouest, Centre Artistique, rencontre avec artistes locaux." },
+    { day:"03", location:"Ouidah \u2014 Histoire & Spiritualit\u00e9", desc:"Temple des Pythons, Mus\u00e9e d\u2019Histoire, Route des Esclaves & Porte du Non-Retour face \u00e0 l\u2019Atlantique." },
+    { day:"04", location:"Ganvi\u00e9 \u2014 La Venise de l\u2019Afrique", desc:"Travers\u00e9e en pirogue vers le village lacustre sur pilotis du lac Nokou\u00e9, rencontre avec les habitants." },
+    { day:"05", location:"Porto-Novo \u2014 La Capitale", desc:"Mus\u00e9e Ethnographique, Grande Mosqu\u00e9e Brasileira, march\u00e9 central, Palais Royal de Porto-Novo." },
+    { day:"06\u201409", location:"Exp\u00e9riences & Immersion", desc:"Journ\u00e9es culturelles, artisanat, cuisine locale, excursions optionnelles (Abomey, Penjari\u2026), journ\u00e9es libres & soir\u00e9es." },
+    { day:"10", location:"Cotonou \u2014 D\u00e9part", desc:"Petit-d\u00e9jeuner, d\u00eaner de cl\u00f4ture, remise du cadeau souvenir S-Group & transfert a\u00e9roport." },
   ],
-  conditions: "Acompte de 30% à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande. Visa à la charge du client (assistance S-Group disponible).",
+  conditions: "Acompte de 30\u00a0% \u00e0 la confirmation \u2014 Solde 30 jours avant le d\u00e9part. Paiement \u00e9chelonn\u00e9 possible sur demande. Assistance visa disponible.",
 };
 
 // ─── PAGE CIRCUITS ────────────────────────────────────────────────────────────
 function CircuitsPage({ data, onBook }) {
   const d = data ? { ...DEFAULT_CIRCUIT, ...data } : DEFAULT_CIRCUIT;
-  const packs = (data && data.packs) ? data.packs : DEFAULT_CIRCUIT.packs;
-  const programme = (data && data.programme) ? data.programme : DEFAULT_CIRCUIT.programme;
-  const inclus = (data && data.inclus) ? data.inclus : DEFAULT_CIRCUIT.inclus;
-  const non_inclus = (data && data.non_inclus) ? data.non_inclus : DEFAULT_CIRCUIT.non_inclus;
-  const periodes = (data && data.periodes) ? data.periodes : DEFAULT_CIRCUIT.periodes;
+  const packs     = (data && data.packs)      ? data.packs      : DEFAULT_CIRCUIT.packs;
+  const programme = (data && data.programme)  ? data.programme  : DEFAULT_CIRCUIT.programme;
+  const inclus    = (data && data.inclus)     ? data.inclus     : DEFAULT_CIRCUIT.inclus;
+  const non_inclus= (data && data.non_inclus) ? data.non_inclus : DEFAULT_CIRCUIT.non_inclus;
+  const periodes  = (data && data.periodes)   ? data.periodes   : DEFAULT_CIRCUIT.periodes;
 
   return (
     <div style={{ animation:'fadeUp .4s ease' }}>
 
-      {/* HERO */}
-      <div style={{ position:'relative', overflow:'hidden', padding:'70px 56px 60px', background:'linear-gradient(135deg,#0a0a0a 0%,#0d1a0d 50%,#0a0a0a 100%)' }}>
-        <div style={{ position:'absolute', top:-80, right:-60, width:400, height:400, borderRadius:'50%', background:`radial-gradient(circle,${C.gold}10 0%,transparent 70%)`, pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', bottom:-60, left:40, width:280, height:280, borderRadius:'50%', background:`radial-gradient(circle,${C.gold}07 0%,transparent 70%)`, pointerEvents:'none' }}/>
+      {/* ── HERO ── */}
+      <div style={{ position:'relative', overflow:'hidden', padding:'80px 56px 72px', background:'linear-gradient(160deg,#050e05 0%,#0d1a0d 55%,#050e05 100%)' }}>
+        <div style={{ position:'absolute', top:-100, right:-80, width:500, height:500, borderRadius:'50%', background:`radial-gradient(circle,${C.gold}0d 0%,transparent 65%)`, pointerEvents:'none' }}/>
+        <div style={{ position:'absolute', bottom:-80, left:-40, width:350, height:350, borderRadius:'50%', background:`radial-gradient(circle,${C.gold}07 0%,transparent 65%)`, pointerEvents:'none' }}/>
         <div style={{ maxWidth:1180, margin:'0 auto' }}>
-          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:11, marginBottom:10 }}>✦ {d.saison}</p>
-          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:52, fontWeight:900, lineHeight:1.05, marginBottom:10 }}>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:5, textTransform:'uppercase', fontSize:10, marginBottom:16 }}>{d.saison}</p>
+          <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:56, fontWeight:900, lineHeight:1.02, marginBottom:12, color:C.white }}>
             {d.hero_title}<br/>
             <span style={{ background:`linear-gradient(90deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>{d.hero_subtitle}</span>
           </h1>
-          <div style={{ width:60, height:3, background:C.gold, margin:'18px 0' }}/>
-          <p style={{ color:C.muted, fontSize:15, lineHeight:1.8, maxWidth:580 }}>{d.hero_desc}</p>
-          {/* PACKS STRIP */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginTop:32, maxWidth:700 }}>
+          <div style={{ width:64, height:3, background:`linear-gradient(90deg,${C.gold},${C.goldL})`, margin:'22px 0' }}/>
+          <p style={{ color:C.muted, fontSize:15, lineHeight:1.85, maxWidth:600, marginBottom:36 }}>{d.hero_desc}</p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, maxWidth:680 }}>
             {packs.map(p => (
-              <div key={p.id} style={{ background:C.card, border:`1px solid ${C.gold}33`, borderRadius:14, padding:'16px', textAlign:'center' }}>
-                <div style={{ fontSize:22, marginBottom:6 }}>{p.flags}</div>
-                <div style={{ fontSize:12, fontWeight:700, color:C.gold, letterSpacing:1 }}>{p.name}</div>
-                <div style={{ fontSize:10, color:C.muted, marginTop:3 }}>{p.countries}</div>
+              <div key={p.id} style={{ background:'rgba(255,255,255,0.04)', border:`1px solid ${C.gold}22`, borderRadius:14, padding:'18px 14px', textAlign:'center', backdropFilter:'blur(8px)' }}>
+                <p style={{ fontSize:11, fontWeight:700, color:C.gold, letterSpacing:2, textTransform:'uppercase', marginBottom:4 }}>{p.name}</p>
+                <p style={{ fontSize:10, color:C.muted }}>{p.countries}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* PÉRIODES */}
-      <div style={{ maxWidth:1180, margin:'0 auto', padding:'48px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', fontSize:11, marginBottom:6 }}>✦ Disponibilités</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, marginBottom:8 }}>Deux saisons, deux ambiances</h2>
+      {/* ── PÉRIODES ── */}
+      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Disponibilités</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Deux saisons, deux ambiances</h2>
         <GL/>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
           {periodes.map((p,i) => (
-            <div key={i} style={{ background:C.card, border:`1px solid ${p.type==='haute'?C.gold:C.border}44`, borderRadius:16, padding:'24px 28px' }}>
-              <div style={{ fontSize:28, marginBottom:10 }}>{p.icon}</div>
-              <p style={{ fontSize:10, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:p.type==='haute'?C.gold:C.blue, marginBottom:5 }}>{p.label}</p>
-              <p style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:C.white, marginBottom:8 }}>{p.dates}</p>
-              <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:10 }}>{p.desc}</p>
-              <p style={{ fontSize:12, fontWeight:700, color:p.type==='haute'?C.gold:C.blue }}>{p.tarif}</p>
+            <div key={i} style={{ background:C.card, border:`1px solid ${p.type==='haute'?C.gold+'44':C.border}`, borderRadius:18, padding:'32px 30px' }}>
+              <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:p.type==='haute'?C.gold:C.blue, marginBottom:10 }}>{p.label}</p>
+              <p style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white, marginBottom:12 }}>{p.dates}</p>
+              <p style={{ fontSize:13, color:C.muted, lineHeight:1.8, marginBottom:14 }}>{p.desc}</p>
+              <div style={{ display:'inline-block', background:p.type==='haute'?`${C.gold}15`:C.card2, border:`1px solid ${p.type==='haute'?C.gold+'33':C.border}`, borderRadius:8, padding:'6px 14px', fontSize:12, fontWeight:700, color:p.type==='haute'?C.gold:C.muted }}>{p.tarif}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* TARIFS */}
-      <div style={{ background:C.card, padding:'48px 0' }}>
+      {/* ── TARIFS ── */}
+      <div style={{ background:C.card, padding:'56px 0' }}>
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
-          <p style={{ color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', fontSize:11, marginBottom:6 }}>✦ Tarification</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, marginBottom:8 }}>Nos formules — à partir de 10 jours</h2>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Tarification</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Nos formules \u2014 \u00e0 partir de 10 jours</h2>
           <GL/>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:22 }}>
             {packs.map(p => (
-              <div key={p.id} className="hov" style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden' }}>
-                <div style={{ padding:'20px', textAlign:'center', background:p.color||C.bg }}>
-                  <div style={{ fontSize:26, marginBottom:8 }}>{p.flags}</div>
-                  <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:4 }}>{p.name}</h3>
-                  <p style={{ fontSize:11, color:'rgba(255,255,255,0.5)', letterSpacing:1 }}>{p.countries}</p>
+              <div key={p.id} className="hov" style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+                <div style={{ padding:'28px 24px', background:p.color||C.bg, position:'relative', overflow:'hidden' }}>
+                  <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
+                  <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:8 }}>{p.countries}</p>
+                  <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white, marginBottom:4 }}>{p.name}</h3>
                 </div>
-                <div style={{ padding:'20px' }}>
-                  {(p.prices||[]).map((pr,i) => (
-                    <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderBottom:i<(p.prices.length-1)?`1px solid ${C.border}`:'none' }}>
-                      <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{pr.label}</span>
-                      <div style={{ textAlign:'right' }}>
-                        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:16, fontWeight:900, color:C.gold }}>{pr.eur}</div>
-                        <div style={{ fontSize:10, color:C.muted }}>{pr.fcfa}</div>
+                <div style={{ padding:'22px 24px', flex:1, display:'flex', flexDirection:'column' }}>
+                  <div style={{ flex:1 }}>
+                    {(p.prices||[]).map((pr,i) => (
+                      <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:i<(p.prices.length-1)?`1px solid ${C.border}`:'none' }}>
+                        <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{pr.label}</span>
+                        <div style={{ textAlign:'right' }}>
+                          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:900, color:C.gold }}>{pr.eur}</div>
+                          <div style={{ fontSize:10, color:C.muted, marginTop:1 }}>{pr.fcfa}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {p.note && <p style={{ fontSize:11, color:C.gold, textAlign:'center', marginTop:12, fontStyle:'italic', fontWeight:600 }}>{p.note}</p>}
+                    ))}
+                    {p.note && <p style={{ fontSize:11, color:C.muted, textAlign:'center', marginTop:14, fontStyle:'italic', borderTop:`1px solid ${C.border}`, paddingTop:12 }}>{p.note}</p>}
+                  </div>
                   <button type="button" className="btn" onClick={() => onBook(p)}
-                    style={{ width:'100%', marginTop:16, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                    <Calendar size={14}/>Réserver ce circuit
+                    style={{ width:'100%', marginTop:18, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'13px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
+                    R\u00e9server ce circuit
                   </button>
                 </div>
               </div>
@@ -613,26 +612,26 @@ function CircuitsPage({ data, onBook }) {
         </div>
       </div>
 
-      {/* INCLUS / NON INCLUS */}
-      <div style={{ maxWidth:1180, margin:'0 auto', padding:'48px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', fontSize:11, marginBottom:6 }}>✦ Contenu des packs</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, marginBottom:8 }}>Ce qui est inclus</h2>
+      {/* ── INCLUS / NON INCLUS ── */}
+      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Contenu des formules</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Ce qui est inclus</h2>
         <GL/>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
-          <div style={{ background:C.card, border:`1px solid ${C.green}33`, borderRadius:16, padding:'24px 28px' }}>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.green, marginBottom:16, paddingBottom:12, borderBottom:`2px solid ${C.green}` }}>✅ Inclus dans tous les packs</p>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
+          <div style={{ background:C.card, border:`1px solid ${C.green}33`, borderRadius:18, padding:'28px 30px' }}>
+            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.green, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.green}22` }}>Inclus dans toutes les formules</p>
             {inclus.map((item,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:10 }}>
-                <div style={{ width:7, height:7, borderRadius:'50%', background:C.green, marginTop:5, flexShrink:0 }}/>
+              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:C.green, marginTop:6, flexShrink:0 }}/>
                 <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
               </div>
             ))}
           </div>
-          <div style={{ background:C.card, border:`1px solid ${C.red}33`, borderRadius:16, padding:'24px 28px' }}>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.red, marginBottom:16, paddingBottom:12, borderBottom:`2px solid ${C.red}` }}>❌ Non inclus</p>
+          <div style={{ background:C.card, border:`1px solid ${C.red}33`, borderRadius:18, padding:'28px 30px' }}>
+            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.red, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.red}22` }}>Non inclus</p>
             {non_inclus.map((item,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:10 }}>
-                <div style={{ width:7, height:7, borderRadius:'50%', background:C.red, marginTop:5, flexShrink:0 }}/>
+              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
+                <div style={{ width:6, height:6, borderRadius:'50%', background:C.red, marginTop:6, flexShrink:0 }}/>
                 <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
               </div>
             ))}
@@ -640,19 +639,19 @@ function CircuitsPage({ data, onBook }) {
         </div>
       </div>
 
-      {/* PROGRAMME */}
-      <div style={{ background:C.card, padding:'48px 0' }}>
+      {/* ── PROGRAMME ── */}
+      <div style={{ background:C.card, padding:'56px 0' }}>
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
-          <p style={{ color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', fontSize:11, marginBottom:6 }}>✦ Programme — Pack Bénin</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, marginBottom:8 }}>Aperçu du séjour jour par jour</h2>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Programme indicatif</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>S\u00e9jour jour par jour \u2014 Pack B\u00e9nin</h2>
           <GL/>
-          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+          <div>
             {programme.map((item,i) => (
-              <div key={i} style={{ display:'flex', gap:20, padding:'18px 0', borderBottom:i<programme.length-1?`1px solid ${C.border}`:'none', alignItems:'flex-start' }}>
-                <div style={{ width:48, height:48, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, fontFamily:"'Playfair Display',serif", fontSize:15, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, borderRadius:10 }}>{item.day}</div>
+              <div key={i} style={{ display:'flex', gap:24, padding:'22px 0', borderBottom:i<programme.length-1?`1px solid ${C.border}`:'none', alignItems:'flex-start' }}>
+                <div style={{ width:52, height:52, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, borderRadius:12, letterSpacing:1 }}>J{item.day}</div>
                 <div style={{ flex:1 }}>
-                  <p style={{ fontSize:12, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:1, marginBottom:4 }}>{item.location}</p>
-                  <p style={{ fontSize:13, color:C.muted, lineHeight:1.7 }}>{item.desc}</p>
+                  <p style={{ fontSize:13, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:1.5, marginBottom:6 }}>{item.location}</p>
+                  <p style={{ fontSize:14, color:C.muted, lineHeight:1.8 }}>{item.desc}</p>
                 </div>
               </div>
             ))}
@@ -660,32 +659,42 @@ function CircuitsPage({ data, onBook }) {
         </div>
       </div>
 
-      {/* PAIEMENT & CONDITIONS */}
-      <div style={{ maxWidth:1180, margin:'0 auto', padding:'48px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', fontSize:11, marginBottom:6 }}>✦ Réservation</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:900, marginBottom:8 }}>Modalités de paiement</h2>
+      {/* ── PAIEMENT & CTA ── */}
+      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>R\u00e9servation</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Modalit\u00e9s de paiement</h2>
         <GL/>
-        <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:18 }}>
-          {['📱 Mobile Money','🏦 Virement bancaire','💳 Carte bancaire','🌐 PayPal','💵 Espèces'].map(m => (
-            <div key={m} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 18px', fontSize:12, fontWeight:600, color:C.white }}>{m}</div>
-          ))}
-        </div>
-        <div style={{ background:C.card, borderLeft:`4px solid ${C.gold}`, borderRadius:'0 12px 12px 0', padding:'18px 22px', fontSize:13, color:C.muted, lineHeight:1.8 }}>
-          {d.conditions}
-        </div>
-        <div style={{ display:'flex', gap:12, marginTop:24, flexWrap:'wrap' }}>
-          {packs.map(p => (
-            <button key={p.id} type="button" className="btn" onClick={() => onBook(p)}
-              style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px 26px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', gap:8 }}>
-              <Calendar size={14}/>Réserver — {p.name}
-            </button>
-          ))}
-          <a href={`${WA}?text=Bonjour%20S-Mall%2C%20je%20veux%20en%20savoir%20plus%20sur%20les%20circuits`} target="_blank" rel="noreferrer"
-            style={{ display:'flex', alignItems:'center', gap:8, background:'#25d366', color:'#fff', borderRadius:13, padding:'13px 22px', fontWeight:700, fontSize:14, textDecoration:'none', fontFamily:"'DM Sans',sans-serif" }}>
-            <MessageCircle size={14}/>WhatsApp
-          </a>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:24 }}>
+          <div>
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:18 }}>
+              {['Mobile Money','Virement bancaire','Carte bancaire','PayPal','Esp\u00e8ces'].map(m => (
+                <div key={m} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 18px', fontSize:12, fontWeight:600, color:C.white }}>{m}</div>
+              ))}
+            </div>
+            <div style={{ background:C.card, borderLeft:`3px solid ${C.gold}`, borderRadius:'0 12px 12px 0', padding:'18px 22px', fontSize:13, color:C.muted, lineHeight:1.8 }}>
+              {d.conditions}
+            </div>
+          </div>
+          <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:18, padding:'28px 26px' }}>
+            <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:6 }}>Vous souhaitez r\u00e9server ?</p>
+            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:20 }}>Choisissez votre formule et r\u00e9servez en ligne avec un acompte de 30\u00a0%. Notre \u00e9quipe vous contacte sous 24h pour finaliser les d\u00e9tails.</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              {packs.map(p => (
+                <button key={p.id} type="button" className="btn" onClick={() => onBook(p)}
+                  style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px 20px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span>{p.name}</span>
+                  <span style={{ fontSize:11, opacity:0.8 }}>R\u00e9server \u2192</span>
+                </button>
+              ))}
+              <a href={WA + "?text=Bonjour%20S-Group%2C%20je%20souhaite%20des%20informations%20sur%20les%20circuits"} target="_blank" rel="noreferrer"
+                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, background:'#25d366', color:'#fff', borderRadius:12, padding:'12px', fontWeight:700, fontSize:13, textDecoration:'none', fontFamily:"'DM Sans',sans-serif" }}>
+                Contacter via WhatsApp
+              </a>
+            </div>
+          </div>
         </div>
       </div>
+
     </div>
   );
 }
@@ -693,23 +702,23 @@ function CircuitsPage({ data, onBook }) {
 // ─── MODAL RÉSERVATION CIRCUIT ────────────────────────────────────────────────
 function CircuitBookModal({ pack, onClose, onConfirm }) {
   const today = new Date();
-  const [bf, setBf] = useState({ name:'', email:'', tel:'', date:'', qty:1, type:'couple' });
+  const [bf, setBf] = useState({ name:'', email:'', tel:'', date:'', qty:1 });
   const [err, setErr] = useState('');
   const [calOpen, setCalOpen] = useState(false);
   const [view, setView] = useState({ y:today.getFullYear(), m:today.getMonth() });
 
   useEffect(() => {
-    if (pack) { setBf({ name:'', email:'', tel:'', date:'', qty:1, type:'couple' }); setErr(''); }
+    if (pack) { setBf({ name:'', email:'', tel:'', date:'', qty:1 }); setErr(''); }
   }, [pack?.id]);
 
   if (!pack) return null;
 
-  const MONTHS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const MONTHS = ['Janvier','F\u00e9vrier','Mars','Avril','Mai','Juin','Juillet','Ao\u00fbt','Septembre','Octobre','Novembre','D\u00e9cembre'];
   const days  = new Date(view.y, view.m+1, 0).getDate();
   const first = new Date(view.y, view.m, 1).getDay();
-  const basePrice = pack.base || 1100;
+  const basePrice = Number(pack.base) || 1100;
   const total = basePrice * bf.qty;
-  const acompte = Math.round(total * 0.30);
+  const acompte30 = Math.round(total * 0.30);
 
   const pickDate = d => {
     const dt = new Date(view.y, view.m, d);
@@ -720,47 +729,47 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
   };
 
   const confirm = () => {
-    if (!bf.name.trim()||!bf.tel.trim()||!bf.date) { setErr('Remplissez tous les champs obligatoires'); return; }
+    if (!bf.name.trim()||!bf.tel.trim()||!bf.date) { setErr('Veuillez remplir tous les champs obligatoires'); return; }
     setErr('');
-    onConfirm({ ...bf, packName:pack.name, total, acompte });
+    onConfirm({ ...bf, packName:pack.name, total, acompte:acompte30 });
   };
 
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.93)', zIndex:1002, display:'flex', alignItems:'center', justifyContent:'center', padding:20 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:28, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:30, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
           <div>
-            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase', marginBottom:4 }}>Réservation Circuit</p>
-            <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:18, color:C.white }}>{pack.name} {pack.flags}</h3>
+            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>R\u00e9servation</p>
+            <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.white }}>{pack.name}</h3>
+            <p style={{ fontSize:12, color:C.muted, marginTop:3 }}>{pack.countries}</p>
           </div>
-          <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:30, height:30, cursor:'pointer', fontSize:16 }}>×</button>
+          <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>\u00d7</button>
         </div>
         <GL/>
-        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {[['name','Votre nom *','text'],['email','Email','email'],['tel','Téléphone / WhatsApp *','tel']].map(([f,l,t]) => (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          {[['name','Nom complet *','text'],['email','Adresse email','email'],['tel','T\u00e9l\u00e9phone / WhatsApp *','tel']].map(([f,l,t]) => (
             <div key={f}>
-              <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:4 }}>{l}</label>
+              <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>{l}</label>
               <input type={t} value={bf[f]} onChange={e => setBf(x => ({...x,[f]:e.target.value}))} placeholder={l.replace(' *','')}
-                style={{ width:'100%', background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'10px 13px', color:C.white, fontSize:14, fontFamily:"'DM Sans',sans-serif", outline:'none', boxSizing:'border-box' }}/>
+                style={{ width:'100%', background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'11px 14px', color:C.white, fontSize:14, fontFamily:"'DM Sans',sans-serif", outline:'none', boxSizing:'border-box' }}/>
             </div>
           ))}
-          {/* Date */}
           <div style={{ position:'relative' }}>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:4 }}>Date de départ souhaitée *</label>
+            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:5 }}>Date de d\u00e9part souhait\u00e9e *</label>
             <button type="button" onClick={() => setCalOpen(o => !o)}
-              style={{ width:'100%', background:C.card2, border:`1.5px solid ${bf.date?C.gold:C.border}`, borderRadius:10, padding:'10px 13px', color:bf.date?C.gold:C.muted, fontSize:14, fontFamily:"'DM Sans',sans-serif", cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span>{bf.date || 'Choisir une date'}</span>
-              <Calendar size={14} color={bf.date?C.gold:C.muted}/>
+              style={{ width:'100%', background:C.card2, border:`1.5px solid ${bf.date?C.gold:C.border}`, borderRadius:10, padding:'11px 14px', color:bf.date?C.gold:C.muted, fontSize:14, fontFamily:"'DM Sans',sans-serif", cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span>{bf.date || 'S\u00e9lectionner une date'}</span>
+              <Calendar size={15} color={bf.date?C.gold:C.muted}/>
             </button>
             {calOpen && (
-              <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:14, width:240, boxShadow:'0 20px 50px rgba(0,0,0,.9)' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-                  <button type="button" onClick={() => setView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'3px 10px', cursor:'pointer' }}>‹</button>
+              <div style={{ position:'absolute', top:'calc(100% + 6px)', left:0, zIndex:600, background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:16, width:260, boxShadow:'0 20px 50px rgba(0,0,0,.9)' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                  <button type="button" onClick={() => setView(v => v.m===0?{y:v.y-1,m:11}:{...v,m:v.m-1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>\u2039</button>
                   <span style={{ fontWeight:700, fontSize:13, color:C.white }}>{MONTHS[view.m]} {view.y}</span>
-                  <button type="button" onClick={() => setView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'3px 10px', cursor:'pointer' }}>›</button>
+                  <button type="button" onClick={() => setView(v => v.m===11?{y:v.y+1,m:0}:{...v,m:v.m+1})} style={{ background:'none', border:`1px solid ${C.border}`, color:C.gold, borderRadius:7, padding:'4px 12px', cursor:'pointer', fontSize:16 }}>\u203a</button>
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4 }}>
-                  {['Di','Lu','Ma','Me','Je','Ve','Sa'].map(d => <div key={d} style={{ textAlign:'center', fontSize:9, color:C.muted, fontWeight:700 }}>{d}</div>)}
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:6 }}>
+                  {['Di','Lu','Ma','Me','Je','Ve','Sa'].map(d => <div key={d} style={{ textAlign:'center', fontSize:9, color:C.muted, fontWeight:700, padding:'4px 0' }}>{d}</div>)}
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2 }}>
                   {Array(first).fill(null).map((_,i) => <div key={'e'+i}/>)}
@@ -771,7 +780,7 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
                     const sel=bf.date===`${String(d).padStart(2,'0')}/${String(view.m+1).padStart(2,'0')}/${view.y}`;
                     return (
                       <button key={d} type="button" onClick={() => pickDate(d)}
-                        style={{ textAlign:'center', fontSize:12, padding:'5px 0', borderRadius:7, border:'none', background:sel?C.gold:past?'transparent':C.card2, color:sel?C.bg:past?C.border:C.white, cursor:past?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", fontWeight:sel?800:400 }}>
+                        style={{ textAlign:'center', fontSize:12, padding:'6px 0', borderRadius:7, border:'none', background:sel?C.gold:past?'transparent':C.card2, color:sel?C.bg:past?C.border:C.white, cursor:past?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", fontWeight:sel?800:400 }}>
                         {d}
                       </button>
                     );
@@ -780,32 +789,31 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
               </div>
             )}
           </div>
-          {/* Nombre de personnes */}
           <div>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:6 }}>Nombre de personnes</label>
-            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <button type="button" onClick={() => setBf(f => ({...f,qty:Math.max(1,f.qty-1)}))} style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={13}/></button>
-              <span style={{ fontWeight:800, fontSize:18, minWidth:20, textAlign:'center' }}>{bf.qty}</span>
-              <button type="button" onClick={() => setBf(f => ({...f,qty:f.qty+1}))} style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Plus size={13}/></button>
+            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:8 }}>Nombre de personnes</label>
+            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+              <button type="button" onClick={() => setBf(f => ({...f,qty:Math.max(1,f.qty-1)}))} style={{ width:36, height:36, borderRadius:10, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={14}/></button>
+              <span style={{ fontWeight:800, fontSize:20, minWidth:24, textAlign:'center', color:C.white }}>{bf.qty}</span>
+              <button type="button" onClick={() => setBf(f => ({...f,qty:f.qty+1}))} style={{ width:36, height:36, borderRadius:10, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Plus size={14}/></button>
             </div>
           </div>
-          {err && <p style={{ color:C.red, fontSize:12, fontWeight:600 }}>⚠ {err}</p>}
-          {/* Résumé */}
-          <div style={{ background:`${C.gold}10`, border:`1px solid ${C.gold}33`, borderRadius:12, padding:'14px 16px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
-              <span style={{ color:C.muted }}>Prix base × {bf.qty} pers.</span>
-              <span style={{ fontWeight:700 }}>{basePrice * bf.qty} €</span>
+          {err && <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'10px 14px', borderRadius:9 }}>{err}</p>}
+          <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}2a`, borderRadius:14, padding:'16px 18px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:8 }}>
+              <span style={{ color:C.muted }}>Prix base \u00d7 {bf.qty} personne{bf.qty>1?'s':''}</span>
+              <span style={{ fontWeight:700, color:C.white }}>{total}\u00a0\u20ac</span>
             </div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:15 }}>
-              <span style={{ color:C.gold, fontWeight:700 }}>Acompte 30%</span>
-              <span style={{ fontWeight:900, color:C.gold }}>{Math.round(total*0.30)} €</span>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30\u00a0%</span>
+              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{acompte30}\u00a0\u20ac</span>
             </div>
-            <p style={{ fontSize:11, color:C.muted, marginTop:6 }}>Solde ({Math.round(total*0.70)} €) à régler 30 jours avant le départ.</p>
+            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({Math.round(total*0.70)}\u00a0\u20ac) \u00e0 r\u00e9gler 30 jours avant le d\u00e9part.</p>
           </div>
           <button type="button" className="btn" onClick={confirm}
-            style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:13, padding:'13px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-            <Calendar size={15}/>Confirmer — Acompte {Math.round(total*0.30)} €
+            style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:14, padding:'14px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
+            Confirmer la r\u00e9servation \u2014 {acompte30}\u00a0\u20ac
           </button>
+          <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre \u00e9quipe vous contactera sous 24h pour valider votre s\u00e9jour.</p>
         </div>
       </div>
     </div>

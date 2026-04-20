@@ -522,14 +522,56 @@ const DEFAULT_CIRCUIT = {
   conditions: "Acompte de 30 % à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande. Assistance visa disponible.",
 };
 
+// ─── CARTE CIRCUIT INDIVIDUEL ────────────────────────────────────────────────
+function CircuitCard({ p, allImages, onBook, i }) {
+  const imgs = allImages[p.id] || [];
+  const img  = imgs[0] || p.image_url;
+  return (
+    <div className="hov" style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column', animation:`fadeUp .35s ease ${Math.min(i,6)*.06}s both` }}>
+      <div style={{ height:200, position:'relative', overflow:'hidden', background:'linear-gradient(135deg,#050e05,#0d1a0d)', flexShrink:0 }}>
+        {img
+          ? <img src={img} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+          : <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%' }}>
+              <Map size={48} strokeWidth={1} color={C.gold}/>
+            </div>
+        }
+        {p.badge && (
+          <span style={{ position:'absolute', top:12, right:12, background:C.gold, color:C.bg, fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:999, textTransform:'uppercase', letterSpacing:1 }}>{p.badge}</span>
+        )}
+        {p.orig_price && (
+          <span style={{ position:'absolute', top:12, left:12, background:C.red, color:'#fff', fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:999 }}>-{PCT(p.orig_price,p.price)}%</span>
+        )}
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent,rgba(0,0,0,.7))', padding:'20px 16px 12px' }}>
+          <p style={{ fontSize:9, color:C.gold, fontWeight:700, letterSpacing:3, textTransform:'uppercase' }}>Circuit</p>
+        </div>
+      </div>
+      <div style={{ padding:'20px 22px', flex:1, display:'flex', flexDirection:'column' }}>
+        <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:900, color:C.white, marginBottom:6, lineHeight:1.3 }}>{p.name}</h3>
+        <p style={{ fontSize:12, color:C.muted, lineHeight:1.7, marginBottom:14, flex:1 }}>{(p.desc||p.description||'').slice(0,100)}{(p.desc||p.description||'').length>100?'…':''}</p>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+          <div>
+            <p style={{ fontFamily:"'Playfair Display',serif", fontSize:20, fontWeight:900, color:C.gold }}>{FCFA(p.price)}</p>
+            {p.orig_price && <p style={{ fontSize:11, color:C.muted, textDecoration:'line-through' }}>{FCFA(p.orig_price)}</p>}
+          </div>
+          <span style={{ fontSize:11, color:C.muted, background:C.card2, border:`1px solid ${C.border}`, borderRadius:8, padding:'4px 10px' }}>Acompte 30%</span>
+        </div>
+        <button type="button" className="btn" onClick={() => onBook({ id:p.id, name:p.name, countries:p.dest||'Bénin', base:p.price, color:'#0D2B45', prices:[], note:'' })}
+          style={{ width:'100%', background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.3 }}>
+          Réserver ce circuit
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── PAGE CIRCUITS ────────────────────────────────────────────────────────────
-function CircuitsPage({ data, onBook }) {
-  const d = data ? { ...DEFAULT_CIRCUIT, ...data } : DEFAULT_CIRCUIT;
-  const packs     = (data && data.packs)      ? data.packs      : DEFAULT_CIRCUIT.packs;
-  const programme = (data && data.programme)  ? data.programme  : DEFAULT_CIRCUIT.programme;
-  const inclus    = (data && data.inclus)     ? data.inclus     : DEFAULT_CIRCUIT.inclus;
-  const non_inclus= (data && data.non_inclus) ? data.non_inclus : DEFAULT_CIRCUIT.non_inclus;
-  const periodes  = (data && data.periodes)   ? data.periodes   : DEFAULT_CIRCUIT.periodes;
+function CircuitsPage({ data, circuits, allImages, onBook, onOpenProduct }) {
+  const d          = data ? { ...DEFAULT_CIRCUIT, ...data } : DEFAULT_CIRCUIT;
+  const packs      = (data && data.packs)      ? data.packs      : DEFAULT_CIRCUIT.packs;
+  const programme  = (data && data.programme)  ? data.programme  : DEFAULT_CIRCUIT.programme;
+  const inclus     = (data && data.inclus)     ? data.inclus     : DEFAULT_CIRCUIT.inclus;
+  const non_inclus = (data && data.non_inclus) ? data.non_inclus : DEFAULT_CIRCUIT.non_inclus;
+  const periodes   = (data && data.periodes)   ? data.periodes   : DEFAULT_CIRCUIT.periodes;
 
   return (
     <div style={{ animation:'fadeUp .4s ease' }}>
@@ -557,139 +599,157 @@ function CircuitsPage({ data, onBook }) {
         </div>
       </div>
 
+      {/* ── CIRCUITS DISPONIBLES (dynamiques depuis Supabase) ── */}
+      {circuits && circuits.length > 0 && (
+        <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Nos circuits</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:6, color:C.white }}>Circuits disponibles</h2>
+          <p style={{ fontSize:14, color:C.muted, marginBottom:10, lineHeight:1.7 }}>Chaque circuit est une expérience unique, organisée et gérée par S-Group de A à Z.</p>
+          <GL/>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:22 }}>
+            {circuits.map((p,i) => (
+              <CircuitCard key={p.id} p={p} allImages={allImages} onBook={onBook} i={i}/>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── PÉRIODES ── */}
+      <div style={{ background: circuits && circuits.length > 0 ? C.card : 'transparent', padding:'56px 0' }}>
+        <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Disponibilités</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Deux saisons, deux ambiances</h2>
+          <GL/>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
+            {periodes.map((p,i) => (
+              <div key={i} style={{ background:C.card, border:`1px solid ${p.type==='haute'?C.gold+'44':C.border}`, borderRadius:18, padding:'32px 30px' }}>
+                <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:p.type==='haute'?C.gold:C.blue, marginBottom:10 }}>{p.label}</p>
+                <p style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white, marginBottom:12 }}>{p.dates}</p>
+                <p style={{ fontSize:13, color:C.muted, lineHeight:1.8, marginBottom:14 }}>{p.desc}</p>
+                <div style={{ display:'inline-block', background:p.type==='haute'?`${C.gold}15`:C.card2, border:`1px solid ${p.type==='haute'?C.gold+'33':C.border}`, borderRadius:8, padding:'6px 14px', fontSize:12, fontWeight:700, color:p.type==='haute'?C.gold:C.muted }}>{p.tarif}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── FORMULES TARIFAIRES ── */}
       <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Disponibilités</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Deux saisons, deux ambiances</h2>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Tarification</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:6, color:C.white }}>Nos formules — à partir de 10 jours</h2>
+        <p style={{ fontSize:14, color:C.muted, marginBottom:10, lineHeight:1.7 }}>Hébergement, transport, repas et visites inclus. Prix par personne hors billet d'avion.</p>
         <GL/>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
-          {periodes.map((p,i) => (
-            <div key={i} style={{ background:C.card, border:`1px solid ${p.type==='haute'?C.gold+'44':C.border}`, borderRadius:18, padding:'32px 30px' }}>
-              <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:p.type==='haute'?C.gold:C.blue, marginBottom:10 }}>{p.label}</p>
-              <p style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white, marginBottom:12 }}>{p.dates}</p>
-              <p style={{ fontSize:13, color:C.muted, lineHeight:1.8, marginBottom:14 }}>{p.desc}</p>
-              <div style={{ display:'inline-block', background:p.type==='haute'?`${C.gold}15`:C.card2, border:`1px solid ${p.type==='haute'?C.gold+'33':C.border}`, borderRadius:8, padding:'6px 14px', fontSize:12, fontWeight:700, color:p.type==='haute'?C.gold:C.muted }}>{p.tarif}</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:22 }}>
+          {packs.map(p => (
+            <div key={p.id} className="hov" style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column' }}>
+              <div style={{ padding:'28px 24px', background:p.color||C.bg, position:'relative', overflow:'hidden' }}>
+                <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
+                <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:8 }}>{p.countries}</p>
+                <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white }}>{p.name}</h3>
+              </div>
+              <div style={{ padding:'22px 24px', flex:1, display:'flex', flexDirection:'column' }}>
+                <div style={{ flex:1 }}>
+                  {(p.prices||[]).map((pr,i) => (
+                    <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:i<(p.prices.length-1)?`1px solid ${C.border}`:'none' }}>
+                      <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{pr.label}</span>
+                      <div style={{ textAlign:'right' }}>
+                        <div style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:900, color:C.gold }}>{pr.eur}</div>
+                        <div style={{ fontSize:10, color:C.muted, marginTop:1 }}>{pr.fcfa}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {p.note && <p style={{ fontSize:11, color:C.muted, textAlign:'center', marginTop:14, fontStyle:'italic', borderTop:`1px solid ${C.border}`, paddingTop:12 }}>{p.note}</p>}
+                </div>
+                <button type="button" className="btn" onClick={() => onBook(p)}
+                  style={{ width:'100%', marginTop:18, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'13px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
+                  Réserver cette formule
+                </button>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── TARIFS ── */}
+      {/* ── INCLUS / NON INCLUS ── */}
       <div style={{ background:C.card, padding:'56px 0' }}>
         <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
-          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Tarification</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Nos formules — à partir de 10 jours</h2>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Contenu des formules</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Ce qui est inclus</h2>
           <GL/>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:22 }}>
-            {packs.map(p => (
-              <div key={p.id} className="hov" style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:20, overflow:'hidden', display:'flex', flexDirection:'column' }}>
-                <div style={{ padding:'28px 24px', background:p.color||C.bg, position:'relative', overflow:'hidden' }}>
-                  <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.04)' }}/>
-                  <p style={{ fontSize:10, fontWeight:700, letterSpacing:3, textTransform:'uppercase', color:'rgba(255,255,255,0.5)', marginBottom:8 }}>{p.countries}</p>
-                  <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:22, fontWeight:900, color:C.white, marginBottom:4 }}>{p.name}</h3>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
+            <div style={{ background:C.card2, border:`1px solid ${C.green}33`, borderRadius:18, padding:'28px 30px' }}>
+              <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.green, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.green}22` }}>Inclus dans toutes les formules</p>
+              {inclus.map((item,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:C.green, marginTop:6, flexShrink:0 }}/>
+                  <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
                 </div>
-                <div style={{ padding:'22px 24px', flex:1, display:'flex', flexDirection:'column' }}>
-                  <div style={{ flex:1 }}>
-                    {(p.prices||[]).map((pr,i) => (
-                      <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 0', borderBottom:i<(p.prices.length-1)?`1px solid ${C.border}`:'none' }}>
-                        <span style={{ fontSize:12, color:C.muted, fontWeight:600 }}>{pr.label}</span>
-                        <div style={{ textAlign:'right' }}>
-                          <div style={{ fontFamily:"'Playfair Display',serif", fontSize:17, fontWeight:900, color:C.gold }}>{pr.eur}</div>
-                          <div style={{ fontSize:10, color:C.muted, marginTop:1 }}>{pr.fcfa}</div>
-                        </div>
-                      </div>
-                    ))}
-                    {p.note && <p style={{ fontSize:11, color:C.muted, textAlign:'center', marginTop:14, fontStyle:'italic', borderTop:`1px solid ${C.border}`, paddingTop:12 }}>{p.note}</p>}
-                  </div>
-                  <button type="button" className="btn" onClick={() => onBook(p)}
-                    style={{ width:'100%', marginTop:18, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'13px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
-                    Réserver ce circuit
-                  </button>
+              ))}
+            </div>
+            <div style={{ background:C.card2, border:`1px solid ${C.red}33`, borderRadius:18, padding:'28px 30px' }}>
+              <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.red, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.red}22` }}>Non inclus</p>
+              {non_inclus.map((item,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
+                  <div style={{ width:6, height:6, borderRadius:'50%', background:C.red, marginTop:6, flexShrink:0 }}/>
+                  <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── INCLUS / NON INCLUS ── */}
-      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Contenu des formules</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Ce qui est inclus</h2>
-        <GL/>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
-          <div style={{ background:C.card, border:`1px solid ${C.green}33`, borderRadius:18, padding:'28px 30px' }}>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.green, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.green}22` }}>Inclus dans toutes les formules</p>
-            {inclus.map((item,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
-                <div style={{ width:6, height:6, borderRadius:'50%', background:C.green, marginTop:6, flexShrink:0 }}/>
-                <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
-              </div>
-            ))}
-          </div>
-          <div style={{ background:C.card, border:`1px solid ${C.red}33`, borderRadius:18, padding:'28px 30px' }}>
-            <p style={{ fontSize:11, fontWeight:700, letterSpacing:2, textTransform:'uppercase', color:C.red, marginBottom:18, paddingBottom:14, borderBottom:`1px solid ${C.red}22` }}>Non inclus</p>
-            {non_inclus.map((item,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
-                <div style={{ width:6, height:6, borderRadius:'50%', background:C.red, marginTop:6, flexShrink:0 }}/>
-                <p style={{ fontSize:13, color:C.muted, lineHeight:1.6 }}>{item}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── PROGRAMME ── */}
-      <div style={{ background:C.card, padding:'56px 0' }}>
-        <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
-          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Programme indicatif</p>
-          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Séjour jour par jour — Pack Bénin</h2>
-          <GL/>
-          <div>
-            {programme.map((item,i) => (
-              <div key={i} style={{ display:'flex', gap:24, padding:'22px 0', borderBottom:i<programme.length-1?`1px solid ${C.border}`:'none', alignItems:'flex-start' }}>
-                <div style={{ width:52, height:52, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, borderRadius:12, letterSpacing:1 }}>J{item.day}</div>
-                <div style={{ flex:1 }}>
-                  <p style={{ fontSize:13, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:1.5, marginBottom:6 }}>{item.location}</p>
-                  <p style={{ fontSize:14, color:C.muted, lineHeight:1.8 }}>{item.desc}</p>
-                </div>
+      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
+        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Programme indicatif</p>
+        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Séjour jour par jour — Pack Bénin</h2>
+        <GL/>
+        <div>
+          {programme.map((item,i) => (
+            <div key={i} style={{ display:'flex', gap:24, padding:'22px 0', borderBottom:i<programme.length-1?`1px solid ${C.border}`:'none', alignItems:'flex-start' }}>
+              <div style={{ width:52, height:52, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, fontFamily:"'Playfair Display',serif", fontSize:14, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, borderRadius:12, letterSpacing:1 }}>J{item.day}</div>
+              <div style={{ flex:1 }}>
+                <p style={{ fontSize:13, fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:1.5, marginBottom:6 }}>{item.location}</p>
+                <p style={{ fontSize:14, color:C.muted, lineHeight:1.8 }}>{item.desc}</p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* ── PAIEMENT & CTA ── */}
-      <div style={{ maxWidth:1180, margin:'0 auto', padding:'56px 28px' }}>
-        <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Réservation</p>
-        <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Modalités de paiement</h2>
-        <GL/>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18, marginBottom:24 }}>
-          <div>
-            <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:18 }}>
-              {['Mobile Money','Virement bancaire','Carte bancaire','PayPal','Espèces'].map(m => (
-                <div key={m} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 18px', fontSize:12, fontWeight:600, color:C.white }}>{m}</div>
-              ))}
+      <div style={{ background:C.card, padding:'56px 0' }}>
+        <div style={{ maxWidth:1180, margin:'0 auto', padding:'0 28px' }}>
+          <p style={{ color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', fontSize:10, marginBottom:8 }}>Réservation</p>
+          <h2 style={{ fontFamily:"'Playfair Display',serif", fontSize:32, fontWeight:900, marginBottom:10, color:C.white }}>Modalités de paiement</h2>
+          <GL/>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:18 }}>
+            <div>
+              <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:18 }}>
+                {['Mobile Money','Virement bancaire','Carte bancaire','PayPal','Espèces'].map(m => (
+                  <div key={m} style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:10, padding:'10px 18px', fontSize:12, fontWeight:600, color:C.white }}>{m}</div>
+                ))}
+              </div>
+              <div style={{ background:C.card2, borderLeft:`3px solid ${C.gold}`, borderRadius:'0 12px 12px 0', padding:'18px 22px', fontSize:13, color:C.muted, lineHeight:1.8 }}>
+                {d.conditions}
+              </div>
             </div>
-            <div style={{ background:C.card, borderLeft:`3px solid ${C.gold}`, borderRadius:'0 12px 12px 0', padding:'18px 22px', fontSize:13, color:C.muted, lineHeight:1.8 }}>
-              {d.conditions}
-            </div>
-          </div>
-          <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:18, padding:'28px 26px' }}>
-            <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:6 }}>Vous souhaitez réserver ?</p>
-            <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:20 }}>Choisissez votre formule et réservez en ligne avec un acompte de 30 %. Notre équipe vous contacte sous 24h pour finaliser les détails.</p>
-            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-              {packs.map(p => (
-                <button key={p.id} type="button" className="btn" onClick={() => onBook(p)}
-                  style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px 20px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <span>{p.name}</span>
-                  <span style={{ fontSize:11, opacity:0.8 }}>Réserver →</span>
-                </button>
-              ))}
-              <a href={WA + "?text=Bonjour%20S-Group%2C%20je%20souhaite%20des%20informations%20sur%20les%20circuits"} target="_blank" rel="noreferrer"
-                style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, background:'#25d366', color:'#fff', borderRadius:12, padding:'12px', fontWeight:700, fontSize:13, textDecoration:'none', fontFamily:"'DM Sans',sans-serif" }}>
-                Contacter via WhatsApp
-              </a>
+            <div style={{ background:C.card2, border:`1px solid ${C.border}`, borderRadius:18, padding:'28px 26px' }}>
+              <p style={{ fontFamily:"'Playfair Display',serif", fontSize:18, fontWeight:900, color:C.white, marginBottom:6 }}>Vous souhaitez réserver ?</p>
+              <p style={{ fontSize:13, color:C.muted, lineHeight:1.7, marginBottom:20 }}>Choisissez votre formule et réservez en ligne avec un acompte de 30 %. Notre équipe vous contacte sous 24h pour finaliser les détails.</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {packs.map(p => (
+                  <button key={p.id} type="button" className="btn" onClick={() => onBook(p)}
+                    style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:12, padding:'12px 20px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'left', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <span>{p.name}</span>
+                    <span style={{ fontSize:11, opacity:0.8 }}>Réserver</span>
+                  </button>
+                ))}
+                <a href={WA + "?text=Bonjour%20S-Group%2C%20je%20souhaite%20des%20informations%20sur%20les%20circuits"} target="_blank" rel="noreferrer"
+                  style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:10, background:'#25d366', color:'#fff', borderRadius:12, padding:'12px', fontWeight:700, fontSize:13, textDecoration:'none', fontFamily:"'DM Sans',sans-serif" }}>
+                  Contacter via WhatsApp
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -708,7 +768,7 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
   const [view, setView] = useState({ y:today.getFullYear(), m:today.getMonth() });
 
   useEffect(() => {
-    if (pack) { setBf({ name:'', email:'', tel:'', date:'', qty:1 }); setErr(''); }
+    if (pack) { setBf({ name:'', email:'', tel:'', date:'', qty:1 }); setErr(''); setCalOpen(false); }
   }, [pack?.id]);
 
   if (!pack) return null;
@@ -716,7 +776,7 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
   const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const days  = new Date(view.y, view.m+1, 0).getDate();
   const first = new Date(view.y, view.m, 1).getDay();
-  const basePrice = Number(pack.base) || 1100;
+  const basePrice = Number(pack.base) || Number(pack.price) || 1100;
   const total = basePrice * bf.qty;
   const acompte30 = Math.round(total * 0.30);
 
@@ -739,9 +799,9 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
       <div onClick={e => e.stopPropagation()} style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:22, padding:30, width:'100%', maxWidth:460, maxHeight:'90vh', overflowY:'auto' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:16 }}>
           <div>
-            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>Réservation</p>
+            <p style={{ fontSize:10, color:C.gold, fontWeight:700, letterSpacing:4, textTransform:'uppercase', marginBottom:5 }}>Réservation Circuit</p>
             <h3 style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.white }}>{pack.name}</h3>
-            <p style={{ fontSize:12, color:C.muted, marginTop:3 }}>{pack.countries}</p>
+            {pack.countries && <p style={{ fontSize:12, color:C.muted, marginTop:3 }}>{pack.countries}</p>}
           </div>
           <button type="button" onClick={onClose} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:8, width:32, height:32, cursor:'pointer', fontSize:18, display:'flex', alignItems:'center', justifyContent:'center' }}>×</button>
         </div>
@@ -801,17 +861,17 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
           <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}2a`, borderRadius:14, padding:'16px 18px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:8 }}>
               <span style={{ color:C.muted }}>Prix base × {bf.qty} personne{bf.qty>1?'s':''}</span>
-              <span style={{ fontWeight:700, color:C.white }}>{total} €</span>
+              <span style={{ fontWeight:700, color:C.white }}>{FCFA(total)}</span>
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30 %</span>
-              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{acompte30} €</span>
+              <span style={{ color:C.gold, fontWeight:700, fontSize:14 }}>Acompte 30 %</span>
+              <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:20, color:C.gold }}>{FCFA(acompte30)}</span>
             </div>
-            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({Math.round(total*0.70)} €) à régler 30 jours avant le départ.</p>
+            <p style={{ fontSize:11, color:C.muted, marginTop:8, lineHeight:1.6 }}>Solde restant ({FCFA(Math.round(total*0.70))}) à régler 30 jours avant le départ.</p>
           </div>
           <button type="button" className="btn" onClick={confirm}
             style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:14, padding:'14px', fontWeight:700, fontSize:14, cursor:'pointer', fontFamily:"'DM Sans',sans-serif", letterSpacing:0.5 }}>
-            Confirmer la réservation — {acompte30} €
+            Confirmer la réservation — {FCFA(acompte30)}
           </button>
           <p style={{ fontSize:11, color:C.muted, textAlign:'center', lineHeight:1.6 }}>Notre équipe vous contactera sous 24h pour valider votre séjour.</p>
         </div>
@@ -1559,8 +1619,10 @@ export default function SMall() {
       {page==='circuits' && (
         <CircuitsPage
           data={circuitData}
+          circuits={products.filter(p => p.cat === 'circuit' && p.active !== false)}
+          allImages={allImages}
           onBook={(pack) => setBookCircuit(pack)}
-          onBack={() => go('home')}
+          onOpenProduct={(p) => setModal(p)}
         />
       )}
 

@@ -1193,7 +1193,7 @@ function CircuitsSection() {
                       }
                     </div>
                   ))}
-                  <div style={{display:"flex",gap:8"}}>
+                  <div style={{display:"flex",gap:8}}>
                     <button type="button" onClick={()=>{const np=[...cf.programme];np.splice(di,1);setCf(x=>({...x,programme:np}));setEditDay(null);}}
                       style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer ce jour</button>
                   </div>

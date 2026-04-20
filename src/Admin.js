@@ -965,79 +965,273 @@ function BannersSection() {
 // ── MAIN ADMIN ────────────────────────────────────────────────────────────────
 
 // ── CIRCUITS SECTION ──────────────────────────────────────────────────────────
+// Cette section a DEUX parties :
+// 1. Gestion des circuits individuels (produits cat=circuit)
+// 2. Configuration de la page (textes, packs, programme, inclus)
+
 const DEFAULT_CIRCUIT_CONFIG = {
   hero_title:"Circuits Vacances",
   hero_subtitle:"Afrique de l'Ouest — Clé en main",
   hero_desc:"Du transfert aéroport jusqu'à votre départ, S-Group organise chaque détail de votre séjour.",
   saison:"Saison 2026 — 2027",
-  conditions:"Acompte de 30% à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande.",
+  conditions:"Acompte de 30 % à la confirmation — Solde 30 jours avant le départ. Paiement échelonné possible sur demande.",
   packs:[
-    {id:"benin",flags:"🇧🇯",name:"Pack Bénin",countries:"Bénin uniquement",color:"#0D2B45",base:1100,
-     prices:[{label:"👫 Couple / pers.",eur:"1 100€",fcfa:"721 000 FCFA"},{label:"🧍 Solo",eur:"1 400€",fcfa:"918 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-     note:"+110€ / jour supplémentaire"},
-    {id:"benin-togo",flags:"🇧🇯 🇹🇬",name:"Pack Bénin + Togo",countries:"2 pays",color:"#1A4560",base:1300,
-     prices:[{label:"👫 Couple / pers.",eur:"1 300€",fcfa:"853 000 FCFA"},{label:"🧍 Solo",eur:"1 600€",fcfa:"1 049 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-     note:"+130€ / jour supplémentaire"},
-    {id:"sous-region",flags:"🇧🇯 🇹🇬 🇨🇮",name:"Pack Sous-Région",countries:"3 pays",color:"#0F3520",base:1900,
-     prices:[{label:"👫 Couple / pers.",eur:"1 900€",fcfa:"1 246 000 FCFA"},{label:"🧍 Solo",eur:"2 200€",fcfa:"1 443 000 FCFA"},{label:"✈️ Avec billet",eur:"+1 100€",fcfa:"en option"}],
-     note:"+190€ / jour supplémentaire"},
+    {id:"benin",name:"Pack Bénin",countries:"Bénin uniquement",color:"#0D2B45",base:1100,
+     prices:[{label:"Couple / personne",eur:"1 100 €",fcfa:"721 000 FCFA"},{label:"Solo",eur:"1 400 €",fcfa:"918 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+     note:"+ 110 € / jour supplémentaire"},
+    {id:"benin-togo",name:"Pack Bénin + Togo",countries:"2 pays",color:"#1A4560",base:1300,
+     prices:[{label:"Couple / personne",eur:"1 300 €",fcfa:"853 000 FCFA"},{label:"Solo",eur:"1 600 €",fcfa:"1 049 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+     note:"+ 130 € / jour supplémentaire"},
+    {id:"sous-region",name:"Pack Sous-Région",countries:"3 pays",color:"#0F3520",base:1900,
+     prices:[{label:"Couple / personne",eur:"1 900 €",fcfa:"1 246 000 FCFA"},{label:"Solo",eur:"2 200 €",fcfa:"1 443 000 FCFA"},{label:"Avec billet inclus",eur:"+1 100 €",fcfa:"en option"}],
+     note:"+ 190 € / jour supplémentaire"},
   ],
   periodes:[
-    {type:"basse",icon:"🌴",label:"Basse Saison",dates:"Août → Octobre 2026",desc:"Conditions idéales, moins de touristes.",tarif:"→ Prix de base"},
-    {type:"haute",icon:"🎉",label:"Haute Saison",dates:"Nov. 2026 → Jan. 2027",desc:"Fêtes de fin d'année, ambiance festive.",tarif:"→ Prix de base + 10%"},
+    {type:"basse",label:"Basse Saison",dates:"Août → Octobre 2026",desc:"Conditions idéales, moins de touristes.",tarif:"Prix de base"},
+    {type:"haute",label:"Haute Saison",dates:"Nov. 2026 → Jan. 2027",desc:"Fêtes de fin d'année, ambiance festive.",tarif:"Prix de base + 10 %"},
   ],
-  inclus:["Transfert aéroport","Hébergement hôtel 3 étoiles","3 repas complets par jour","Guide local S-Group dédié","Véhicule avec chauffeur","Toutes excursions & visites guidées","Eau minérale à volonté","Carte SIM locale + Internet","Cadeau souvenir S-Group"],
-  non_inclus:["Visa (à la charge du client)","Billet international (optionnel)","Dépenses personnelles","Assurance voyage","Pourboires","Activités hors programme","Boissons alcoolisées"],
+  inclus:["Transfert aéroport","Hébergement hôtel 3 étoiles","3 repas complets par jour","Guide local S-Group dédié","Véhicule avec chauffeur privé","Toutes excursions & visites guidées","Eau minérale à volonté","Carte SIM locale + Internet","Cadeau souvenir S-Group"],
+  non_inclus:["Visa (assisté par S-Group)","Billet international (optionnel)","Dépenses personnelles","Assurance voyage","Pourboires","Activités hors programme","Boissons alcoolisées"],
   programme:[
-    {day:"1",location:"Cotonou — Arrivée",desc:"Accueil VIP à l'aéroport, transfert hôtel, déjeuner de bienvenue."},
-    {day:"2",location:"Cotonou — Marché Dantokpa",desc:"Visite du plus grand marché d'Afrique de l'Ouest."},
-    {day:"3",location:"Ouidah — Histoire & Spiritualité",desc:"Temple des Pythons, Musée d'Histoire, Route des Esclaves."},
-    {day:"4",location:"Ganvié — La Venise de l'Afrique",desc:"Traversée en pirogue vers le village lacustre du lac Nokoué."},
-    {day:"5",location:"Porto-Novo — La Capitale",desc:"Musée Ethnographique, Grande Mosquée Brasileira, Palais Royal."},
-    {day:"6-9",location:"Expériences & Immersion",desc:"Journées culturelles, artisanat, cuisine locale, excursions optionnelles."},
+    {day:"01",location:"Cotonou — Arrivée",desc:"Accueil VIP à l'aéroport, transfert hôtel, déjeuner de bienvenue."},
+    {day:"02",location:"Cotonou — Marché Dantokpa",desc:"Visite du plus grand marché d'Afrique de l'Ouest."},
+    {day:"03",location:"Ouidah — Histoire & Spiritualité",desc:"Temple des Pythons, Musée d'Histoire, Route des Esclaves."},
+    {day:"04",location:"Ganvié — La Venise de l'Afrique",desc:"Traversée en pirogue vers le village lacustre du lac Nokoué."},
+    {day:"05",location:"Porto-Novo — La Capitale",desc:"Musée Ethnographique, Grande Mosquée Brasileira, Palais Royal."},
+    {day:"06—09",location:"Expériences & Immersion",desc:"Journées culturelles, artisanat, cuisine locale, excursions optionnelles."},
     {day:"10",location:"Cotonou — Départ",desc:"Petit-déjeuner, dîner de clôture, remise du cadeau souvenir & transfert aéroport."},
   ],
 };
 
 function CircuitsSection() {
-  const [config, setConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState("general");
-  const [cf, setCf] = useState(DEFAULT_CIRCUIT_CONFIG);
-  const [editPack, setEditPack] = useState(null);
-  const [editDay, setEditDay] = useState(null);
-  const [newInclus, setNewInclus] = useState("");
-  const [newNonInclus, setNewNonInclus] = useState("");
+  const [tab, setTab] = useState("circuits");
 
-  useEffect(() => {
-    sb.from("circuit_config").select("*").single().then(({data}) => {
-      if (data) { setConfig(data); setCf({...DEFAULT_CIRCUIT_CONFIG,...data}); }
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+  const TABS = [
+    {id:"circuits", label:"Circuits individuels"},
+    {id:"general",  label:"Textes & Général"},
+    {id:"packs",    label:"Formules & Tarifs"},
+    {id:"periodes", label:"Périodes"},
+    {id:"programme",label:"Programme"},
+    {id:"inclus",   label:"Inclus / Non inclus"},
+  ];
 
-  const save = async () => {
-    setSaving(true);
-    if (config) {
-      await sb.from("circuit_config").update(cf).eq("id", config.id);
-    } else {
-      const {data} = await sb.from("circuit_config").insert(cf).select().single();
-      if (data) setConfig(data);
-    }
-    setSaving(false);
-    alert("✅ Circuits mis à jour !");
+  return (
+    <div>
+      <div style={{marginBottom:22}}>
+        <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Page Circuits</h2>
+        <p style={{color:C.muted,fontSize:14}}>Gérez les circuits individuels et le contenu de la page</p>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
+        {TABS.map(t=>(
+          <button type="button" key={t.id} onClick={()=>setTab(t.id)}
+            style={{padding:"9px 18px",borderRadius:999,border:`1.5px solid ${tab===t.id?C.gold:C.border}`,background:tab===t.id?`${C.gold}18`:"transparent",color:tab===t.id?C.gold:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",transition:"all .2s"}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab==="circuits"  && <CircuitsListTab/>}
+      {tab==="general"   && <CircuitsConfigTab activeTab="general"/>}
+      {tab==="packs"     && <CircuitsConfigTab activeTab="packs"/>}
+      {tab==="periodes"  && <CircuitsConfigTab activeTab="periodes"/>}
+      {tab==="programme" && <CircuitsConfigTab activeTab="programme"/>}
+      {tab==="inclus"    && <CircuitsConfigTab activeTab="inclus"/>}
+    </div>
+  );
+}
+
+// ── ONGLET 1 : CIRCUITS INDIVIDUELS ──────────────────────────────────────────
+function CircuitsListTab() {
+  const circuitsLoader = useCallback(()=>sb.from("products").select("*").eq("cat","circuit").order("id"),[]);
+  const {data:circuits, loading} = useRealtimeTable("products", circuitsLoader);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing]   = useState(null);
+  const [savedId, setSavedId]   = useState(null);
+  const [saving,  setSaving]    = useState(false);
+  const [form, setForm] = useState({name:"",price:"",orig_price:"",emoji:"✈️",desc:"",badge:"",dest:"",active:true});
+
+  const resetForm = () => setForm({name:"",price:"",orig_price:"",emoji:"✈️",desc:"",badge:"",dest:"",active:true});
+
+  const startNew = () => { setEditing(null); setSavedId(null); resetForm(); setShowForm(true); };
+  const startEdit = (p) => {
+    setEditing(p); setSavedId(p.id);
+    setForm({name:p.name,price:String(p.price),orig_price:p.orig_price?String(p.orig_price):"",emoji:p.emoji||"✈️",desc:p.desc||p.description||"",badge:p.badge||"",dest:p.dest||"",active:p.active!==false});
+    setShowForm(true);
   };
 
-  const TA = ({label, field, rows=2}) => (
+  const save = async () => {
+    if(!form.name.trim()||!form.price) return;
+    setSaving(true);
+    const payload = {
+      cat:"circuit",
+      name:form.name.trim(),
+      price:Number(form.price),
+      orig_price:form.orig_price?Number(form.orig_price):null,
+      emoji:form.emoji||"✈️",
+      desc:form.desc,
+      description:form.desc,
+      badge:form.badge||null,
+      dest:form.dest||null,
+      active:form.active,
+      bookable:true,
+      book_type:"circuit",
+    };
+    if(editing) {
+      await sb.from("products").update(payload).eq("id",editing.id);
+    } else {
+      const {data,error} = await sb.from("products").insert({...payload,image_url:null}).select().single();
+      if(data){ setSavedId(data.id); setEditing(data); }
+      if(error) { alert("Erreur: "+error.message); setSaving(false); return; }
+    }
+    setSaving(false);
+  };
+
+  const deleteCircuit = async (id) => {
+    if(!window.confirm("Supprimer ce circuit ?")) return;
+    await sb.from("products").delete().eq("id",id);
+    if(editing?.id===id){ setShowForm(false); setEditing(null); setSavedId(null); }
+  };
+
+  const toggleActive = async (p) => { await sb.from("products").update({active:!p.active}).eq("id",p.id); };
+
+  const INP = ({label,field,placeholder="",type="text"}) => (
     <div style={{marginBottom:12}}>
       <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{label}</label>
-      <textarea value={cf[field]||""} onChange={e=>setCf(x=>({...x,[field]:e.target.value}))} rows={rows}
-        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
+      <input type={type} value={form[field]} onChange={e=>setForm(f=>({...f,[field]:e.target.value}))} placeholder={placeholder}
+        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
     </div>
   );
 
-  const INP = ({label, field, placeholder=""}) => (
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <p style={{color:C.muted,fontSize:14}}>{circuits.length} circuit{circuits.length!==1?"s":""} — s'affichent automatiquement sur la page Circuits</p>
+        <button type="button" onClick={showForm?()=>{setShowForm(false);setEditing(null);setSavedId(null);}:startNew}
+          style={{background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,border:"none",borderRadius:12,padding:"10px 20px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+          {showForm?"✕ Fermer":"+ Nouveau circuit"}
+        </button>
+      </div>
+
+      {showForm && (
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:20,padding:24,marginBottom:24}}>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:17,color:C.gold,marginBottom:18}}>{editing?"Modifier le circuit":"Nouveau circuit"}</h3>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div>
+              <INP label="Nom du circuit *" field="name" placeholder="Ex: Circuit Ouidah & Cotonou 7 jours"/>
+              <INP label="Destination" field="dest" placeholder="Ex: Bénin, Togo, Sous-région"/>
+              <INP label="Emoji" field="emoji" placeholder="✈️"/>
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>Description</label>
+                <textarea value={form.desc} onChange={e=>setForm(f=>({...f,desc:e.target.value}))} placeholder="Décrivez le circuit, les points forts, les inclus spécifiques…" rows={4}
+                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
+              </div>
+            </div>
+            <div>
+              <INP label="Prix (FCFA) *" field="price" placeholder="721000" type="number"/>
+              <INP label="Prix barré (FCFA)" field="orig_price" placeholder="850000" type="number"/>
+              <div style={{marginBottom:12}}>
+                <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>Badge</label>
+                <select value={form.badge} onChange={e=>setForm(f=>({...f,badge:e.target.value}))}
+                  style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none"}}>
+                  <option value="">— Aucun —</option>
+                  {["Nouveau","Bestseller","Promo","Premium"].map(b=><option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+              <label style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer",background:C.card2,border:`1px solid ${C.border}`,borderRadius:10,padding:"10px 14px",marginBottom:12}}>
+                <input type="checkbox" checked={form.active} onChange={e=>setForm(f=>({...f,active:e.target.checked}))} style={{accentColor:C.gold,width:16,height:16}}/>
+                <span style={{fontSize:13,color:C.white,fontWeight:600}}>Visible sur le site</span>
+              </label>
+              <div style={{display:"flex",gap:8}}>
+                <button type="button" onClick={save} disabled={saving||!form.name||!form.price}
+                  style={{flex:1,background:saving||!form.name||!form.price?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:saving||!form.name||!form.price?C.muted:C.bg,border:"none",borderRadius:12,padding:"11px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                  {saving?<><Spinner size={14}/>Sauvegarde…</>:"Sauvegarder"}
+                </button>
+                <button type="button" onClick={()=>{setShowForm(false);setEditing(null);setSavedId(null);}}
+                  style={{background:"none",border:`1px solid ${C.border}`,color:C.muted,borderRadius:12,padding:"11px 16px",cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Annuler</button>
+              </div>
+            </div>
+          </div>
+          {savedId && (
+            <div style={{marginTop:20,display:"flex",flexDirection:"column",gap:14}}>
+              <div style={{background:C.card2,border:`1px solid ${C.gold}33`,borderRadius:14,padding:18}}>
+                <ImageUploader productId={savedId}/>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading
+        ? <div style={{display:"flex",gap:10,alignItems:"center",padding:"30px 0"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>
+        : circuits.length===0
+          ? <div style={{textAlign:"center",padding:"50px 0",color:C.muted}}>
+              <p style={{fontSize:16,fontWeight:700,marginBottom:8}}>Aucun circuit pour l'instant</p>
+              <p style={{fontSize:13}}>Ajoutez votre premier circuit via le bouton ci-dessus.</p>
+            </div>
+          : <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))",gap:16}}>
+              {circuits.map(p => (
+                <div key={p.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:16,overflow:"hidden"}}>
+                  <div style={{height:130,position:"relative",background:"linear-gradient(135deg,#050e05,#0d1a0d)"}}>
+                    {p.image_url
+                      ? <img src={p.image_url} alt={p.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                      : <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100%",fontSize:44}}>{p.emoji||"✈️"}</div>
+                    }
+                    {!p.active && (
+                      <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.65)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <span style={{color:C.red,fontWeight:800,fontSize:12}}>Masqué</span>
+                      </div>
+                    )}
+                    {p.badge && (
+                      <span style={{position:"absolute",top:8,right:8,background:C.gold,color:C.bg,fontSize:9,fontWeight:800,padding:"2px 8px",borderRadius:999}}>{p.badge}</span>
+                    )}
+                  </div>
+                  <div style={{padding:"14px 16px"}}>
+                    <p style={{fontWeight:700,fontSize:14,color:C.white,marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.name}</p>
+                    <p style={{fontSize:11,color:C.muted,marginBottom:8}}>{p.dest||"Circuit"}{p.badge?` · ${p.badge}`:""}</p>
+                    <p style={{fontWeight:800,fontSize:14,color:C.gold,marginBottom:12}}>{new Intl.NumberFormat("fr-FR").format(p.price)} FCFA</p>
+                    <div style={{display:"flex",gap:6}}>
+                      <button type="button" onClick={()=>startEdit(p)} style={{flex:1,background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:9,padding:"7px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Modifier</button>
+                      <button type="button" onClick={()=>toggleActive(p)} style={{background:`${p.active?C.red:C.green}15`,border:`1px solid ${p.active?C.red:C.green}33`,color:p.active?C.red:C.green,borderRadius:9,padding:"7px 10px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{p.active?"Masquer":"Afficher"}</button>
+                      <button type="button" onClick={()=>deleteCircuit(p.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"7px 10px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Supprimer</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+      }
+    </div>
+  );
+}
+
+// ── ONGLET 2 : CONFIGURATION PAGE CIRCUITS ────────────────────────────────────
+function CircuitsConfigTab({activeTab}) {
+  const [config,  setConfig]  = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
+  const [cf, setCf] = useState(DEFAULT_CIRCUIT_CONFIG);
+  const [editPack, setEditPack] = useState(null);
+  const [editDay,  setEditDay]  = useState(null);
+  const [newInclus,    setNewInclus]    = useState("");
+  const [newNonInclus, setNewNonInclus] = useState("");
+
+  useEffect(()=>{
+    sb.from("circuit_config").select("*").single()
+      .then(({data})=>{ if(data){setConfig(data);setCf({...DEFAULT_CIRCUIT_CONFIG,...data});} setLoading(false); })
+      .catch(()=>setLoading(false));
+  },[]);
+
+  const save = async () => {
+    setSaving(true);
+    if(config) {
+      await sb.from("circuit_config").update(cf).eq("id",config.id);
+    } else {
+      const {data} = await sb.from("circuit_config").insert(cf).select().single();
+      if(data) setConfig(data);
+    }
+    setSaving(false);
+    alert("Modifications sauvegardées !");
+  };
+
+  const INP = ({label,field,placeholder=""}) => (
     <div style={{marginBottom:12}}>
       <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{label}</label>
       <input value={cf[field]||""} onChange={e=>setCf(x=>({...x,[field]:e.target.value}))} placeholder={placeholder}
@@ -1045,100 +1239,81 @@ function CircuitsSection() {
     </div>
   );
 
-  const TABS = [
-    {id:"general",label:"🌐 Général"},
-    {id:"packs",label:"📦 Packs & Tarifs"},
-    {id:"periodes",label:"📅 Périodes"},
-    {id:"programme",label:"🗓️ Programme"},
-    {id:"inclus",label:"✅ Inclus"},
-  ];
+  const TA = ({label,field,rows=3}) => (
+    <div style={{marginBottom:12}}>
+      <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{label}</label>
+      <textarea value={cf[field]||""} onChange={e=>setCf(x=>({...x,[field]:e.target.value}))} rows={rows}
+        style={{width:"100%",background:C.card2,border:`1.5px solid ${C.border}`,borderRadius:10,padding:"10px 14px",color:C.white,fontSize:14,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"vertical",boxSizing:"border-box"}}/>
+    </div>
+  );
 
-  if (loading) return <div style={{display:"flex",gap:10,alignItems:"center",padding:"40px 0"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>;
+  if(loading) return <div style={{display:"flex",gap:10,alignItems:"center",padding:"30px 0"}}><Spinner/><span style={{color:C.muted}}>Chargement…</span></div>;
 
   return (
     <div>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
-        <div>
-          <h2 style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:24,marginBottom:4}}>Page Circuits</h2>
-          <p style={{color:C.muted,fontSize:14}}>Gérez tout le contenu de la page Circuits Vacances</p>
-        </div>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:18}}>
         <button type="button" onClick={save} disabled={saving}
           style={{background:saving?"#333":`linear-gradient(135deg,${C.goldD},${C.gold})`,color:saving?C.muted:C.bg,border:"none",borderRadius:12,padding:"10px 22px",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",display:"flex",alignItems:"center",gap:8}}>
-          {saving?<><Spinner size={14}/>Sauvegarde…</>:"💾 Tout sauvegarder"}
+          {saving?<><Spinner size={14}/>Sauvegarde…</>:"Sauvegarder les modifications"}
         </button>
       </div>
 
-      {/* TABS */}
-      <div style={{display:"flex",gap:8,marginBottom:24,flexWrap:"wrap"}}>
-        {TABS.map(t => (
-          <button type="button" key={t.id} onClick={()=>setTab(t.id)}
-            style={{padding:"9px 16px",borderRadius:999,border:`1.5px solid ${tab===t.id?C.gold:C.border}`,background:tab===t.id?`${C.gold}18`:"transparent",color:tab===t.id?C.gold:C.muted,fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB: GÉNÉRAL */}
-      {tab==="general" && (
-        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:24}}>
-          <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:17,color:C.gold,marginBottom:18}}>🌐 Informations générales</h3>
+      {/* GÉNÉRAL */}
+      {activeTab==="general" && (
+        <div style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,padding:26}}>
+          <h3 style={{fontFamily:"'Playfair Display',serif",fontWeight:800,fontSize:17,color:C.gold,marginBottom:20}}>Textes de la page</h3>
           <INP label="Titre principal" field="hero_title" placeholder="Circuits Vacances"/>
           <INP label="Sous-titre" field="hero_subtitle" placeholder="Afrique de l'Ouest — Clé en main"/>
-          <TA label="Description hero" field="hero_desc" rows={3}/>
+          <TA  label="Description (accroche)" field="hero_desc" rows={3}/>
           <INP label="Badge saison" field="saison" placeholder="Saison 2026 — 2027"/>
-          <TA label="Conditions de paiement" field="conditions" rows={3}/>
+          <TA  label="Conditions de paiement" field="conditions" rows={3}/>
         </div>
       )}
 
-      {/* TAB: PACKS */}
-      {tab==="packs" && (
+      {/* PACKS */}
+      {activeTab==="packs" && (
         <div style={{display:"flex",flexDirection:"column",gap:16}}>
-          {(cf.packs||[]).map((pack,pi) => (
+          {(cf.packs||[]).map((pack,pi)=>(
             <div key={pack.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:18,overflow:"hidden"}}>
               <div style={{background:pack.color||C.bg,padding:"16px 22px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{display:"flex",alignItems:"center",gap:12}}>
-                  <span style={{fontSize:22}}>{pack.flags}</span>
-                  <div>
-                    <p style={{fontWeight:800,fontSize:15,color:C.white}}>{pack.name}</p>
-                    <p style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>{pack.countries}</p>
-                  </div>
+                <div>
+                  <p style={{fontWeight:800,fontSize:15,color:C.white}}>{pack.name}</p>
+                  <p style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:2}}>{pack.countries}</p>
                 </div>
                 <button type="button" onClick={()=>setEditPack(editPack===pi?null:pi)}
-                  style={{background:`${C.gold}20`,border:`1px solid ${C.gold}44`,color:C.gold,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-                  {editPack===pi?"✕ Fermer":"✏️ Modifier"}
+                  style={{background:`${C.gold}20`,border:`1px solid ${C.gold}44`,color:C.gold,borderRadius:9,padding:"7px 16px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                  {editPack===pi?"Fermer":"Modifier"}
                 </button>
               </div>
               {editPack===pi && (
                 <div style={{padding:22}}>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-                    {[["name","Nom du pack"],["flags","Emoji drapeaux"],["countries","Pays / description"],["color","Couleur header (hex)"],["base","Prix de base (€)"],["note","Note tarifaire"]].map(([f,l]) => (
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
+                    {[["name","Nom"],["countries","Pays / description"],["color","Couleur (hex)"],["base","Prix de base (€)"],["note","Note tarifaire"]].map(([f,l])=>(
                       <div key={f}>
                         <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:5}}>{l}</label>
-                        <input value={pack[f]||""} onChange={e=>{
-                          const newPacks=[...cf.packs];
-                          newPacks[pi]={...newPacks[pi],[f]:e.target.value};
-                          setCf(x=>({...x,packs:newPacks}));
-                        }} style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                        <input value={pack[f]||""} onChange={e=>{const np=[...cf.packs];np[pi]={...np[pi],[f]:e.target.value};setCf(x=>({...x,packs:np}));}}
+                          style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
                       </div>
                     ))}
                   </div>
                   <p style={{fontSize:12,fontWeight:700,color:C.muted,marginBottom:10}}>Lignes de prix</p>
-                  {(pack.prices||[]).map((pr,pri) => (
-                    <div key={pri} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:8,background:C.card2,borderRadius:10,padding:"10px 14px"}}>
-                      {[["label","Libellé"],["eur","Prix €"],["fcfa","Prix FCFA"]].map(([f,l]) => (
+                  {(pack.prices||[]).map((pr,pri)=>(
+                    <div key={pri} style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:8,marginBottom:8,alignItems:"center"}}>
+                      {[["label","Libellé"],["eur","Prix €"],["fcfa","Prix FCFA"]].map(([f,l])=>(
                         <div key={f}>
                           <label style={{fontSize:10,color:C.muted,display:"block",marginBottom:3}}>{l}</label>
-                          <input value={pr[f]||""} onChange={e=>{
-                            const newPacks=[...cf.packs];
-                            const newPrices=[...(newPacks[pi].prices||[])];
-                            newPrices[pri]={...newPrices[pri],[f]:e.target.value};
-                            newPacks[pi]={...newPacks[pi],prices:newPrices};
-                            setCf(x=>({...x,packs:newPacks}));
-                          }} style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.white,fontSize:12,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                          <input value={pr[f]||""} onChange={e=>{const np=[...cf.packs];const npr=[...(np[pi].prices||[])];npr[pri]={...npr[pri],[f]:e.target.value};np[pi]={...np[pi],prices:npr};setCf(x=>({...x,packs:np}));}}
+                            style={{width:"100%",background:C.bg,border:`1px solid ${C.border}`,borderRadius:7,padding:"7px 10px",color:C.white,fontSize:12,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
                         </div>
                       ))}
+                      <button type="button" onClick={()=>{const np=[...cf.packs];np[pi]={...np[pi],prices:(np[pi].prices||[]).filter((_,j)=>j!==pri)};setCf(x=>({...x,packs:np}));}}
+                        style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"7px 10px",fontSize:12,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:14}}>✕</button>
                     </div>
                   ))}
+                  <button type="button" onClick={()=>{const np=[...cf.packs];np[pi]={...np[pi],prices:[...(np[pi].prices||[]),{label:"",eur:"",fcfa:""}]};setCf(x=>({...x,packs:np}));}}
+                    style={{background:`${C.blue}15`,border:`1px solid ${C.blue}33`,color:C.blue,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif",marginTop:6}}>
+                    + Ajouter une ligne de prix
+                  </button>
                 </div>
               )}
             </div>
@@ -1146,20 +1321,17 @@ function CircuitsSection() {
         </div>
       )}
 
-      {/* TAB: PÉRIODES */}
-      {tab==="periodes" && (
+      {/* PÉRIODES */}
+      {activeTab==="periodes" && (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          {(cf.periodes||[]).map((p,pi) => (
-            <div key={pi} style={{background:C.card,border:`1px solid ${pi===1?C.gold:C.border}44`,borderRadius:18,padding:22}}>
-              <p style={{fontWeight:800,fontSize:15,color:pi===1?C.gold:C.blue,marginBottom:16}}>{p.icon} {p.label}</p>
-              {[["icon","Icône"],["label","Type"],["dates","Dates"],["desc","Description"],["tarif","Tarif affiché"]].map(([f,l]) => (
+          {(cf.periodes||[]).map((p,pi)=>(
+            <div key={pi} style={{background:C.card,border:`1px solid ${pi===1?C.gold+"44":C.border}`,borderRadius:18,padding:22}}>
+              <p style={{fontWeight:800,fontSize:15,color:pi===1?C.gold:C.blue,marginBottom:16}}>{p.label||"Saison"}</p>
+              {[["type","Type (basse/haute)"],["label","Titre"],["dates","Dates"],["desc","Description"],["tarif","Tarif affiché"]].map(([f,l])=>(
                 <div key={f} style={{marginBottom:10}}>
                   <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label>
-                  <input value={p[f]||""} onChange={e=>{
-                    const newP=[...cf.periodes];
-                    newP[pi]={...newP[pi],[f]:e.target.value};
-                    setCf(x=>({...x,periodes:newP}));
-                  }} style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
+                  <input value={p[f]||""} onChange={e=>{const np=[...cf.periodes];np[pi]={...np[pi],[f]:e.target.value};setCf(x=>({...x,periodes:np}));}}
+                    style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
                 </div>
               ))}
             </div>
@@ -1167,89 +1339,92 @@ function CircuitsSection() {
         </div>
       )}
 
-      {/* TAB: PROGRAMME */}
-      {tab==="programme" && (
+      {/* PROGRAMME */}
+      {activeTab==="programme" && (
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {(cf.programme||[]).map((item,di) => (
+          {(cf.programme||[]).map((item,di)=>(
             <div key={di} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,overflow:"hidden"}}>
               <div style={{display:"flex",alignItems:"center",gap:14,padding:"12px 18px",cursor:"pointer"}} onClick={()=>setEditDay(editDay===di?null:di)}>
-                <div style={{width:40,height:40,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,fontFamily:"'Playfair Display',serif",fontSize:14,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:9,flexShrink:0}}>{item.day}</div>
+                <div style={{width:44,height:44,background:`linear-gradient(135deg,${C.goldD},${C.gold})`,color:C.bg,fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:900,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:9,flexShrink:0}}>J{item.day}</div>
                 <div style={{flex:1}}>
                   <p style={{fontWeight:700,fontSize:13,color:C.gold}}>{item.location}</p>
-                  <p style={{fontSize:11,color:C.muted}}>{(item.desc||"").slice(0,60)}…</p>
+                  <p style={{fontSize:11,color:C.muted}}>{(item.desc||"").slice(0,70)}…</p>
                 </div>
-                <span style={{color:C.muted,fontSize:18}}>{editDay===di?"▲":"▼"}</span>
+                <div style={{display:"flex",gap:6}}>
+                  <button type="button" onClick={e=>{e.stopPropagation();const np=[...cf.programme];if(di>0){[np[di-1],np[di]]=[np[di],np[di-1]];setCf(x=>({...x,programme:np}));}}}
+                    style={{background:C.card2,border:`1px solid ${C.border}`,color:C.muted,borderRadius:7,padding:"4px 8px",cursor:"pointer",fontSize:12}} title="Monter">↑</button>
+                  <button type="button" onClick={e=>{e.stopPropagation();const np=[...cf.programme];if(di<np.length-1){[np[di],np[di+1]]=[np[di+1],np[di]];setCf(x=>({...x,programme:np}));}}}
+                    style={{background:C.card2,border:`1px solid ${C.border}`,color:C.muted,borderRadius:7,padding:"4px 8px",cursor:"pointer",fontSize:12}} title="Descendre">↓</button>
+                  <button type="button" onClick={e=>{e.stopPropagation();if(window.confirm("Supprimer ce jour ?")){const np=[...cf.programme];np.splice(di,1);setCf(x=>({...x,programme:np}));setEditDay(null);}}}
+                    style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:7,padding:"4px 8px",cursor:"pointer",fontSize:12}}>✕</button>
+                </div>
               </div>
               {editDay===di && (
                 <div style={{padding:"0 18px 18px",display:"flex",flexDirection:"column",gap:10}}>
-                  {[["day","Jour(s)"],["location","Lieu / titre"],["desc","Description"]].map(([f,l]) => (
+                  {[["day","Jour(s) (ex: 01, 06—09)"],["location","Lieu / titre de la journée"]].map(([f,l])=>(
                     <div key={f}>
                       <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>{l}</label>
-                      {f==="desc"
-                        ? <textarea value={item[f]||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],[f]:e.target.value};setCf(x=>({...x,programme:np}));}} rows={3}
-                            style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
-                        : <input value={item[f]||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],[f]:e.target.value};setCf(x=>({...x,programme:np}));}}
-                            style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
-                      }
+                      <input value={item[f]||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],[f]:e.target.value};setCf(x=>({...x,programme:np}));}}
+                        style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",boxSizing:"border-box"}}/>
                     </div>
                   ))}
-                  <div style={{display:"flex",gap:8}}>
-                    <button type="button" onClick={()=>{const np=[...cf.programme];np.splice(di,1);setCf(x=>({...x,programme:np}));setEditDay(null);}}
-                      style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"7px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️ Supprimer ce jour</button>
+                  <div>
+                    <label style={{fontSize:12,fontWeight:700,color:C.muted,display:"block",marginBottom:4}}>Description</label>
+                    <textarea value={item.desc||""} onChange={e=>{const np=[...cf.programme];np[di]={...np[di],desc:e.target.value};setCf(x=>({...x,programme:np}));}} rows={3}
+                      style={{width:"100%",background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none",resize:"none",boxSizing:"border-box"}}/>
                   </div>
                 </div>
               )}
             </div>
           ))}
-          <button type="button" onClick={()=>setCf(x=>({...x,programme:[...(x.programme||[]),{day:String((x.programme||[]).length+1),location:"Nouveau lieu",desc:"Description..."}]}))}
-            style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:12,padding:"11px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
-            + Ajouter un jour
+          <button type="button" onClick={()=>{setCf(x=>({...x,programme:[...(x.programme||[]),{day:String((x.programme||[]).length+1).padStart(2,"0"),location:"Nouveau lieu",desc:"Description de la journée"}]}));}}
+            style={{background:`${C.gold}15`,border:`1px solid ${C.gold}33`,color:C.gold,borderRadius:12,padding:"12px",fontWeight:700,fontSize:13,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+            + Ajouter un jour au programme
           </button>
         </div>
       )}
 
-      {/* TAB: INCLUS */}
-      {tab==="inclus" && (
+      {/* INCLUS / NON INCLUS */}
+      {activeTab==="inclus" && (
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
-          {/* INCLUS */}
           <div style={{background:C.card,border:`1px solid ${C.green}33`,borderRadius:18,padding:22}}>
-            <p style={{fontWeight:800,fontSize:15,color:C.green,marginBottom:16}}>✅ Inclus dans tous les packs</p>
-            {(cf.inclus||[]).map((item,i) => (
+            <p style={{fontWeight:800,fontSize:15,color:C.green,marginBottom:16}}>Inclus dans toutes les formules</p>
+            {(cf.inclus||[]).map((item,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:C.card2,borderRadius:9,padding:"9px 12px",marginBottom:8}}>
                 <input value={item} onChange={e=>{const ni=[...cf.inclus];ni[i]=e.target.value;setCf(x=>({...x,inclus:ni}));}}
                   style={{flex:1,background:"transparent",border:"none",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
                 <button type="button" onClick={()=>setCf(x=>({...x,inclus:x.inclus.filter((_,j)=>j!==i)}))}
-                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14}}>✕</button>
+                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14,flexShrink:0}}>✕</button>
               </div>
             ))}
             <div style={{display:"flex",gap:8,marginTop:10}}>
-              <input value={newInclus} onChange={e=>setNewInclus(e.target.value)} placeholder="Ajouter un élément inclus…"
+              <input value={newInclus} onChange={e=>setNewInclus(e.target.value)} placeholder="Nouvel élément inclus…"
+                onKeyDown={e=>{if(e.key==="Enter"&&newInclus.trim()){setCf(x=>({...x,inclus:[...(x.inclus||[]),newInclus.trim()]}));setNewInclus("");}}}
                 style={{flex:1,background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
               <button type="button" onClick={()=>{if(newInclus.trim()){setCf(x=>({...x,inclus:[...(x.inclus||[]),newInclus.trim()]}));setNewInclus("");}}}
-                style={{background:`${C.green}20`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+                style={{background:`${C.green}20`,border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Ajouter</button>
             </div>
           </div>
-          {/* NON INCLUS */}
           <div style={{background:C.card,border:`1px solid ${C.red}33`,borderRadius:18,padding:22}}>
-            <p style={{fontWeight:800,fontSize:15,color:C.red,marginBottom:16}}>❌ Non inclus</p>
-            {(cf.non_inclus||[]).map((item,i) => (
+            <p style={{fontWeight:800,fontSize:15,color:C.red,marginBottom:16}}>Non inclus</p>
+            {(cf.non_inclus||[]).map((item,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",gap:8,background:C.card2,borderRadius:9,padding:"9px 12px",marginBottom:8}}>
                 <input value={item} onChange={e=>{const ni=[...cf.non_inclus];ni[i]=e.target.value;setCf(x=>({...x,non_inclus:ni}));}}
                   style={{flex:1,background:"transparent",border:"none",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
                 <button type="button" onClick={()=>setCf(x=>({...x,non_inclus:x.non_inclus.filter((_,j)=>j!==i)}))}
-                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14}}>✕</button>
+                  style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:14,flexShrink:0}}>✕</button>
               </div>
             ))}
             <div style={{display:"flex",gap:8,marginTop:10}}>
-              <input value={newNonInclus} onChange={e=>setNewNonInclus(e.target.value)} placeholder="Ajouter un élément non inclus…"
+              <input value={newNonInclus} onChange={e=>setNewNonInclus(e.target.value)} placeholder="Nouvel élément non inclus…"
+                onKeyDown={e=>{if(e.key==="Enter"&&newNonInclus.trim()){setCf(x=>({...x,non_inclus:[...(x.non_inclus||[]),newNonInclus.trim()]}));setNewNonInclus("");}}}
                 style={{flex:1,background:C.card2,border:`1px solid ${C.border}`,borderRadius:9,padding:"9px 12px",color:C.white,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:"none"}}/>
               <button type="button" onClick={()=>{if(newNonInclus.trim()){setCf(x=>({...x,non_inclus:[...(x.non_inclus||[]),newNonInclus.trim()]}));setNewNonInclus("");}}}
-                style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>+ Ajouter</button>
+                style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"9px 14px",fontSize:12,fontWeight:700,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>Ajouter</button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

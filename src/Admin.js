@@ -1444,6 +1444,7 @@ const MENU=[
 
 // FIX: mot de passe stocké en variable d'environnement ou constante hors bundle lisible
 // En production, utiliser process.env.REACT_APP_ADMIN_PWD
+// ⚠️ Définir REACT_APP_ADMIN_PWD dans Vercel > Settings > Environment Variables
 const ADMIN_PWD = process.env.REACT_APP_ADMIN_PWD || "small2025";
 
 export default function SMallAdmin() {

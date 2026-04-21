@@ -1222,6 +1222,9 @@ export default function SMall() {
       .on('postgres_changes',{event:'*',schema:'public',table:'products'},loadAll)
       .on('postgres_changes',{event:'*',schema:'public',table:'banners'},loadAll)
       .on('postgres_changes',{event:'*',schema:'public',table:'reviews'},loadAll)
+      .on('postgres_changes',{event:'*',schema:'public',table:'categories'},loadAll)
+      .on('postgres_changes',{event:'*',schema:'public',table:'shipping_zones'},loadAll)
+      .on('postgres_changes',{event:'*',schema:'public',table:'circuit_config'},loadAll)
       .subscribe();
     return () => sb.removeChannel(ch);
   }, [loadAll]);

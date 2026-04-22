@@ -96,12 +96,15 @@ function BannerSlider({ items }) {
   }, [items]);
   if (!items || items.length === 0) return null;
   const b = items[Math.min(idx, items.length-1)];
-  if (!b || !b.media_url) return null;
+  const bUrl  = b.media_url || b.url;
+  const bType = b.media_type || b.type || 'image';
+  const bLink = b.link_url || b.link;
+  if (!b || !bUrl) return null;
   return (
-    <div style={{ position:'relative', borderRadius:16, overflow:'hidden', cursor:b.link_url?'pointer':'default' }} onClick={() => b.link_url && window.open(b.link_url,'_blank')}>
-      {b.media_type === 'video'
-        ? <video src={b.media_url} autoPlay muted loop playsInline style={{ width:'100%', maxHeight:220, objectFit:'cover', display:'block' }}/>
-        : <img src={b.media_url} alt={b.title||''} style={{ width:'100%', maxHeight:220, objectFit:'cover', display:'block' }}/>
+    <div style={{ position:'relative', borderRadius:16, overflow:'hidden', cursor:bLink?'pointer':'default' }} onClick={() => bLink && window.open(bLink,'_blank')}>
+      {bType === 'video'
+        ? <video src={bUrl} autoPlay muted loop playsInline style={{ width:'100%', maxHeight:220, objectFit:'cover', display:'block' }}/>
+        : <img src={bUrl} alt={b.title||''} style={{ width:'100%', maxHeight:220, objectFit:'cover', display:'block' }}/>
       }
       {b.title && (
         <div style={{ position:'absolute', bottom:0, left:0, right:0, background:'linear-gradient(transparent,rgba(0,0,0,.75))', padding:'20px 16px 12px' }}>

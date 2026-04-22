@@ -19,24 +19,37 @@ function useRealtimeTable(table, loadFn) {
   const [loading, setLoading] = useState(true);
   const loadFnRef = useRef(loadFn);
   loadFnRef.current = loadFn;
+  const mountedRef = useRef(true);
+
+  // Expose une fonction reload appelable manuellement
+  const reloadRef = useRef(null);
 
   useEffect(()=>{
-    let mounted = true;
+    mountedRef.current = true;
     const load = async()=>{
       try {
-        const {data:d} = await loadFnRef.current();
-        if(mounted) { setData(d||[]); setLoading(false); }
-      } catch(e) { if(mounted) setLoading(false); }
+        const {data:d, error} = await loadFnRef.current();
+        if(mountedRef.current) {
+          if(!error) setData(d||[]);
+          setLoading(false);
+        }
+      } catch(e) { if(mountedRef.current) setLoading(false); }
     };
+    reloadRef.current = load;
     load();
     const chName = `rt-${table}-${Math.random().toString(36).slice(2)}`;
     const ch = sb.channel(chName)
-      .on("postgres_changes",{event:"*",schema:"public",table},()=>{ if(mounted) load(); })
+      .on("postgres_changes",{event:"*",schema:"public",table},()=>{
+        // Petit délai pour laisser Supabase propager la transaction
+        setTimeout(()=>{ if(mountedRef.current) load(); }, 300);
+      })
       .subscribe();
-    return ()=>{ mounted=false; sb.removeChannel(ch); };
-  },[table]); // table est une string stable — pas de dépendance circulaire
+    return ()=>{ mountedRef.current=false; sb.removeChannel(ch); };
+  },[table]);
 
-  return {data,loading};
+  const reload = useCallback(()=>{ if(reloadRef.current) reloadRef.current(); },[]);
+
+  return {data, loading, reload};
 }
 
 // ── IMAGE UPLOADER ────────────────────────────────────────────────────────────
@@ -220,7 +233,7 @@ function ProductsSection() {
   const [CATS,setCATS]=useState([]);
   // FIX: loadFn mémoïsé pour éviter rerenders inutiles dans useRealtimeTable
   const productsLoader=useCallback(()=>sb.from("products").select("*").order("id"),[]);
-  const {data:products,loading}=useRealtimeTable("products", productsLoader);
+  const {data:products,loading,reload:reloadProducts}=useRealtimeTable("products", productsLoader);
   const [showForm,setShowForm]=useState(false);
   const [editing,setEditing]=useState(null);
   const [savedId,setSavedId]=useState(null);
@@ -259,6 +272,7 @@ function ProductsSection() {
     if(editing){
       await sb.from("products").update(payload).eq("id",editing.id);
       setSavedId(editing.id);
+      reloadProducts();
     } else {
       const {data,error}=await sb.from("products").insert({...payload,image_url:null}).select().single();
       if(data){setSavedId(data.id);setEditing(data);}
@@ -845,17 +859,25 @@ function BannersSection() {
   const save=async()=>{
     if(!bf.media_url){alert("Veuillez d'abord uploader une image ou vidéo.");return;}
     setSaving(true);
-    // FIX: title est null explicitement si vide (évite undefined)
+    // Essai avec media_url, fallback sur image_url selon le schéma Supabase
+    // Colonnes réelles de la table banners : url, type, link + media_url, media_type, link_url (ajoutés)
     const bannerPayload = {
-      media_url: bf.media_url,
-      active: bf.active,
-      title: bf.title.trim() || null,
+      url:        bf.media_url,
+      media_url:  bf.media_url,
+      type:       bf.media_type || "image",
       media_type: bf.media_type || "image",
-      position: bf.position || "home_top",
-      link_url: bf.link_url.trim() || null,
+      title:      bf.title.trim() || null,
+      position:   bf.position || "home_top",
+      link:       bf.link_url.trim() || null,
+      link_url:   bf.link_url.trim() || null,
+      active:     bf.active,
     };
-    const {error}=await sb.from("banners").insert(bannerPayload);
-    if(error){alert("Erreur: "+error.message);setSaving(false);return;}
+    const {error} = await sb.from("banners").insert(bannerPayload);
+    if(error){
+      alert("Erreur bannière: "+error.message);
+      setSaving(false);
+      return;
+    }
     setShowForm(false);
     setBf({title:"",media_url:"",media_type:"image",link_url:"",position:"home_top",active:true});
     setSaving(false);
@@ -939,16 +961,16 @@ function BannersSection() {
           {banners.map(b=>(
             <div key={b.id} style={{background:C.card,border:`1px solid ${b.active?C.gold:C.border}44`,borderRadius:16,overflow:"hidden"}}>
               <div style={{position:"relative",height:140}}>
-                {b.media_type==="video"
-                  ?<video src={b.media_url} muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                  :<img src={b.media_url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                {(b.media_type||b.type)==="video"
+                  ?<video src={b.media_url||b.url} muted style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                  :<img src={b.media_url||b.url} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 }
                 {!b.active&&<div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.6)",display:"flex",alignItems:"center",justifyContent:"center"}}><span style={{color:C.muted,fontWeight:800}}>🔴 Désactivée</span></div>}
-                <span style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.7)",color:b.position==="home_top"?C.gold:C.blue,fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:999}}>{b.position==="home_top"?"Haut":"Milieu"}</span>
+                <span style={{position:"absolute",top:8,right:8,background:"rgba(0,0,0,0.7)",color:(b.position||"home_top")==="home_top"?C.gold:C.blue,fontSize:10,fontWeight:700,padding:"3px 8px",borderRadius:999}}>{(b.position||"home_top")==="home_top"?"Haut":"Milieu"}</span>
               </div>
               <div style={{padding:"12px 14px"}}>
                 <p style={{fontWeight:700,fontSize:13,color:C.white,marginBottom:3}}>{b.title||"(Sans titre)"}</p>
-                <p style={{fontSize:11,color:C.muted,marginBottom:10}}>{b.media_type==="video"?"🎬 Vidéo":"🖼️ Image"} · {new Date(b.created_at).toLocaleDateString("fr-FR")}</p>
+                <p style={{fontSize:11,color:C.muted,marginBottom:10}}>{(b.media_type||b.type)==="video"?"🎬 Vidéo":"🖼️ Image"} · {new Date(b.created_at).toLocaleDateString("fr-FR")}</p>
                 <div style={{display:"flex",gap:7}}>
                   <button type="button" onClick={()=>toggle(b)} style={{flex:1,background:`${b.active?C.red:C.green}15`,border:`1px solid ${b.active?C.red:C.green}33`,color:b.active?C.red:C.green,borderRadius:9,padding:"6px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>{b.active?"🙈 Désactiver":"👁 Activer"}</button>
                   <button type="button" onClick={()=>remove(b.id)} style={{background:`${C.red}15`,border:`1px solid ${C.red}33`,color:C.red,borderRadius:9,padding:"6px 10px",fontWeight:700,fontSize:11,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>🗑️</button>
@@ -1451,6 +1473,11 @@ export default function SMallAdmin() {
   const [auth,setAuth]=useState(false);
   const [pwd,setPwd]=useState("");
   const [section,setSection]=useState("stats");
+  const [toast,setToast]=useState(null);
+  const showToast = useCallback((msg, color=C.green) => {
+    setToast({msg,color});
+    setTimeout(()=>setToast(null), 3000);
+  },[]);
   const msgLoader=useCallback(()=>sb.from("messages").select("id,read"),[]);
   const revLoader=useCallback(()=>sb.from("reviews").select("id,approved"),[]);
   const {data:messages}=useRealtimeTable("messages", msgLoader);
@@ -1519,6 +1546,12 @@ export default function SMallAdmin() {
         </div>
       </aside>
 
+      {/* TOAST NOTIFICATION */}
+      {toast && (
+        <div style={{position:"fixed",top:16,right:16,zIndex:9999,background:C.card,border:`1px solid ${toast.color}`,color:toast.color,padding:"11px 20px",borderRadius:12,fontWeight:700,fontSize:13,boxShadow:"0 8px 28px rgba(0,0,0,.7)",animation:"fadeUp .3s ease",maxWidth:320,pointerEvents:"none"}}>
+          {toast.msg}
+        </div>
+      )}
       {/* MAIN CONTENT */}
       <main style={{flex:1,padding:"32px 36px",overflowY:"auto"}}>
         {section==="stats"       && <StatsSection/>}

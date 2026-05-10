@@ -1276,7 +1276,7 @@ function DeliveryMap({ zone }) {
           });
         }
       },
-      err => { setLoading(false); setError('Impossible d'accéder à votre position. Utilisez la saisie manuelle.'); },
+      err => { setLoading(false); setError("Impossible d'accéder à votre position. Utilisez la saisie manuelle."); },
       { enableHighAccuracy:true, timeout:10000 }
     );
   };

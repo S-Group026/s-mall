@@ -424,9 +424,11 @@ function BookingModal({ data, onClose, onConfirm }) {
             )}
           </div>
 
-          {/* NB PERSONNES */}
+          {/* NB PERSONNES / NUITS selon la catégorie */}
           <div>
-            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:6 }}>Nombre de personnes</label>
+            <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'block', marginBottom:6 }}>
+              {product.cat === 'appart' ? 'Nombre de nuits' : 'Nombre de personnes'}
+            </label>
             <div style={{ display:'flex', alignItems:'center', gap:12 }}>
               <button type="button" onClick={() => setBf(f => ({...f,qty:Math.max(1,f.qty-1)}))} style={{ width:34, height:34, borderRadius:9, border:`1.5px solid ${C.border}`, background:C.card2, color:C.gold, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}><Minus size={13}/></button>
               <span style={{ fontWeight:800, fontSize:18, minWidth:20, textAlign:'center' }}>{bf.qty}</span>
@@ -438,14 +440,38 @@ function BookingModal({ data, onClose, onConfirm }) {
 
           {/* RÉSUMÉ PAIEMENT */}
           <div style={{ background:`${C.orange}12`, border:`1px solid ${C.orange}33`, borderRadius:12, padding:'12px 16px' }}>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
-              <span style={{ color:C.muted }}>Montant total</span>
-              <span style={{ fontWeight:700 }}>{FCFA(price * bf.qty)}</span>
-            </div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:15 }}>
-              <span style={{ color:C.orange, fontWeight:700 }}>Acompte (10%)</span>
-              <span style={{ fontWeight:900, color:C.orange }}>{FCFA(acompte * bf.qty)}</span>
-            </div>
+            {/* Pour les appartements : prix fixe (pas par personne) */}
+            {product.cat === 'appart' ? (
+              <>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                  <span style={{ color:C.muted }}>Prix de l'appartement</span>
+                  <span style={{ fontWeight:700 }}>{FCFA(price)}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                  <span style={{ color:C.muted }}>Durée</span>
+                  <span style={{ fontWeight:700 }}>{bf.qty} nuit{bf.qty > 1 ? 's' : ''}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                  <span style={{ color:C.muted }}>Montant total</span>
+                  <span style={{ fontWeight:700 }}>{FCFA(price * bf.qty)}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:15 }}>
+                  <span style={{ color:C.orange, fontWeight:700 }}>Acompte (10%)</span>
+                  <span style={{ fontWeight:900, color:C.orange }}>{FCFA(acompte * bf.qty)}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:13, marginBottom:6 }}>
+                  <span style={{ color:C.muted }}>Montant total</span>
+                  <span style={{ fontWeight:700 }}>{FCFA(price * bf.qty)}</span>
+                </div>
+                <div style={{ display:'flex', justifyContent:'space-between', fontSize:15 }}>
+                  <span style={{ color:C.orange, fontWeight:700 }}>Acompte (10%)</span>
+                  <span style={{ fontWeight:900, color:C.orange }}>{FCFA(acompte * bf.qty)}</span>
+                </div>
+              </>
+            )}
           </div>
 
           <button type="button" className="btn" onClick={confirm}
@@ -1143,6 +1169,232 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
   );
 }
 
+// ─── COMPOSANT CARTE LIVRAISON ───────────────────────────────────────────────
+function DeliveryMap({ zone }) {
+  const [loc,      setLoc]      = useState(null);   // {lat, lng, address}
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
+  const [manual,   setManual]   = useState('');
+  const [mode,     setMode]     = useState(null);   // 'gps' | 'manual'
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const mapObjRef = useRef(null);
+
+  // Charger Leaflet dynamiquement (carte open-source, gratuite)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.L) return; // déjà chargé
+    // CSS Leaflet
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    // JS Leaflet
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.async = true;
+    document.head.appendChild(script);
+  }, []);
+
+  // Initialiser la carte quand le mode GPS ou manuel est choisi
+  useEffect(() => {
+    if (!mode || !mapRef.current) return;
+    // Attendre que Leaflet soit chargé
+    const initMap = () => {
+      if (!window.L) { setTimeout(initMap, 200); return; }
+      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; }
+      const center = loc ? [loc.lat, loc.lng] : [5.3484, -4.0083]; // Abidjan par défaut
+      const map = window.L.map(mapRef.current).setView(center, loc ? 15 : 12);
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+      mapObjRef.current = map;
+
+      // Icône personnalisée
+      const icon = window.L.divIcon({
+        html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
+        iconSize: [22, 22], iconAnchor: [11, 22], className: ''
+      });
+
+      if (loc) {
+        markerRef.current = window.L.marker([loc.lat, loc.lng], {icon, draggable:true}).addTo(map);
+        markerRef.current.on('dragend', async e => {
+          const {lat, lng} = e.target.getLatLng();
+          const addr = await reverseGeocode(lat, lng);
+          setLoc({ lat, lng, address: addr });
+        });
+      }
+
+      // Clic sur la carte = placer le marqueur
+      map.on('click', async e => {
+        const {lat, lng} = e.latlng;
+        if (markerRef.current) markerRef.current.remove();
+        markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(map);
+        markerRef.current.on('dragend', async ev => {
+          const p = ev.target.getLatLng();
+          const addr = await reverseGeocode(p.lat, p.lng);
+          setLoc({ lat:p.lat, lng:p.lng, address:addr });
+        });
+        const addr = await reverseGeocode(lat, lng);
+        setLoc({ lat, lng, address: addr });
+      });
+    };
+    initMap();
+    return () => { if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; } };
+  }, [mode]);
+
+  // Géocodage inverse (coordonnées → adresse)
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+      const d = await r.json();
+      return d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+  };
+
+  // Géolocalisation GPS
+  const getGPS = () => {
+    setLoading(true); setError('');
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        const { latitude:lat, longitude:lng } = pos.coords;
+        const addr = await reverseGeocode(lat, lng);
+        setLoc({ lat, lng, address: addr });
+        setLoading(false);
+        if (mapObjRef.current) {
+          mapObjRef.current.setView([lat, lng], 16);
+          const icon = window.L.divIcon({
+            html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
+            iconSize:[22,22], iconAnchor:[11,22], className:''
+          });
+          if (markerRef.current) markerRef.current.remove();
+          markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(mapObjRef.current);
+          markerRef.current.on('dragend', async e => {
+            const p = e.target.getLatLng();
+            const a = await reverseGeocode(p.lat, p.lng);
+            setLoc({ lat:p.lat, lng:p.lng, address:a });
+          });
+        }
+      },
+      err => { setLoading(false); setError('Impossible d'accéder à votre position. Utilisez la saisie manuelle.'); },
+      { enableHighAccuracy:true, timeout:10000 }
+    );
+  };
+
+  // Géocodage depuis adresse textuelle
+  const searchAddress = async () => {
+    if (!manual.trim()) return;
+    setLoading(true); setError('');
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manual)}&format=json&limit=1`);
+      const d = await r.json();
+      if (!d.length) { setError('Adresse introuvable. Essayez d'être plus précis.'); setLoading(false); return; }
+      const lat = parseFloat(d[0].lat), lng = parseFloat(d[0].lon);
+      const addr = d[0].display_name;
+      setLoc({ lat, lng, address: addr });
+      setLoading(false);
+      if (mapObjRef.current) {
+        mapObjRef.current.setView([lat, lng], 15);
+        const icon = window.L.divIcon({
+          html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
+          iconSize:[22,22], iconAnchor:[11,22], className:''
+        });
+        if (markerRef.current) markerRef.current.remove();
+        markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(mapObjRef.current);
+        markerRef.current.on('dragend', async e => {
+          const p = e.target.getLatLng();
+          const a = await reverseGeocode(p.lat, p.lng);
+          setLoc({ lat:p.lat, lng:p.lng, address:a });
+        });
+      }
+    } catch { setError('Erreur de recherche. Réessayez.'); setLoading(false); }
+  };
+
+  return (
+    <div style={{ marginTop:10 }}>
+      <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'flex', alignItems:'center', gap:5, marginBottom:8 }}>
+        <MapPin size={11} color={C.gold}/>Adresse de livraison précise
+      </label>
+
+      {/* Choix du mode */}
+      {!mode && (
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+          <button type="button" onClick={() => setMode('gps')}
+            style={{ background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'12px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'all .15s' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor=C.gold}
+            onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+            <p style={{ fontSize:18, marginBottom:4 }}>📍</p>
+            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Ma position GPS</p>
+            <p style={{ fontSize:10, color:C.muted }}>Localisation automatique</p>
+          </button>
+          <button type="button" onClick={() => setMode('manual')}
+            style={{ background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'12px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'all .15s' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor=C.gold}
+            onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
+            <p style={{ fontSize:18, marginBottom:4 }}>🔍</p>
+            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Saisir une adresse</p>
+            <p style={{ fontSize:10, color:C.muted }}>Recherche sur la carte</p>
+          </button>
+        </div>
+      )}
+
+      {/* Mode GPS */}
+      {mode === 'gps' && !loc && (
+        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
+          <button type="button" onClick={getGPS} disabled={loading}
+            style={{ flex:1, background:loading?C.card2:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:loading?C.muted:C.bg, border:'none', borderRadius:10, padding:'11px', fontWeight:700, fontSize:13, cursor:loading?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
+            {loading ? <><Spin s={14}/>Localisation…</> : <>📍 Détecter ma position</>}
+          </button>
+          <button type="button" onClick={() => setMode(null)} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:10, padding:'11px 14px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", fontSize:12 }}>Retour</button>
+        </div>
+      )}
+
+      {/* Mode Manuel */}
+      {mode === 'manual' && (
+        <div style={{ marginBottom:8 }}>
+          <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+            <input value={manual} onChange={e => setManual(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && searchAddress()}
+              placeholder="Ex: Cocody, Abidjan ou Rue des Jardins, Lomé…"
+              style={{ flex:1, background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'10px 13px', color:C.white, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:'none' }}/>
+            <button type="button" onClick={searchAddress} disabled={loading}
+              style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:10, padding:'10px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
+              {loading ? <Spin s={14}/> : '🔍'}
+            </button>
+            <button type="button" onClick={() => setMode(null)} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:10, padding:'10px 13px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", fontSize:12 }}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {error && <p style={{ color:C.red, fontSize:12, marginBottom:8, fontWeight:600 }}>{error}</p>}
+
+      {/* CARTE */}
+      {mode && (
+        <div style={{ position:'relative' }}>
+          <div ref={mapRef} style={{ width:'100%', height:220, borderRadius:12, border:`1.5px solid ${loc?C.gold:C.border}`, overflow:'hidden', background:C.card2 }}/>
+          <p style={{ fontSize:10, color:C.muted, marginTop:5 }}>
+            {loc ? 'Déplacez le marqueur pour ajuster votre position exacte' : 'Cliquez sur la carte pour placer votre position'}
+          </p>
+        </div>
+      )}
+
+      {/* Adresse confirmée */}
+      {loc && (
+        <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}33`, borderRadius:10, padding:'10px 13px', marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+          <div style={{ flex:1 }}>
+            <p style={{ fontSize:11, fontWeight:700, color:C.gold, marginBottom:3 }}>Position confirmée</p>
+            <p style={{ fontSize:11, color:C.muted, lineHeight:1.5 }}>{loc.address.slice(0,120)}{loc.address.length>120?'…':''}</p>
+          </div>
+          <button type="button" onClick={() => { setLoc(null); setMode(null); setManual(''); }}
+            style={{ background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:16, flexShrink:0 }}>✕</button>
+        </div>
+      )}
+
+      {!mode && <p style={{ fontSize:10, color:C.muted, marginTop:6 }}>Facultatif — aide le livreur à vous trouver précisément</p>}
+    </div>
+  );
+}
+
 // ─── APPLICATION PRINCIPALE ───────────────────────────────────────────────────
 export default function SMall() {
   // ── Data
@@ -1648,6 +1900,7 @@ export default function SMall() {
                         </select>
                       </div>
                     )}
+                    {needsShip && zone && <DeliveryMap zone={zone}/>}
 
                     {needsShip && (
                       <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
@@ -1933,7 +2186,7 @@ export default function SMall() {
           <div style={{ width:24, height:24, borderRadius:6, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>✦</div>
           <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:14, background:`linear-gradient(90deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>S-Mall</span>
         </div>
-        <p style={{ color:C.muted, fontSize:11 }}>Bénin · Togo · Côte d'Ivoire — Mobile Money · FedaPay</p>
+        <p style={{ color:C.muted, fontSize:11 }}>Côte d'Ivoire · Togo · Afrique de l'Ouest — Mobile Money · FedaPay</p>
         <p style={{ color:C.muted, fontSize:11 }}>© 2025 S-Mall. Tous droits réservés.</p>
       </footer>
     </div>

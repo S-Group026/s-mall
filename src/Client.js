@@ -1288,7 +1288,7 @@ function DeliveryMap({ zone }) {
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manual)}&format=json&limit=1`);
       const d = await r.json();
-      if (!d.length) { setError('Adresse introuvable. Essayez d'être plus précis.'); setLoading(false); return; }
+      if (!d.length) { setError("Adresse introuvable. Essayez d'être plus précis."); setLoading(false); return; }
       const lat = parseFloat(d[0].lat), lng = parseFloat(d[0].lon);
       const addr = d[0].display_name;
       setLoc({ lat, lng, address: addr });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ShoppingCart, Calendar, Search, ChevronLeft, Lock, CreditCard, CheckCircle, Truck, MessageCircle, Send, Star, Phone, ArrowRight, Minus, Plus, Trash2, X, MapPin, Clock, Eye, Flame, Sparkles, TrendingUp, ShoppingBag, Cpu, GraduationCap, Map, Car, Home } from 'lucide-react';
 import { sb } from './supabase';
 
@@ -1170,227 +1170,212 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
 }
 
 // ─── COMPOSANT CARTE LIVRAISON ───────────────────────────────────────────────
+// Version robuste : iframe OpenStreetMap + géolocalisation native du navigateur
 function DeliveryMap({ zone }) {
-  const [loc,      setLoc]      = useState(null);   // {lat, lng, address}
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [manual,   setManual]   = useState('');
-  const [mode,     setMode]     = useState(null);   // 'gps' | 'manual'
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const mapObjRef = useRef(null);
+  const [step,    setStep]    = useState('choice'); // 'choice' | 'gps' | 'manual' | 'done'
+  const [loc,     setLoc]     = useState(null);     // { lat, lng, address }
+  const [manual,  setManual]  = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState('');
 
-  // Charger Leaflet dynamiquement (carte open-source, gratuite)
+  // Réinitialiser si zone change
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.L) return; // déjà chargé
-    // CSS Leaflet
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    document.head.appendChild(link);
-    // JS Leaflet
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.async = true;
-    document.head.appendChild(script);
-  }, []);
+    setStep('choice'); setLoc(null); setManual(''); setError('');
+  }, [zone?.id]);
 
-  // Initialiser la carte quand le mode GPS ou manuel est choisi
-  useEffect(() => {
-    if (!mode || !mapRef.current) return;
-    // Attendre que Leaflet soit chargé
-    const initMap = () => {
-      if (!window.L) { setTimeout(initMap, 200); return; }
-      if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; }
-      const center = loc ? [loc.lat, loc.lng] : [5.3484, -4.0083]; // Abidjan par défaut
-      const map = window.L.map(mapRef.current).setView(center, loc ? 15 : 12);
-      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(map);
-      mapObjRef.current = map;
-
-      // Icône personnalisée
-      const icon = window.L.divIcon({
-        html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
-        iconSize: [22, 22], iconAnchor: [11, 22], className: ''
-      });
-
-      if (loc) {
-        markerRef.current = window.L.marker([loc.lat, loc.lng], {icon, draggable:true}).addTo(map);
-        markerRef.current.on('dragend', async e => {
-          const {lat, lng} = e.target.getLatLng();
-          const addr = await reverseGeocode(lat, lng);
-          setLoc({ lat, lng, address: addr });
-        });
-      }
-
-      // Clic sur la carte = placer le marqueur
-      map.on('click', async e => {
-        const {lat, lng} = e.latlng;
-        if (markerRef.current) markerRef.current.remove();
-        markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(map);
-        markerRef.current.on('dragend', async ev => {
-          const p = ev.target.getLatLng();
-          const addr = await reverseGeocode(p.lat, p.lng);
-          setLoc({ lat:p.lat, lng:p.lng, address:addr });
-        });
-        const addr = await reverseGeocode(lat, lng);
-        setLoc({ lat, lng, address: addr });
-      });
-    };
-    initMap();
-    return () => { if (mapObjRef.current) { mapObjRef.current.remove(); mapObjRef.current = null; } };
-  }, [mode]);
-
-  // Géocodage inverse (coordonnées → adresse)
+  // Géocodage inverse : coordonnées → adresse lisible
   const reverseGeocode = async (lat, lng) => {
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-      const d = await r.json();
-      return d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`,
+        { headers: { 'Accept-Language': 'fr' } }
+      );
+      const data = await res.json();
+      return data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    } catch {
+      return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
   };
 
-  // Géolocalisation GPS
-  const getGPS = () => {
+  // Géocodage : adresse → coordonnées
+  const geocode = async (address) => {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`,
+      { headers: { 'Accept-Language': 'fr' } }
+    );
+    const data = await res.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), address: data[0].display_name };
+  };
+
+  // Détection GPS
+  const handleGPS = () => {
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n'est pas supportée par votre navigateur.");
+      return;
+    }
     setLoading(true); setError('');
     navigator.geolocation.getCurrentPosition(
       async pos => {
-        const { latitude:lat, longitude:lng } = pos.coords;
-        const addr = await reverseGeocode(lat, lng);
-        setLoc({ lat, lng, address: addr });
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const address = await reverseGeocode(lat, lng);
+        setLoc({ lat, lng, address });
+        setStep('done');
         setLoading(false);
-        if (mapObjRef.current) {
-          mapObjRef.current.setView([lat, lng], 16);
-          const icon = window.L.divIcon({
-            html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
-            iconSize:[22,22], iconAnchor:[11,22], className:''
-          });
-          if (markerRef.current) markerRef.current.remove();
-          markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(mapObjRef.current);
-          markerRef.current.on('dragend', async e => {
-            const p = e.target.getLatLng();
-            const a = await reverseGeocode(p.lat, p.lng);
-            setLoc({ lat:p.lat, lng:p.lng, address:a });
-          });
-        }
       },
-      err => { setLoading(false); setError("Impossible d'accéder à votre position. Utilisez la saisie manuelle."); },
-      { enableHighAccuracy:true, timeout:10000 }
+      () => {
+        setLoading(false);
+        setError("Position non accessible. Essayez la saisie manuelle.");
+        setStep('manual');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
-  // Géocodage depuis adresse textuelle
-  const searchAddress = async () => {
+  // Recherche adresse manuelle
+  const handleSearch = async () => {
     if (!manual.trim()) return;
     setLoading(true); setError('');
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(manual)}&format=json&limit=1`);
-      const d = await r.json();
-      if (!d.length) { setError("Adresse introuvable. Essayez d'être plus précis."); setLoading(false); return; }
-      const lat = parseFloat(d[0].lat), lng = parseFloat(d[0].lon);
-      const addr = d[0].display_name;
-      setLoc({ lat, lng, address: addr });
-      setLoading(false);
-      if (mapObjRef.current) {
-        mapObjRef.current.setView([lat, lng], 15);
-        const icon = window.L.divIcon({
-          html: `<div style="background:${C.gold};width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
-          iconSize:[22,22], iconAnchor:[11,22], className:''
-        });
-        if (markerRef.current) markerRef.current.remove();
-        markerRef.current = window.L.marker([lat, lng], {icon, draggable:true}).addTo(mapObjRef.current);
-        markerRef.current.on('dragend', async e => {
-          const p = e.target.getLatLng();
-          const a = await reverseGeocode(p.lat, p.lng);
-          setLoc({ lat:p.lat, lng:p.lng, address:a });
-        });
+      const result = await geocode(manual);
+      if (!result) {
+        setError("Adresse introuvable. Soyez plus précis (ville, quartier, rue).");
+        setLoading(false);
+        return;
       }
-    } catch { setError('Erreur de recherche. Réessayez.'); setLoading(false); }
+      setLoc(result);
+      setStep('done');
+      setLoading(false);
+    } catch {
+      setError("Erreur de recherche. Vérifiez votre connexion.");
+      setLoading(false);
+    }
   };
 
+  // URL iframe OpenStreetMap (stable, sans dépendance externe)
+  const mapUrl = loc
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${loc.lng-0.01},${loc.lat-0.01},${loc.lng+0.01},${loc.lat+0.01}&layer=mapnik&marker=${loc.lat},${loc.lng}`
+    : null;
+
   return (
-    <div style={{ marginTop:10 }}>
-      <label style={{ fontSize:12, fontWeight:700, color:C.muted, display:'flex', alignItems:'center', gap:5, marginBottom:8 }}>
-        <MapPin size={11} color={C.gold}/>Adresse de livraison précise
-      </label>
+    <div style={{ marginTop:12, background:C.card2, border:`1px solid ${C.border}`, borderRadius:14, padding:'14px 16px' }}>
 
-      {/* Choix du mode */}
-      {!mode && (
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:12 }}>
+        <MapPin size={13} color={C.gold}/>
+        <p style={{ fontSize:12, fontWeight:700, color:C.gold }}>
+          Adresse de livraison précise
+        </p>
+        <span style={{ fontSize:10, color:C.muted, marginLeft:'auto' }}>Facultatif</span>
+      </div>
+
+      {/* ── ÉTAPE 1 : Choix du mode ── */}
+      {step === 'choice' && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-          <button type="button" onClick={() => setMode('gps')}
-            style={{ background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'12px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'all .15s' }}
-            onMouseEnter={e => e.currentTarget.style.borderColor=C.gold}
-            onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
-            <p style={{ fontSize:18, marginBottom:4 }}>📍</p>
-            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Ma position GPS</p>
-            <p style={{ fontSize:10, color:C.muted }}>Localisation automatique</p>
+          <button
+            type="button"
+            onClick={() => { setStep('gps'); handleGPS(); }}
+            style={{ background:C.card, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'14px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'border-color .2s' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+          >
+            <MapPin size={20} color={C.gold} style={{ margin:'0 auto 6px', display:'block' }}/>
+            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Position GPS</p>
+            <p style={{ fontSize:10, color:C.muted }}>Localisation auto</p>
           </button>
-          <button type="button" onClick={() => setMode('manual')}
-            style={{ background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'12px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'all .15s' }}
-            onMouseEnter={e => e.currentTarget.style.borderColor=C.gold}
-            onMouseLeave={e => e.currentTarget.style.borderColor=C.border}>
-            <p style={{ fontSize:18, marginBottom:4 }}>🔍</p>
-            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Saisir une adresse</p>
-            <p style={{ fontSize:10, color:C.muted }}>Recherche sur la carte</p>
+          <button
+            type="button"
+            onClick={() => setStep('manual')}
+            style={{ background:C.card, border:`1.5px solid ${C.border}`, borderRadius:12, padding:'14px 10px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", textAlign:'center', transition:'border-color .2s' }}
+            onMouseEnter={e => e.currentTarget.style.borderColor = C.gold}
+            onMouseLeave={e => e.currentTarget.style.borderColor = C.border}
+          >
+            <Search size={20} color={C.gold} style={{ margin:'0 auto 6px', display:'block' }}/>
+            <p style={{ fontWeight:700, fontSize:12, color:C.white, marginBottom:2 }}>Saisir l'adresse</p>
+            <p style={{ fontSize:10, color:C.muted }}>Recherche manuelle</p>
           </button>
         </div>
       )}
 
-      {/* Mode GPS */}
-      {mode === 'gps' && !loc && (
-        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:8 }}>
-          <button type="button" onClick={getGPS} disabled={loading}
-            style={{ flex:1, background:loading?C.card2:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:loading?C.muted:C.bg, border:'none', borderRadius:10, padding:'11px', fontWeight:700, fontSize:13, cursor:loading?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', justifyContent:'center', gap:7 }}>
-            {loading ? <><Spin s={14}/>Localisation…</> : <>📍 Détecter ma position</>}
-          </button>
-          <button type="button" onClick={() => setMode(null)} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:10, padding:'11px 14px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", fontSize:12 }}>Retour</button>
+      {/* ── ÉTAPE 2a : GPS en cours ── */}
+      {step === 'gps' && loading && (
+        <div style={{ textAlign:'center', padding:'18px 0' }}>
+          <Spin s={22}/>
+          <p style={{ color:C.muted, fontSize:13, marginTop:10 }}>Détection de votre position…</p>
+          <p style={{ color:C.muted, fontSize:11, marginTop:4 }}>Autorisez l'accès à votre localisation</p>
         </div>
       )}
 
-      {/* Mode Manuel */}
-      {mode === 'manual' && (
-        <div style={{ marginBottom:8 }}>
+      {/* ── ÉTAPE 2b : Saisie manuelle ── */}
+      {step === 'manual' && (
+        <div>
           <div style={{ display:'flex', gap:8, marginBottom:8 }}>
-            <input value={manual} onChange={e => setManual(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && searchAddress()}
-              placeholder="Ex: Cocody, Abidjan ou Rue des Jardins, Lomé…"
-              style={{ flex:1, background:C.card2, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'10px 13px', color:C.white, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:'none' }}/>
-            <button type="button" onClick={searchAddress} disabled={loading}
-              style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:10, padding:'10px 16px', fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:"'DM Sans',sans-serif" }}>
-              {loading ? <Spin s={14}/> : '🔍'}
+            <input
+              value={manual}
+              onChange={e => setManual(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              placeholder="Ex: Cocody Angré, Abidjan…"
+              style={{ flex:1, background:C.card, border:`1.5px solid ${C.border}`, borderRadius:10, padding:'10px 13px', color:C.white, fontSize:13, fontFamily:"'DM Sans',sans-serif", outline:'none' }}
+            />
+            <button
+              type="button"
+              onClick={handleSearch}
+              disabled={loading || !manual.trim()}
+              style={{ background:loading?C.card2:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:loading?C.muted:C.bg, border:'none', borderRadius:10, padding:'10px 16px', fontWeight:700, fontSize:13, cursor:loading?'not-allowed':'pointer', fontFamily:"'DM Sans',sans-serif", display:'flex', alignItems:'center', gap:6 }}>
+              {loading ? <Spin s={14}/> : <Search size={14}/>}
             </button>
-            <button type="button" onClick={() => setMode(null)} style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, borderRadius:10, padding:'10px 13px', cursor:'pointer', fontFamily:"'DM Sans',sans-serif", fontSize:12 }}>✕</button>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setStep('choice'); setError(''); setManual(''); }}
+            style={{ background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:11, fontFamily:"'DM Sans',sans-serif" }}>
+            ← Retour
+          </button>
+        </div>
+      )}
+
+      {/* Erreur */}
+      {error && (
+        <p style={{ color:C.red, fontSize:12, fontWeight:600, background:`${C.red}10`, padding:'8px 12px', borderRadius:8, marginTop:8 }}>
+          {error}
+        </p>
+      )}
+
+      {/* ── ÉTAPE 3 : Résultat + Carte ── */}
+      {step === 'done' && loc && (
+        <div>
+          {/* Carte iframe OpenStreetMap */}
+          <div style={{ borderRadius:10, overflow:'hidden', border:`1px solid ${C.border}`, marginBottom:10 }}>
+            <iframe
+              title="Carte de livraison"
+              src={mapUrl}
+              width="100%"
+              height="200"
+              style={{ display:'block', border:'none' }}
+              loading="lazy"
+            />
+          </div>
+          {/* Adresse confirmée */}
+          <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}33`, borderRadius:10, padding:'10px 13px', display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+            <div style={{ flex:1 }}>
+              <p style={{ fontSize:11, fontWeight:700, color:C.gold, marginBottom:3 }}>
+                Position confirmée
+              </p>
+              <p style={{ fontSize:11, color:C.muted, lineHeight:1.5 }}>
+                {loc.address.slice(0, 120)}{loc.address.length > 120 ? '…' : ''}
+              </p>
+              <p style={{ fontSize:10, color:C.muted, marginTop:4 }}>
+                {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setLoc(null); setStep('choice'); setManual(''); setError(''); }}
+              style={{ background:'none', border:`1px solid ${C.border}`, color:C.muted, cursor:'pointer', borderRadius:7, padding:'4px 8px', fontSize:11, fontFamily:"'DM Sans',sans-serif", flexShrink:0 }}>
+              Modifier
+            </button>
           </div>
         </div>
       )}
-
-      {error && <p style={{ color:C.red, fontSize:12, marginBottom:8, fontWeight:600 }}>{error}</p>}
-
-      {/* CARTE */}
-      {mode && (
-        <div style={{ position:'relative' }}>
-          <div ref={mapRef} style={{ width:'100%', height:220, borderRadius:12, border:`1.5px solid ${loc?C.gold:C.border}`, overflow:'hidden', background:C.card2 }}/>
-          <p style={{ fontSize:10, color:C.muted, marginTop:5 }}>
-            {loc ? 'Déplacez le marqueur pour ajuster votre position exacte' : 'Cliquez sur la carte pour placer votre position'}
-          </p>
-        </div>
-      )}
-
-      {/* Adresse confirmée */}
-      {loc && (
-        <div style={{ background:`${C.gold}0d`, border:`1px solid ${C.gold}33`, borderRadius:10, padding:'10px 13px', marginTop:8, display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
-          <div style={{ flex:1 }}>
-            <p style={{ fontSize:11, fontWeight:700, color:C.gold, marginBottom:3 }}>Position confirmée</p>
-            <p style={{ fontSize:11, color:C.muted, lineHeight:1.5 }}>{loc.address.slice(0,120)}{loc.address.length>120?'…':''}</p>
-          </div>
-          <button type="button" onClick={() => { setLoc(null); setMode(null); setManual(''); }}
-            style={{ background:'none', border:'none', color:C.muted, cursor:'pointer', fontSize:16, flexShrink:0 }}>✕</button>
-        </div>
-      )}
-
-      {!mode && <p style={{ fontSize:10, color:C.muted, marginTop:6 }}>Facultatif — aide le livreur à vous trouver précisément</p>}
     </div>
   );
 }

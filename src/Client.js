@@ -4,10 +4,29 @@ import { sb } from './supabase';
 
 // ─── CONSTANTES ───────────────────────────────────────────────────────────────
 const C = {
-  bg:'#0a0a0a', card:'#161616', card2:'#1c1c1c', border:'#2a2a2a',
-  gold:'#c9a84c', goldL:'#e8c97a', goldD:'#9a7a2e',
-  white:'#f5f0e8', muted:'#888880', red:'#e05a4e', green:'#4caf7d',
-  orange:'#f59e0b', blue:'#3b82f6',
+  // Noirs esthétiques — 5 niveaux de profondeur chauds
+  bg:    '#080808',
+  card:  '#0f0f0f',
+  card2: '#161616',
+  card3: '#1e1e1e',
+  card4: '#272727',
+  // Or chaud — 4 tons
+  gold:  '#c8a84b',
+  goldL: '#e2c46a',
+  goldD: '#8a6820',
+  goldXL:'#f5d98a',
+  // Textes
+  white: '#f4ede0',
+  muted: '#8a8278',
+  muted2:'#5a5450',
+  // Sémantiques
+  red:   '#e05a4e',
+  green: '#4caf7d',
+  orange:'#f59e0b',
+  blue:  '#3b82f6',
+  // Bordures
+  border:'#242424',
+  borderOr: 'rgba(200,168,75,0.18)',
 };
 const FCFA = n => new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA';
 const PCT  = (o,s) => Math.round((1-s/o)*100);
@@ -15,7 +34,7 @@ const UID  = () => 'CMD-' + Date.now().toString(36).toUpperCase();
 const RID  = () => 'RES-' + Date.now().toString(36).toUpperCase();
 const WA   = 'https://wa.me/2250150512408';
 const EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email';
-const FEDA_KEY = 'pk_live_EzI5k531w-Iu-LUAu4I2sluv';
+const FEDA_EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/fedapay-session';
 const BOOKING_CATS = ['circuit','voiture','appart'];
 const NO_SHIP_CATS = ['circuit','voiture','appart','formation'];
 const BADGE_COLOR  = { Nouveau:C.green, Bestseller:C.gold, Promo:C.red, Premium:'#9b59b6' };
@@ -38,22 +57,89 @@ const ZONE_COUNTRY = {
 
 // ─── CSS GLOBAL ───────────────────────────────────────────────────────────────
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;0,700;1,300;1,600&family=Jost:wght@200;300;400;500;600&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: #0a0a0a; color: #f5f0e8; font-family: 'DM Sans', sans-serif; }
-::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: #9a7a2e; border-radius: 4px; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }
-@keyframes spin   { to { transform:rotate(360deg) } }
-@keyframes glow   { 0%,100% { box-shadow:0 0 12px #c9a84c55 } 50% { box-shadow:0 0 28px #c9a84c99 } }
-.hov { transition:transform .25s,box-shadow .25s; }
-.hov:hover { transform:translateY(-4px); box-shadow:0 16px 40px rgba(201,168,76,.15) !important; }
-.btn { transition:filter .15s; } .btn:hover { filter:brightness(1.1); }
-.lnk { cursor:pointer; transition:color .2s; } .lnk:hover { color:#c9a84c !important; }
-select option { background:#1c1c1c; color:#f5f0e8; }
-@media (max-width:768px) {
-  .hide-mob { display:none !important; }
-  .col1 { grid-template-columns:1fr !important; }
-  .hero { padding:52px 22px 44px !important; }
+body { background: #080808; color: #f4ede0; font-family: 'Jost', sans-serif; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: #8a6820; border-radius: 3px; }
+
+@keyframes fadeUp  { from { opacity:0; transform:translateY(18px) } to { opacity:1; transform:translateY(0) } }
+@keyframes spin    { to { transform:rotate(360deg) } }
+@keyframes glow    { 0%,100% { box-shadow:0 0 14px #c8a84b44 } 50% { box-shadow:0 0 32px #c8a84b88 } }
+@keyframes float   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes overlayIn { from{opacity:0} to{opacity:1} }
+
+.hov { transition:transform .3s, border-color .3s; }
+.hov:hover { transform:translateY(-5px); border-color: rgba(200,168,75,0.4) !important; }
+.btn { transition:filter .15s, transform .1s; }
+.btn:hover { filter:brightness(1.08); }
+.btn:active { transform:scale(0.98); }
+.lnk { cursor:pointer; transition:color .2s; }
+.lnk:hover { color:#c8a84b !important; }
+
+/* Typo titres */
+.serif { font-family: 'Cormorant Garamond', serif; }
+
+/* Nav mobile burger */
+.burger-menu {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(320px, 85vw);
+  background: #0f0f0f;
+  border-left: 0.5px solid rgba(200,168,75,0.2);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  padding: 80px 28px 36px;
+  gap: 8px;
+  animation: slideIn .3s ease;
+}
+.burger-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 199;
+  animation: overlayIn .3s ease;
+}
+.burger-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8a8278;
+  border: 0.5px solid transparent;
+  transition: all .2s;
+  font-family: 'Jost', sans-serif;
+}
+.burger-item:hover, .burger-item.act {
+  color: #c8a84b;
+  background: rgba(200,168,75,0.06);
+  border-color: rgba(200,168,75,0.15);
+}
+.burger-item .burger-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #c8a84b;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.burger-item.act .burger-dot { opacity: 1; }
+
+select option { background:#161616; color:#f4ede0; }
+
+@media (max-width: 768px) {
+  .hide-mob  { display:none !important; }
+  .show-mob  { display:flex !important; }
+  .col1      { grid-template-columns:1fr !important; }
+  .hero      { padding:52px 22px 44px !important; }
+  .hero-title-size { font-size: 36px !important; }
 }
 `;
 
@@ -844,7 +930,7 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
 
   const prixBillet   = billet ? (pack.billet_fcfa || 721500) : 0;
   const prixBase     = (prixUnitaire + prixBillet) * qty;
-  const acompte      = Math.round(prixBase * 0.30);
+  const acompte      = Math.round(prixBase * 0.60);
   const solde        = prixBase - acompte;
 
   const prixEur = option === 'solo'
@@ -1136,11 +1222,11 @@ function CircuitBookModal({ pack, onClose, onConfirm }) {
                   </div>
                   <div style={{ background:`${C.gold}15`, border:`1px solid ${C.gold}33`, borderRadius:10, padding:'12px 14px', marginTop:4 }}>
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                      <span style={{ fontWeight:700, color:C.gold, fontSize:14 }}>Acompte 30 % à payer</span>
+                      <span style={{ fontWeight:700, color:C.gold, fontSize:14 }}>Acompte 60 % à payer</span>
                       <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:22, color:C.gold }}>{FCFA(acompte)}</span>
                     </div>
                     <div style={{ display:'flex', justifyContent:'space-between', fontSize:12 }}>
-                      <span style={{ color:C.muted }}>Solde restant (à 30 jours)</span>
+                      <span style={{ color:C.muted }}>Solde restant (à 10 jours)</span>
                       <span style={{ fontWeight:700, color:C.muted }}>{FCFA(solde)}</span>
                     </div>
                   </div>
@@ -1381,6 +1467,73 @@ function DeliveryMap({ zone }) {
 }
 
 // ─── APPLICATION PRINCIPALE ───────────────────────────────────────────────────
+function BurgerMenu({ page, cat, go, onClose }) {
+  const links = [
+    { label: 'Accueil',     key: 'home',       icon: '✦' },
+    { label: 'Boutique',    key: 'shop',        icon: '◈' },
+    { label: 'Circuits',    key: 'circuits',    icon: '◎' },
+    { label: 'Formations',  key: 'formations',  icon: '◇' },
+    { label: 'Contact',     key: 'contact',     icon: '◉' },
+  ];
+
+  const isActive = (key) => {
+    if (key === 'home')       return page === 'home';
+    if (key === 'shop')       return page === 'shop' && cat !== 'formation';
+    if (key === 'formations') return page === 'shop' && cat === 'formation';
+    if (key === 'circuits')   return page === 'circuits';
+    if (key === 'contact')    return page === 'contact';
+    return false;
+  };
+
+  return (
+    <>
+      {/* Overlay */}
+      <div className="burger-overlay" onClick={onClose} aria-hidden="true"/>
+
+      {/* Menu */}
+      <nav className="burger-menu" aria-label="Navigation mobile">
+        {/* Logo */}
+        <div style={{ position: 'absolute', top: 22, left: 28, display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: `linear-gradient(135deg,${C.goldD},${C.gold})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>✦</div>
+          <span style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, fontSize: 18, letterSpacing: 3, background: `linear-gradient(120deg,${C.gold},${C.goldL})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>S-Mall</span>
+        </div>
+
+        {/* Bouton fermer */}
+        <button type="button" onClick={onClose} aria-label="Fermer le menu"
+          style={{ position: 'absolute', top: 18, right: 20, background: 'none', border: `0.5px solid ${C.border}`, color: C.muted, borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+          ×
+        </button>
+
+        {/* Séparateur */}
+        <div style={{ height: 0.5, background: `linear-gradient(90deg,transparent,${C.gold},transparent)`, marginBottom: 8 }}/>
+
+        {/* Liens */}
+        {links.map(({ label, key, icon }) => (
+          <div key={key}
+            className={`burger-item${isActive(key) ? ' act' : ''}`}
+            onClick={() => { go(key); onClose(); }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => e.key === 'Enter' && (go(key), onClose())}
+            aria-current={isActive(key) ? 'page' : undefined}>
+            <div className="burger-dot" aria-hidden="true"/>
+            <span style={{ fontSize: 10, color: C.gold, fontFamily: 'monospace', opacity: 0.5 }}>{icon}</span>
+            <span>{label}</span>
+          </div>
+        ))}
+
+        {/* Footer du menu */}
+        <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: `0.5px solid ${C.border}` }}>
+          <p style={{ fontSize: 10, color: C.muted2, letterSpacing: 2, textTransform: 'uppercase', lineHeight: 1.8 }}>
+            S-Mall ·>
+            © 2025 S-Group
+          </p>
+        </div>
+      </nav>
+    </>
+  );
+}
+
 export default function SMall() {
   // ── Data
   const [products,  setProducts]  = useState([]);
@@ -1406,6 +1559,7 @@ export default function SMall() {
   const [errs,    setErrs]    = useState({});
   const [proc,    setProc]    = useState(false);
   const [notif,   setNotif]   = useState(null);
+  const [burgerOpen, setBurgerOpen] = useState(false);
   const [rvForm,  setRvForm]  = useState({ name:'', rating:5, comment:'' });
   const [rvSent,  setRvSent]  = useState(false);
   const [ctForm,  setCtForm]  = useState({ name:'', email:'', tel:'', message:'' });
@@ -1531,42 +1685,103 @@ export default function SMall() {
     return ZONE_COUNTRY[zone.name] || 'bj';
   };
 
-  const doBook = async info => {
-    const resId = RID();
-    const amt   = info.acompte * info.qty;
-    setBooking(null);
-    await sb.from('reservations').insert({
-      id:resId, client_name:info.name, client_email:info.email||'N/A', client_tel:info.tel,
-      product_id:info.product.id, product_name:info.product.name, product_emoji:info.product.emoji,
-      book_type:info.product.cat, date_from:info.date, persons:info.qty, total:amt, status:'En attente',
+const doBook = async info => {
+  const resId = RID();
+  const amt   = info.acompte * info.qty;
+  setBooking(null);
+
+  // 1️⃣ Créer la réservation en base (statut En attente)
+  await sb.from('reservations').insert({
+    id:           resId,
+    client_name:  info.name,
+    client_email: info.email || 'N/A',
+    client_tel:   info.tel,
+    product_id:   info.product.id,
+    product_name: info.product.name,
+    product_emoji:info.product.emoji,
+    book_type:    info.product.cat,
+    date_from:    info.date,
+    persons:      info.qty,
+    total:        amt,
+    status:       'En attente',
+  });
+
+  // 2️⃣ Notifier l'admin
+  try {
+    await fetch(EDGE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to:      'agencesgroup23@gmail.com',
+        subject: `Réservation — ${info.product.name}`,
+        html: `
+          <div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:24px;border-radius:12px;">
+            <h2 style="color:#c8a84b;font-family:Georgia,serif;">Réservation S-Mall</h2>
+            <p><b>Produit:</b> ${info.product.name}</p>
+            <p><b>Client:</b> ${info.name} · ${info.tel}</p>
+            <p><b>Date:</b> ${info.date} · ${info.qty} pers.</p>
+            <p><b>Acompte:</b> ${new Intl.NumberFormat('fr-FR').format(amt)} FCFA</p>
+            <p><b>Réf:</b> ${resId}</p>
+          </div>
+        `,
+      }),
     });
-    try {
-      await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        to:'agencesgroup23@gmail.com',
-        subject:`🔔 Réservation — ${info.product.name}`,
-        html:`<div style="font-family:sans-serif;background:#0a0a0a;color:#f5f0e8;padding:24px;border-radius:12px;"><h2 style="color:#c9a84c;">🔔 Réservation S-Mall</h2><p><b>Produit:</b> ${info.product.name}</p><p><b>Client:</b> ${info.name} / ${info.tel}</p><p><b>Date:</b> ${info.date} · ${info.qty} pers.</p><p><b>Acompte:</b> ${FCFA(amt)}</p><p><b>Réf:</b> ${resId}</p></div>`
-      })});
-    } catch(e) { console.warn('Email notification failed:', e); }
-    setProc(true);
+  } catch (e) { console.warn('Email notification failed:', e); }
+
+  setProc(true);
+
+  // 3️⃣ Session FedaPay côté serveur pour l'acompte
+  try {
+    const res = await fetch(FEDA_EDGE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type:        'reservation',
+        order_id:    resId,
+        amount:      amt,
+        description: `Acompte ${info.product.name}`,
+        customer: {
+          firstname:    info.name.split(' ')[0],
+          lastname:     info.name.split(' ').slice(1).join(' ') || '.',
+          email:        info.email || 'client@smallet.com',
+          phone_number: { number: info.tel, country: 'bj' },
+        },
+      }),
+    });
+
+    if (!res.ok) throw new Error('Session FedaPay échouée');
+    const { token, public_key } = await res.json();
+
     if (window.FedaPay) {
       window.FedaPay.init({
-        public_key: FEDA_KEY,
-        transaction: { amount:amt, description:`Acompte ${info.product.name}` },
-        customer: { firstname:info.name.split(' ')[0], lastname:info.name.split(' ').slice(1).join(' ')||'.', email:info.email||'client@smallet.com', phone_number:{number:info.tel,country:'bj'} },
+        public_key,
+        transaction: { token },
         onComplete: async r => {
-          if (r.reason==='DIALOG DISMISSED') { setProc(false); notify('Paiement annulé',C.red); return; }
-          await sb.from('reservations').update({status:'Acompte reçu'}).eq('id',resId);
+          if (r.reason === 'DIALOG DISMISSED') {
+            setProc(false);
+            notify('Paiement annulé', C.red);
+            return;
+          }
+          await sb.from('reservations').update({ status: 'Acompte reçu' }).eq('id', resId);
           setProc(false);
-          setLastRes({ name:info.name, product:info.product.name, acompte:amt, resId });
+          setLastRes({ name: info.name, product: info.product.name, acompte: amt, resId });
           setPage('resOk');
-        }
+        },
       }).open();
     } else {
       setProc(false);
-      setLastRes({ name:info.name, product:info.product.name, acompte:amt, resId });
+      setLastRes({ name: info.name, product: info.product.name, acompte: amt, resId });
       setPage('resOk');
     }
-  };
+  } catch (e) {
+    console.error('FedaPay session error:', e);
+    setProc(false);
+    // Fallback : réservation enregistrée, paiement via WhatsApp
+    notify('Réservation enregistrée. Finalisez via WhatsApp.', C.orange);
+    setLastRes({ name: info.name, product: info.product.name, acompte: amt, resId });
+    setPage('resOk');
+  }
+};
 
   const validate = () => {
     const e = {};
@@ -1578,43 +1793,128 @@ export default function SMall() {
   };
 
   const doPay = async () => {
-    if (!validate()) return;
-    if (needsShip && !zone) { notify('Choisissez une zone de livraison', C.red); return; }
-    setProc(true);
-    const snap = { cart:[...cart], subtotal, shipCost, total, zone };
-    const country = getFedaCountry();
-    try {
-      if (window.FedaPay) {
-        const oid = UID();
-        window.FedaPay.init({
-          public_key: FEDA_KEY,
-          transaction: { amount:snap.total, description:`Commande S-Mall ${oid}` },
-          customer: { firstname:form.name.split(' ')[0], lastname:form.name.split(' ').slice(1).join(' ')||'.', email:form.email, phone_number:{number:form.tel,country} },
-          onComplete: async r => {
-            if (r.reason==='DIALOG DISMISSED') { setProc(false); notify('Paiement annulé',C.red); return; }
-            await sb.from('orders').insert({
-              id:oid, client_name:form.name.trim(), client_email:form.email.trim(), client_tel:form.tel.trim(),
-              items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),
-              subtotal:snap.subtotal, shipping:snap.shipCost, total:snap.total,
-              pay_method:pay, status:'Confirmé', country:snap.zone?.name||'N/A',
-            });
-            try {
-              await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                to:form.email.trim(),
-                subject:`✦ Confirmation S-Mall — ${oid}`,
-                html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#0a0a0a;color:#f5f0e8;padding:28px;border-radius:14px;"><h1 style="color:#c9a84c;text-align:center;">✦ S-Mall</h1><div style="background:#161616;border-radius:10px;padding:18px;margin:16px 0;text-align:center;"><h2 style="color:#c9a84c;">Commande confirmée !</h2><p style="color:#888;">Réf : <b style="color:#f5f0e8;">${oid}</b></p></div><p>Bonjour <b>${form.name}</b>,<br/>Merci pour votre commande de <b style="color:#c9a84c;">${FCFA(snap.total)}</b>.</p><p style="color:#555;font-size:12px;text-align:center;margin-top:16px;"><a href="${WA}" style="color:#c9a84c;">WhatsApp</a> · sgroupmall.vercel.app</p></div>`
-              })});
-            } catch(e) { console.warn('Email confirmation failed:', e); }
-            setProc(false); setCart([]); setZone(null); setPage('ok');
+  if (!validate()) return;
+  if (needsShip && !zone) { notify('Choisissez une zone de livraison', C.red); return; }
+  setProc(true);
+
+  const snap    = { cart: [...cart], subtotal, shipCost, total, zone };
+  const country = getFedaCountry();
+  const oid     = UID();
+
+  try {
+    // 1️⃣ Créer la session FedaPay côté serveur (la clé n'est jamais dans le client)
+    const res = await fetch(FEDA_EDGE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type:        'order',
+        order_id:    oid,
+        amount:      snap.total,
+        description: `Commande S-Mall ${oid}`,
+        customer: {
+          firstname:    form.name.split(' ')[0],
+          lastname:     form.name.split(' ').slice(1).join(' ') || '.',
+          email:        form.email,
+          phone_number: { number: form.tel, country },
+        },
+        // Le serveur valide le montant côté back — protection contre manipulation
+        items: snap.cart.map(i => ({ id: i.id, qty: i.qty, price: i.price })),
+      }),
+    });
+
+    if (!res.ok) throw new Error('Session FedaPay échouée');
+    const { token, public_key } = await res.json();
+
+    // 2️⃣ Ouvrir FedaPay avec le token signé par le serveur
+    if (window.FedaPay) {
+      window.FedaPay.init({
+        public_key,
+        transaction: { token },
+        onComplete: async r => {
+          if (r.reason === 'DIALOG DISMISSED') {
+            setProc(false);
+            notify('Paiement annulé', C.red);
+            return;
           }
-        }).open();
-      } else {
-        const oid = UID();
-        await sb.from('orders').insert({ id:oid, client_name:form.name.trim(), client_email:form.email.trim(), client_tel:form.tel.trim(), items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})), subtotal:snap.subtotal, shipping:snap.shipCost, total:snap.total, pay_method:pay, status:'En cours', country:snap.zone?.name||'N/A' });
-        setProc(false); setCart([]); setZone(null); setPage('ok');
-      }
-    } catch(e) { setProc(false); notify('Erreur. Réessayez.', C.red); }
-  };
+          // 3️⃣ Insertion commande APRÈS confirmation de paiement
+          await sb.from('orders').insert({
+            id: oid,
+            client_name:  form.name.trim(),
+            client_email: form.email.trim(),
+            client_tel:   form.tel.trim(),
+            items: snap.cart.map(i => ({
+              name:    i.name,
+              emoji:   i.emoji,
+              qty:     i.qty,
+              price:   i.price,
+              variant: i.variantLabel || null,
+            })),
+            subtotal:   snap.subtotal,
+            shipping:   snap.shipCost,
+            total:      snap.total,
+            pay_method: pay,
+            status:     'Confirmé',
+            country:    snap.zone?.name || 'N/A',
+          });
+          // 4️⃣ Email de confirmation
+          try {
+            await fetch(EDGE, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to:      form.email.trim(),
+                subject: `✦ Confirmation S-Mall — ${oid}`,
+                html: `
+                  <div style="font-family:sans-serif;max-width:520px;margin:auto;background:#080808;color:#f4ede0;padding:28px;border-radius:14px;">
+                    <h1 style="font-family:Georgia,serif;color:#c8a84b;text-align:center;letter-spacing:4px;">S-MALL</h1>
+                    <div style="background:#0f0f0f;border-radius:10px;padding:20px;margin:16px 0;text-align:center;border:0.5px solid rgba(200,168,75,0.2);">
+                      <h2 style="color:#c8a84b;font-family:Georgia,serif;">Commande confirmée</h2>
+                      <p style="color:#8a8278;margin-top:8px;">Réf : <strong style="color:#f4ede0;">${oid}</strong></p>
+                    </div>
+                    <p>Bonjour <strong>${form.name}</strong>,</p>
+                    <p style="margin-top:8px;">Merci pour votre commande de <strong style="color:#c8a84b;">${new Intl.NumberFormat('fr-FR').format(snap.total)} FCFA</strong>.</p>
+                    <p style="color:#5a5450;font-size:12px;text-align:center;margin-top:20px;">
+                      <a href="${WA}" style="color:#c8a84b;">WhatsApp</a> · sgroupmall.vercel.app
+                    </p>
+                  </div>
+                `,
+              }),
+            });
+          } catch (e) { console.warn('Email confirmation failed:', e); }
+
+          setProc(false);
+          setCart([]);
+          setZone(null);
+          setPage('ok');
+        },
+      }).open();
+    } else {
+      // Mode fallback sans FedaPay (dev / FedaPay bloqué)
+      await sb.from('orders').insert({
+        id: oid,
+        client_name:  form.name.trim(),
+        client_email: form.email.trim(),
+        client_tel:   form.tel.trim(),
+        items: snap.cart.map(i => ({ name:i.name, emoji:i.emoji, qty:i.qty, price:i.price, variant:i.variantLabel||null })),
+        subtotal: snap.subtotal,
+        shipping: snap.shipCost,
+        total:    snap.total,
+        pay_method: pay,
+        status:   'En cours',
+        country:  snap.zone?.name || 'N/A',
+      });
+      setProc(false);
+      setCart([]);
+      setZone(null);
+      setPage('ok');
+    }
+  } catch (e) {
+    console.error('Paiement error:', e);
+    setProc(false);
+    notify('Erreur de paiement. Réessayez.', C.red);
+  }
+};
+
 
   const Inp = ({ f, pl, t='text' }) => (
     <div>
@@ -1654,26 +1954,89 @@ export default function SMall() {
       />
 
       {/* NAV */}
-      <nav style={{ background:'rgba(10,10,10,.97)', backdropFilter:'blur(12px)', padding:'0 28px', height:64, display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${C.border}`, position:'sticky', top:0, zIndex:100 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }} onClick={() => go('home')}>
-          <div style={{ width:34, height:34, borderRadius:9, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, animation:'glow 3s ease infinite' }}>✦</div>
-          <div>
-            <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:18, background:`linear-gradient(90deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>S-Mall</span>
-            <span style={{ fontSize:8, color:C.muted, display:'block', letterSpacing:3, textTransform:'uppercase' }}>Premium Store</span>
-          </div>
-        </div>
-        <div className="hide-mob" style={{ display:'flex', gap:20, alignItems:'center' }}>
-          {[['Accueil','home'],['Boutique','shop'],['Circuits','circuits'],['Formations','formations'],['Contact','contact']].map(([l,k]) => (
-            <span key={k} className="lnk" style={{ fontWeight:600, fontSize:13, color:page===k||(k==='formations'&&page==='shop'&&cat==='formation')?C.gold:C.muted }} onClick={() => go(k)}>{l}</span>
-          ))}
-        </div>
-        <button type="button" className="btn" onClick={() => setPage('cart')}
-          style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:11, padding:'9px 16px', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:7, fontFamily:"'DM Sans',sans-serif" }}>
-          <ShoppingCart size={15}/>
-          {cartN > 0 && <span style={{ background:C.bg, color:C.gold, borderRadius:999, padding:'1px 6px', fontSize:11, fontWeight:800 }}>{cartN}</span>}
-          Panier
-        </button>
-      </nav>
+      <nav style={{
+  background: 'rgba(8,8,8,0.97)',
+  backdropFilter: 'blur(16px)',
+  padding: '0 28px',
+  height: 64,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  borderBottom: `0.5px solid ${C.borderOr}`,
+  position: 'sticky',
+  top: 0,
+  zIndex: 100,
+}}>
+
+  // Logo
+  <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }} onClick={() => go('home')}>
+    <div style={{ width:32, height:32, borderRadius:8, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, animation:'glow 3s ease infinite' }}>✦</div>
+    <div>
+      <span style={{ fontFamily:"'Cormorant Garamond',serif", fontWeight:600, fontSize:20, letterSpacing:3, background:`linear-gradient(120deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>S-Mall</span>
+      <span style={{ fontSize:7, color:C.muted, display:'block', letterSpacing:3, textTransform:'uppercase', fontFamily:"'Jost',sans-serif" }}>Premium Store</span>
+    </div>
+  </div>
+
+  // Nav desktop — cachée sur mobile
+  <div className="hide-mob" style={{ display:'flex', gap:28, alignItems:'center' }}>
+    {[['Accueil','home'],['Boutique','shop'],['Circuits','circuits'],['Formations','formations'],['Contact','contact']].map(([l,k]) => (
+      <span key={k} className="lnk"
+        style={{
+          fontFamily:"'Jost',sans-serif",
+          fontWeight: 400,
+          fontSize: 10,
+          letterSpacing: 2.5,
+          textTransform: 'uppercase',
+          color: (page===k||(k==='formations'&&page==='shop'&&cat==='formation')) ? C.gold : C.muted,
+          paddingBottom: 2,
+          borderBottom: `1px solid ${(page===k||(k==='formations'&&page==='shop'&&cat==='formation')) ? C.gold : 'transparent'}`,
+          transition: 'all .2s',
+        }}
+        onClick={() => go(k)}>
+        {l}
+      </span>
+    ))}
+  </div>
+
+  // Droite : panier + burger
+  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+    // Bouton panier
+    <button type="button" className="btn" onClick={() => setPage('cart')}
+      style={{ background:`linear-gradient(135deg,${C.goldD},${C.gold})`, color:C.bg, border:'none', borderRadius:30, padding:'8px 18px', fontWeight:500, fontSize:10, cursor:'pointer', display:'flex', alignItems:'center', gap:7, fontFamily:"'Jost',sans-serif", letterSpacing:1.5, textTransform:'uppercase' }}>
+      // Icône panier SVG inline
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M2 2h1.5l1.8 6.5h5.4l1.3-4.5H4.5" stroke={C.bg} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"/>
+        <circle cx="6.5" cy="11.5" r="1" fill={C.bg}/>
+        <circle cx="10" cy="11.5" r="1" fill={C.bg}/>
+      </svg>
+      {cartN > 0 && <span style={{ background:'rgba(0,0,0,0.25)', borderRadius:999, padding:'1px 6px', fontSize:10, fontWeight:700 }}>{cartN}</span>}
+      Panier
+    </button>
+
+    // Bouton burger — visible uniquement sur mobile
+    <button type="button"
+      className="show-mob"
+      onClick={() => setBurgerOpen(true)}
+      aria-label="Ouvrir le menu"
+      aria-expanded={burgerOpen}
+      style={{ display:'none', background:'none', border:`0.5px solid ${C.borderOr}`, borderRadius:8, width:38, height:38, cursor:'pointer', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:5, padding:10 }}>
+      <span style={{ display:'block', width:16, height:0.5, background:C.gold }}/>
+      <span style={{ display:'block', width:12, height:0.5, background:C.gold }}/>
+      <span style={{ display:'block', width:16, height:0.5, background:C.gold }}/>
+    </button>
+  </div>
+</nav>
+
+// Menu burger (à placer juste après </nav>, avant le bloc LOADING)
+{burgerOpen && (
+  <BurgerMenu
+    page={page}
+    cat={cat}
+    go={go}
+    onClose={() => setBurgerOpen(false)}
+  />
+)}
+*/
 
       {/* LOADING */}
       {loading && (
@@ -2166,14 +2529,31 @@ export default function SMall() {
       )}
 
       {/* FOOTER */}
-      <footer style={{ borderTop:`1px solid ${C.border}`, padding:'20px 28px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10, marginTop:24 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <div style={{ width:24, height:24, borderRadius:6, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:11 }}>✦</div>
-          <span style={{ fontFamily:"'Playfair Display',serif", fontWeight:900, fontSize:14, background:`linear-gradient(90deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>S-Mall</span>
-        </div>
-        <p style={{ color:C.muted, fontSize:11 }}>Côte d'Ivoire · Togo · Afrique de l'Ouest — Mobile Money · FedaPay</p>
-        <p style={{ color:C.muted, fontSize:11 }}>© 2025 S-Mall. Tous droits réservés.</p>
-      </footer>
-    </div>
-  );
-}
+      /*
+<footer style={{
+  borderTop: `0.5px solid ${C.borderOr}`,
+  padding: '24px 36px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: 12,
+  marginTop: 24,
+  background: '#0f0f0f',
+}}>
+  // Logo
+  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+    <div style={{ width:22, height:22, borderRadius:5, background:`linear-gradient(135deg,${C.goldD},${C.gold})`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10 }}>✦</div>
+    <span style={{ fontFamily:"'Cormorant Garamond',serif", fontWeight:600, fontSize:16, letterSpacing:3, background:`linear-gradient(120deg,${C.gold},${C.goldL})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>S-Mall</span>
+  </div>
+
+  // Liens légaux — OBLIGATOIRES (RGPD / droit béninois)
+  <div style={{ display:'flex', gap:20, flexWrap:'wrap', alignItems:'center' }}>
+    <span className="lnk" onClick={() => go('privacy')} style={{ fontSize:10, color:C.muted, letterSpacing:1.5, textTransform:'uppercase' }}>Confidentialité</span>
+    <span className="lnk" onClick={() => go('terms')}   style={{ fontSize:10, color:C.muted, letterSpacing:1.5, textTransform:'uppercase' }}>CGV</span>
+    <span className="lnk" onClick={() => go('contact')} style={{ fontSize:10, color:C.muted, letterSpacing:1.5, textTransform:'uppercase' }}>Contact</span>
+  </div>
+
+  <p style={{ color:C.muted2, fontSize:9, letterSpacing:1, textTransform:'uppercase' }}>© 2025 S-Mall · S-Group ·</p>
+</footer>
+*/

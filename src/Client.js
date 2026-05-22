@@ -1234,7 +1234,7 @@ export default function SMall() {
   const openBook=(product,price,acompte)=>{setModal(null);setBooking({product,price,acompte});};
   const validate=()=>{const e={};if(!form.name.trim())e.name='Requis';if(!form.email.includes('@'))e.email='Email invalide';if(!form.tel.trim())e.tel='Requis';setErrs(e);return!Object.keys(e).length;};
 
-  // ✅ FedaPay sécurisé — clé côté serveur uniquement
+  // // FedaPay sécurisé — clé côté serveur uniquement
   const doPay = async()=>{
     if(!validate())return;
     if(needsShip&&!zone){notify('Choisissez une zone de livraison',C.red);return;}
@@ -1260,13 +1260,13 @@ export default function SMall() {
   };
 
   const doBook = async info=>{
-    // ✅ PAIEMENT D'ABORD — la réservation n'est enregistrée QU'APRÈS confirmation du paiement
+    // // PAIEMENT D'ABORD — la réservation n'est enregistrée QU'APRÈS confirmation du paiement
     const resId=RID(), amt=info.acompte*info.qty;
     setBooking(null);
     setProc(true);
     try{
       if(window.FedaPay){
-        // 1️⃣ Créer la session FedaPay côté serveur
+        // 1. Créer la session FedaPay côté serveur
         const res=await fetch(FEDA_EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
           type:'reservation', order_id:resId, amount:amt,
           description:`Acompte ${info.product.name} — ${info.date}`,
@@ -1274,27 +1274,27 @@ export default function SMall() {
         })});
         if(!res.ok)throw new Error('Session FedaPay échouée');
         const{token,public_key}=await res.json();
-        // 2️⃣ Ouvrir FedaPay — on attend la confirmation
+        // 2. Ouvrir FedaPay — on attend la confirmation
         window.FedaPay.init({public_key,transaction:{token},onComplete:async r=>{
           if(r.reason==='DIALOG DISMISSED'){
             setProc(false);
             notify('Paiement annulé — réservation non enregistrée.',C.red);
             return;
           }
-          // 3️⃣ Paiement confirmé → on enregistre la réservation
+          // 3. Paiement confirmé → on enregistre la réservation
           await sb.from('reservations').insert({
             id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
             product_id:info.product.id,product_name:info.product.name,product_emoji:info.product.emoji,
             book_type:info.product.cat,date_from:info.date,persons:info.qty,
             total:amt,acompte_recu:amt,status:'Acompte reçu',
           });
-          // 4️⃣ Notifier l'admin
+          // 4. Notifier l'admin
           try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
             to:'agencesgroup23@gmail.com',
             subject:`✦ Réservation confirmée — ${info.product.name}`,
             html:`<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:24px;border-radius:12px;"><h2 style="color:#c8a84b;">Réservation payée — S-Mall</h2><p><b>${info.product.name}</b></p><p>Client : ${info.name} · ${info.tel}</p><p>Date : ${info.date} · ${info.qty} ${info.product.cat==='voiture'?'jour(s)':info.product.cat==='appart'?'nuit(s)':'pers.'}</p><p>Acompte reçu : <b style="color:#c8a84b;">${FCFA(amt)}</b></p><p>Réf : ${resId}</p></div>`,
           })});}catch{}
-          // 5️⃣ Email de confirmation au client
+          // 5. Email de confirmation au client
           if(info.email&&info.email!=='N/A'){
             try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
               to:info.email,
@@ -1564,7 +1564,7 @@ export default function SMall() {
 
       {/* MODAL CIRCUIT */}
       {bookCircuit&&(<CircuitBookModal pack={bookCircuit}onClose={()=>setBookCircuit(null)}onConfirm={async(info)=>{
-        // ✅ PAIEMENT D'ABORD — circuit enregistré APRÈS confirmation du paiement
+        // // PAIEMENT D'ABORD — circuit enregistré APRÈS confirmation du paiement
         const resId=RID(),amt=Math.round(info.total*0.30);
         setBookCircuit(null);
         setProc(true);
@@ -1586,7 +1586,7 @@ export default function SMall() {
               // Paiement OK → enregistrement
               await sb.from('reservations').insert({
                 id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
-                product_id:null,product_name:info.packName,product_emoji:'✈️',
+                product_id:null,product_name:info.packName,product_emoji:'✈',
                 book_type:'circuit',date_from:info.date,persons:info.qty,
                 total:amt,acompte_recu:amt,status:'Acompte reçu',
               });
@@ -1612,7 +1612,7 @@ export default function SMall() {
             // Fallback sans FedaPay
             await sb.from('reservations').insert({
               id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
-              product_id:null,product_name:info.packName,product_emoji:'✈️',
+              product_id:null,product_name:info.packName,product_emoji:'✈',
               book_type:'circuit',date_from:info.date,persons:info.qty,
               total:amt,acompte_recu:0,status:'En attente',
             });
@@ -1637,7 +1637,7 @@ export default function SMall() {
           <span className="lnk"onClick={()=>go('terms')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>CGV</span>
           <span className="lnk"onClick={()=>go('contact')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>Contact</span>
         </div>
-        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group ·</p>
+        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group · </p>
       </footer>
     </div>
   );

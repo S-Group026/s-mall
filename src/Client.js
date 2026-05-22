@@ -1637,7 +1637,7 @@ export default function SMall() {
           <span className="lnk"onClick={()=>go('terms')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>CGV</span>
           <span className="lnk"onClick={()=>go('contact')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>Contact</span>
         </div>
-        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group · Cotonou, Bénin</p>
+        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group ·</p>
       </footer>
     </div>
   );

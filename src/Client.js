@@ -15,7 +15,18 @@ const UID  = () => 'CMD-' + Date.now().toString(36).toUpperCase();
 const RID  = () => 'RES-' + Date.now().toString(36).toUpperCase();
 const WA   = 'https://wa.me/2250150512408';
 const EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email';
-const FEDA_EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/fedapay-session';
+const FEDA_EDGE  = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/fedapay-session';
+// Clé publique anon Supabase — nécessaire pour appeler les Edge Functions
+const SUPA_ANON  = 'sb_publishable_ZOCmxYKUt7KcZ3m6m_Cmiw_8jv8VGav';
+const fedaFetch  = (body) => fetch(FEDA_EDGE, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${SUPA_ANON}`,
+    'apikey': SUPA_ANON,
+  },
+  body: JSON.stringify(body),
+});
 const BOOKING_CATS = ['circuit','voiture','appart'];
 const NO_SHIP_CATS = ['circuit','voiture','appart','formation'];
 const BADGE_COLOR  = { Nouveau:C.green, Bestseller:C.gold, Promo:C.red, Premium:'#9b59b6' };
@@ -1240,74 +1251,107 @@ export default function SMall() {
     if(needsShip&&!zone){notify('Choisissez une zone de livraison',C.red);return;}
     setProc(true);
     const snap={cart:[...cart],subtotal,shipCost,total,zone};
-    const country=getFedaCountry();const oid=UID();
+    const country=getFedaCountry();
+    const oid=UID();
     try{
       if(window.FedaPay){
-        const res=await fetch(FEDA_EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'order',order_id:oid,amount:snap.total,description:`Commande S-Mall ${oid}`,customer:{firstname:form.name.split(' ')[0],lastname:form.name.split(' ').slice(1).join(' ')||'.',email:form.email,phone_number:{number:form.tel,country}},items:snap.cart.map(i=>({id:i.id,qty:i.qty,price:i.price}))})});
-        if(!res.ok)throw new Error('Session FedaPay échouée');
+        const res=await fedaFetch({
+          type:'order', order_id:oid, amount:snap.total,
+          description:'Commande S-Mall '+oid,
+          customer:{
+            firstname:form.name.split(' ')[0],
+            lastname:form.name.split(' ').slice(1).join(' ')||'.',
+            email:form.email,
+            phone_number:{number:form.tel,country}
+          },
+          items:snap.cart.map(i=>({id:i.id,qty:i.qty,price:i.price})),
+        });
+        if(!res.ok)throw new Error('Session FedaPay echouee');
         const{token,public_key}=await res.json();
         window.FedaPay.init({public_key,transaction:{token},onComplete:async r=>{
-          if(r.reason==='DIALOG DISMISSED'){setProc(false);notify('Paiement annulé',C.red);return;}
-          await sb.from('orders').insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal:snap.subtotal,shipping:snap.shipCost,total:snap.total,pay_method:pay,status:'Confirmé',country:snap.zone?.name||'N/A'});
-          try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:form.email.trim(),subject:`✦ Confirmation S-Mall — ${oid}`,html:`<div style="font-family:sans-serif;max-width:520px;margin:auto;background:#080808;color:#f4ede0;padding:28px;border-radius:14px;"><h1 style="font-family:Georgia,serif;color:#c8a84b;text-align:center;letter-spacing:4px;">S-MALL</h1><p>Bonjour <b>${form.name}</b>, merci pour votre commande de <b style="color:#c8a84b;">${FCFA(snap.total)}</b>. Réf : <b>${oid}</b></p></div>`})});}catch{}
+          if(r.reason==='DIALOG DISMISSED'){setProc(false);notify('Paiement annule',C.red);return;}
+          await sb.from('orders').insert({
+            id:oid,client_name:form.name.trim(),client_email:form.email.trim(),
+            client_tel:form.tel.trim(),
+            items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),
+            subtotal:snap.subtotal,shipping:snap.shipCost,total:snap.total,
+            pay_method:pay,status:'Confirme',country:snap.zone?.name||'N/A'
+          });
+          try{
+            await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({
+                to:form.email.trim(),
+                subject:'Confirmation S-Mall '+oid,
+                html:'<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:20px;border-radius:12px;"><h1 style="color:#c8a84b;text-align:center;">S-MALL</h1><p>Bonjour '+form.name+', merci pour votre commande. Total : '+FCFA(snap.total)+'. Ref : '+oid+'</p></div>',
+              })
+            });
+          }catch(e){console.warn('Email failed:',e);}
           setProc(false);setCart([]);setZone(null);setPage('ok');
         }}).open();
       }else{
-        await sb.from('orders').insert({id:oid,client_name:form.name.trim(),client_email:form.email.trim(),client_tel:form.tel.trim(),items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),subtotal:snap.subtotal,shipping:snap.shipCost,total:snap.total,pay_method:pay,status:'En cours',country:snap.zone?.name||'N/A'});
+        await sb.from('orders').insert({
+          id:oid,client_name:form.name.trim(),client_email:form.email.trim(),
+          client_tel:form.tel.trim(),
+          items:snap.cart.map(i=>({name:i.name,emoji:i.emoji,qty:i.qty,price:i.price,variant:i.variantLabel||null})),
+          subtotal:snap.subtotal,shipping:snap.shipCost,total:snap.total,
+          pay_method:pay,status:'En cours',country:snap.zone?.name||'N/A'
+        });
         setProc(false);setCart([]);setZone(null);setPage('ok');
       }
-    }catch(e){setProc(false);notify('Erreur. Réessayez.',C.red);}
+    }catch(e){setProc(false);notify('Erreur. Reessayez.',C.red);}
   };
 
-  const doBook = async info=>{
-    // // PAIEMENT D'ABORD — la réservation n'est enregistrée QU'APRÈS confirmation du paiement
+    const doBook = async info=>{
     const resId=RID(), amt=info.acompte*info.qty;
     setBooking(null);
     setProc(true);
     try{
       if(window.FedaPay){
-        // 1. Créer la session FedaPay côté serveur
-        const res=await fetch(FEDA_EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        const res=await fedaFetch({
           type:'reservation', order_id:resId, amount:amt,
-          description:`Acompte ${info.product.name} — ${info.date}`,
-          customer:{firstname:info.name.split(' ')[0],lastname:info.name.split(' ').slice(1).join(' ')||'.',email:info.email||'client@smallet.com',phone_number:{number:info.tel,country:'bj'}},
-        })});
-        if(!res.ok)throw new Error('Session FedaPay échouée');
+          description:'Acompte '+info.product.name,
+          customer:{
+            firstname:info.name.split(' ')[0],
+            lastname:info.name.split(' ').slice(1).join(' ')||'.',
+            email:info.email||'client@smallet.com',
+            phone_number:{number:info.tel,country:'bj'}
+          },
+        });
+        if(!res.ok)throw new Error('Session echouee');
         const{token,public_key}=await res.json();
-        // 2. Ouvrir FedaPay — on attend la confirmation
         window.FedaPay.init({public_key,transaction:{token},onComplete:async r=>{
-          if(r.reason==='DIALOG DISMISSED'){
-            setProc(false);
-            notify('Paiement annulé — réservation non enregistrée.',C.red);
-            return;
-          }
-          // 3. Paiement confirmé → on enregistre la réservation
+          if(r.reason==='DIALOG DISMISSED'){setProc(false);notify('Paiement annule',C.red);return;}
           await sb.from('reservations').insert({
             id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
             product_id:info.product.id,product_name:info.product.name,product_emoji:info.product.emoji,
             book_type:info.product.cat,date_from:info.date,persons:info.qty,
-            total:amt,acompte_recu:amt,status:'Acompte reçu',
+            total:amt,acompte_recu:amt,status:'Acompte recu',
           });
-          // 4. Notifier l'admin
-          try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-            to:'agencesgroup23@gmail.com',
-            subject:`✦ Réservation confirmée — ${info.product.name}`,
-            html:`<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:24px;border-radius:12px;"><h2 style="color:#c8a84b;">Réservation payée — S-Mall</h2><p><b>${info.product.name}</b></p><p>Client : ${info.name} · ${info.tel}</p><p>Date : ${info.date} · ${info.qty} ${info.product.cat==='voiture'?'jour(s)':info.product.cat==='appart'?'nuit(s)':'pers.'}</p><p>Acompte reçu : <b style="color:#c8a84b;">${FCFA(amt)}</b></p><p>Réf : ${resId}</p></div>`,
-          })});}catch{}
-          // 5. Email de confirmation au client
+          try{
+            await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({
+                to:'agencesgroup23@gmail.com',
+                subject:'Reservation '+info.product.name,
+                html:'<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:20px;"><h2 style="color:#c8a84b;">Reservation S-Mall</h2><p>'+info.product.name+' — '+info.name+' / '+info.tel+' — '+info.date+' — '+FCFA(amt)+'</p></div>',
+              })
+            });
+          }catch(e){console.warn('Email admin failed');}
           if(info.email&&info.email!=='N/A'){
-            try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-              to:info.email,
-              subject:`✦ Réservation confirmée — ${info.product.name}`,
-              html:`<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:28px;border-radius:14px;max-width:520px;margin:auto;"><h1 style="font-family:Georgia,serif;color:#c8a84b;text-align:center;letter-spacing:4px;">S-MALL</h1><div style="background:#0f0f0f;border-radius:10px;padding:20px;margin:16px 0;text-align:center;border:0.5px solid rgba(200,168,75,0.2);"><h2 style="color:#c8a84b;">Réservation confirmée ✓</h2><p style="color:#8a8278;margin-top:6px;">Réf : <b style="color:#f4ede0;">${resId}</b></p></div><p>Bonjour <b>${info.name}</b>,</p><p style="margin-top:8px;">Votre acompte de <b style="color:#c8a84b;">${FCFA(amt)}</b> a bien été reçu pour <b>${info.product.name}</b> le ${info.date}.</p><p style="margin-top:8px;color:#8a8278;">Notre équipe vous contactera pour finaliser votre réservation.</p></div>`,
-            })});}catch{}
+            try{
+              await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({
+                  to:info.email,
+                  subject:'Reservation confirmee — '+info.product.name,
+                  html:'<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:20px;border-radius:12px;"><h1 style="color:#c8a84b;">S-MALL</h1><p>Bonjour '+info.name+', votre acompte de '+FCFA(amt)+' pour '+info.product.name+' le '+info.date+' a ete recu. Ref : '+resId+'</p></div>',
+                })
+              });
+            }catch(e){console.warn('Email client failed');}
           }
           setProc(false);
           setLastRes({name:info.name,product:info.product.name,acompte:amt,resId});
           setPage('resOk');
         }}).open();
       }else{
-        // Fallback sans FedaPay (dev/test) — on enregistre directement
         await sb.from('reservations').insert({
           id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
           product_id:info.product.id,product_name:info.product.name,product_emoji:info.product.emoji,
@@ -1318,13 +1362,10 @@ export default function SMall() {
         setLastRes({name:info.name,product:info.product.name,acompte:amt,resId});
         setPage('resOk');
       }
-    }catch(e){
-      setProc(false);
-      notify('Erreur de paiement. Réessayez.',C.red);
-    }
+    }catch(e){setProc(false);notify('Erreur de paiement. Reessayez.',C.red);}
   };
 
-  const Inp=({f,pl,t='text'})=>(<div><input type={t}value={form[f]}onChange={e=>setForm(x=>({...x,[f]:e.target.value}))}placeholder={pl}style={{width:'100%',background:C.card2,border:`1px solid ${errs[f]?C.red:C.border}`,borderRadius:4,padding:'11px 14px',color:C.white,fontSize:14,fontFamily:"'Jost',sans-serif",outline:'none',boxSizing:'border-box'}}/>{errs[f]&&<p style={{color:C.red,fontSize:11,marginTop:3,fontWeight:300}}>{errs[f]}</p>}</div>);
+    const Inp=({f,pl,t='text'})=>(<div><input type={t}value={form[f]}onChange={e=>setForm(x=>({...x,[f]:e.target.value}))}placeholder={pl}style={{width:'100%',background:C.card2,border:`1px solid ${errs[f]?C.red:C.border}`,borderRadius:4,padding:'11px 14px',color:C.white,fontSize:14,fontFamily:"'Jost',sans-serif",outline:'none',boxSizing:'border-box'}}/>{errs[f]&&<p style={{color:C.red,fontSize:11,marginTop:3,fontWeight:300}}>{errs[f]}</p>}</div>);
 
   const topBanners=banners.filter(b=>!b.position||b.position==='home_top');
   const midBanners=banners.filter(b=>b.position==='home_mid');
@@ -1564,55 +1605,59 @@ export default function SMall() {
 
       {/* MODAL CIRCUIT */}
       {bookCircuit&&(<CircuitBookModal pack={bookCircuit}onClose={()=>setBookCircuit(null)}onConfirm={async(info)=>{
-        // // PAIEMENT D'ABORD — circuit enregistré APRÈS confirmation du paiement
-        const resId=RID(),amt=Math.round(info.total*0.30);
+        const resId=RID(), amt=Math.round(info.total*0.30);
         setBookCircuit(null);
         setProc(true);
         try{
           if(window.FedaPay){
-            const res=await fetch(FEDA_EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-              type:'circuit',order_id:resId,amount:amt,
-              description:`Acompte 30% Circuit ${info.packName}`,
-              customer:{firstname:info.name.split(' ')[0],lastname:info.name.split(' ').slice(1).join(' ')||'.',email:info.email||'client@smallet.com',phone_number:{number:info.tel,country:'bj'}},
-            })});
+            const res=await fedaFetch({
+              type:'circuit', order_id:resId, amount:amt,
+              description:'Acompte 30% Circuit '+info.packName,
+              customer:{
+                firstname:info.name.split(' ')[0],
+                lastname:info.name.split(' ').slice(1).join(' ')||'.',
+                email:info.email||'client@smallet.com',
+                phone_number:{number:info.tel,country:'bj'}
+              },
+            });
             if(!res.ok)throw new Error();
             const{token,public_key}=await res.json();
             window.FedaPay.init({public_key,transaction:{token},onComplete:async r=>{
-              if(r.reason==='DIALOG DISMISSED'){
-                setProc(false);
-                notify('Paiement annulé — réservation non enregistrée.',C.red);
-                return;
-              }
-              // Paiement OK → enregistrement
+              if(r.reason==='DIALOG DISMISSED'){setProc(false);notify('Paiement annule',C.red);return;}
               await sb.from('reservations').insert({
                 id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
-                product_id:null,product_name:info.packName,product_emoji:'✈',
+                product_id:null,product_name:info.packName,product_emoji:'',
                 book_type:'circuit',date_from:info.date,persons:info.qty,
-                total:amt,acompte_recu:amt,status:'Acompte reçu',
+                total:amt,acompte_recu:amt,status:'Acompte recu',
               });
-              // Notifier admin
-              try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                to:'agencesgroup23@gmail.com',
-                subject:`✦ Circuit payé — ${info.packName}`,
-                html:`<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:24px;border-radius:12px;"><h2 style="color:#c8a84b;">Circuit réservé — S-Mall</h2><p><b>${info.packName}</b></p><p>Client : ${info.name} · ${info.tel}</p><p>Date : ${info.date} · ${info.qty} pers.</p><p>Acompte reçu : <b style="color:#c8a84b;">${FCFA(amt)}</b></p><p>Réf : ${resId}</p></div>`,
-              })});}catch{}
-              // Email client
+              try{
+                await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({
+                    to:'agencesgroup23@gmail.com',
+                    subject:'Circuit paye — '+info.packName,
+                    html:'<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:20px;"><h2 style="color:#c8a84b;">Circuit S-Mall</h2><p>'+info.packName+' — '+info.name+' / '+info.tel+' — '+info.date+' — '+FCFA(amt)+'</p></div>',
+                  })
+                });
+              }catch(e){console.warn('Email admin failed');}
               if(info.email&&info.email!=='N/A'){
-                try{await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-                  to:info.email,
-                  subject:`✦ Réservation Circuit confirmée — ${info.packName}`,
-                  html:`<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:28px;border-radius:14px;max-width:520px;margin:auto;"><h1 style="font-family:Georgia,serif;color:#c8a84b;text-align:center;letter-spacing:4px;">S-MALL</h1><div style="background:#0f0f0f;border-radius:10px;padding:20px;margin:16px 0;text-align:center;border:0.5px solid rgba(200,168,75,0.2);"><h2 style="color:#c8a84b;">Circuit confirmé ✓</h2><p style="color:#8a8278;margin-top:6px;">Réf : <b style="color:#f4ede0;">${resId}</b></p></div><p>Bonjour <b>${info.name}</b>,</p><p style="margin-top:8px;">Votre acompte de <b style="color:#c8a84b;">${FCFA(amt)}</b> pour le circuit <b>${info.packName}</b> (départ : ${info.date}) a bien été reçu.</p><p style="margin-top:8px;color:#8a8278;">Notre équipe vous contactera sous 24h pour finaliser les détails.</p></div>`,
-                })});}catch{}
+                try{
+                  await fetch(EDGE,{method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({
+                      to:info.email,
+                      subject:'Circuit confirme — '+info.packName,
+                      html:'<div style="font-family:sans-serif;background:#080808;color:#f4ede0;padding:20px;border-radius:12px;"><h1 style="color:#c8a84b;">S-MALL</h1><p>Bonjour '+info.name+', acompte de '+FCFA(amt)+' pour circuit '+info.packName+' (depart: '+info.date+') recu. Ref : '+resId+'</p></div>',
+                    })
+                  });
+                }catch(e){console.warn('Email client failed');}
               }
               setProc(false);
               setLastRes({name:info.name,product:info.packName,acompte:amt,resId});
               setPage('resOk');
             }}).open();
           }else{
-            // Fallback sans FedaPay
             await sb.from('reservations').insert({
               id:resId,client_name:info.name,client_email:info.email||'N/A',client_tel:info.tel,
-              product_id:null,product_name:info.packName,product_emoji:'✈',
+              product_id:null,product_name:info.packName,product_emoji:'',
               book_type:'circuit',date_from:info.date,persons:info.qty,
               total:amt,acompte_recu:0,status:'En attente',
             });
@@ -1620,10 +1665,7 @@ export default function SMall() {
             setLastRes({name:info.name,product:info.packName,acompte:amt,resId});
             setPage('resOk');
           }
-        }catch(e){
-          setProc(false);
-          notify('Erreur de paiement. Réessayez.',C.red);
-        }
+        }catch(e){setProc(false);notify('Erreur de paiement. Reessayez.',C.red);}
       }}/>)}
 
       {/* FOOTER */}
@@ -1637,7 +1679,7 @@ export default function SMall() {
           <span className="lnk"onClick={()=>go('terms')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>CGV</span>
           <span className="lnk"onClick={()=>go('contact')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>Contact</span>
         </div>
-        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group ·</p>
+        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group · Cotonou, Bénin</p>
       </footer>
     </div>
   );

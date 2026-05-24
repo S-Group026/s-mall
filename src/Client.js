@@ -17,7 +17,7 @@ const WA   = 'https://wa.me/2250150512408';
 const EDGE = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/send-email';
 const FEDA_EDGE  = 'https://bgsqouczemoqazhcyzga.supabase.co/functions/v1/fedapay-session';
 // Clé publique anon Supabase — nécessaire pour appeler les Edge Functions
-const SUPA_ANON  = 'sb_publishable_ZOCmxYKUt7KcZ3m6m_Cmiw_8jv8VGav';
+const SUPA_ANON  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnc3FvdWN6ZW1vcWF6aGN5emdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzOTE2MDEsImV4cCI6MjA4ODk2NzYwMX0.Hr8TO6FL_-UVaTx0_zGKUUo97M1ahgyTFiZBa9Q1Nus';
 const fedaFetch  = (body) => fetch(FEDA_EDGE, {
   method: 'POST',
   headers: {
@@ -1679,7 +1679,7 @@ export default function SMall() {
           <span className="lnk"onClick={()=>go('terms')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>CGV</span>
           <span className="lnk"onClick={()=>go('contact')}style={{fontSize:9,color:C.muted,letterSpacing:1.5,textTransform:'uppercase',fontWeight:400}}>Contact</span>
         </div>
-        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group · Cotonou, Bénin</p>
+        <p style={{color:C.muted2,fontSize:9,letterSpacing:1,textTransform:'uppercase',fontWeight:300}}>© 2025 S-Mall · S-Group ·</p>
       </footer>
     </div>
   );
